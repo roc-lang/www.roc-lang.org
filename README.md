@@ -1,2 +1,1 @@
-# www.roc-lang.org
-The Roc website: www.roc-lang.org
+Contains everything needed to build the Roc website.
