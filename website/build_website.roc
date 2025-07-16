@@ -8,14 +8,16 @@ import cli.File
 import cli.Env
 import cli.Path
 
+latest_stable_tag = "alpha3-rolling"
+
 main! : List Arg => Result {} _
 main! = |_args|
 
     cwd_path = Env.cwd!({}) ? |err| EncCwdFailed(err)
     cwd_path_str = Path.display(cwd_path)
 
-    if !(Str.ends_with(cwd_path_str, "/www")) then
-        Err(Exit(1, "You must run this script inside the 'www' directory, I am currently in: ${cwd_path_str}"))?
+    if !(Str.ends_with(cwd_path_str, "/website")) then
+        Err(Exit(1, "You must run this script inside the 'website' directory, I am currently in: ${cwd_path_str}"))?
     else
         {}
 
@@ -23,6 +25,7 @@ main! = |_args|
     _ = Dir.delete_all!("build")
     _ = Dir.delete_all!("content/examples")
     _ = Dir.delete_all!("examples-main")
+    _ = Dir.delete_all!("roc")
 
     run_cmd!("cp", ["-r", "public", "build"])?
 
@@ -62,7 +65,7 @@ main! = |_args|
     _ = File.delete!(repl_tarfile)
 
     # Download the latest stable Web REPL as a zip file.
-    run_cmd!("curl", ["-fLJO", "https://github.com/roc-lang/roc/releases/download/alpha3-rolling/${repl_tarfile}"])?
+    run_cmd!("curl", ["-fLJO", "https://github.com/roc-lang/roc/releases/download/${latest_stable_tag}/${repl_tarfile}"])?
 
     Dir.create!("build/repl") ? |err| CreateReplDirFailed(err)
 
@@ -70,8 +73,12 @@ main! = |_args|
 
     File.delete!(repl_tarfile) ? |err| DeleteReplTarFailed(err)
 
-    # TODO generate docs for latest alpha instead of main branch
-    run_cmd!("roc", ["docs", "--output", "build/builtins", "--root-dir", "builtins"])?
+    # git clone latest_stable_tag
+    run_cmd!("git", ["clone", "--branch", latest_stable_tag, "--depth", "1", "https://github.com/roc-lang/roc.git"])?
+
+    # generate docs for builtins
+    run_cmd!("roc", ["docs", "roc/crates/compiler/builtins/roc/main.roc","--output", "build/builtins", "--root-dir", "builtins"])?
+    Dir.delete_all!("roc") ? |err| DeleteRocRepoDirFailed(err)
 
     find_index_stdout = run_cmd_w_output!("find", ["build/builtins", "-type", "f", "-name", "index.html"])?
     index_clean_paths =
@@ -92,8 +99,8 @@ main! = |_args|
 
 
     # Generate site markdown content
-    run_cmd!("roc", ["build", "--linker", "legacy", "main.roc"])?
-    run_cmd!("./main", ["content", "build"])?
+    run_cmd!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
+    run_cmd!("./static_site_gen", ["content", "build"])?
 
 
     # Add github link to examples
@@ -128,7 +135,7 @@ main! = |_args|
             )
     ) ? |err| ExamplesReadmeReplaceFailed(err)
 
-    Stdout.line!("Website built in dir 'www/build'.")
+    Stdout.line!("Website built in dir 'website/build'.")
 
 run_cmd! : Str, List Str => Result {} [BadCmdOutput(Str)]_
 run_cmd! = |cmd_str, args|

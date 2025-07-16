@@ -9,5 +9,5 @@
 # Specifically keep these files with no extension
 !LICENSE*
 
-www/dist
-www/build
+website/dist
+website/build
