@@ -1,0 +1,21 @@
+name: Check Internal Links
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+#  pull_request:
+
+jobs:
+  check-links:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Check internal links
+      run: |
+        ./ci_scripts/check-links.sh 4
+        # 4 is the recursion depth for checking links

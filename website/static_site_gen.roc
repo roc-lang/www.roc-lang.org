@@ -4,7 +4,7 @@ app [main!] {
 
 import pf.SSG
 import pf.Types
-import pf.Html exposing [header, nav, div, link, attribute, text, a, span, html, head, body, meta, script, footer, br]
+import pf.Html exposing [header, nav, div, link, attribute, text, a, span, html, head, body, meta, script, footer]
 import pf.Html.Attributes exposing [id, aria_label, aria_hidden, title, href, class, rel, type, content, lang, charset, name, color]
 import "content/tutorial.md" as tutorial_markdown : Str
 
@@ -145,9 +145,6 @@ view = |page_path_str, html_content|
             # Remove the .no-js class from <html> before the body renders, so anything
             # hidden via CSS using a .no-js selector will apply to the initial layout
             # of the body instead of having a flash of content that immediately gets hidden.
-            #
-            # WARNING: Updating this requires updating its sha256 in netlify.toml under Content-Security-Policy.
-            #          Otherwise, this will work locally and then fail in production!
             script([], [text("document.documentElement.className = document.documentElement.className.replace('no-js', '');")]),
         ]),
         body(body_attrs, [
@@ -160,10 +157,7 @@ view = |page_path_str, html_content|
                             gh_logo,
                             span([id("gh-link-text")], [text("roc-lang/roc")]),
                         ]),
-                    ]),
-                    br([], []),
-                    text(" powered by "),
-                    a([href("https://www.netlify.com")], [text("Netlify")]),
+                    ])
                 ]),
             ]),
         ]),
