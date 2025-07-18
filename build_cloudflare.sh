@@ -19,6 +19,7 @@ mv roc_nightly* roc_nightly
 
 ./roc_nightly/roc version
 
+# add roc to PATH
 export PATH=$PATH:$(pwd)/roc_nightly
 
 cd website
