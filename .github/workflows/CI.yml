@@ -42,4 +42,6 @@ jobs:
 
       - run: roc version
 
-      - run: roc check www/build_website.roc
+      - run: |
+          cd website
+          roc check build_website.roc
