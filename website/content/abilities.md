@@ -176,10 +176,9 @@ Inspect implements
 
 The `toInspector` function takes a value and returns an `Inspector` which describes how to abstractly represent that value's contents in a way that doesn't tie it to a particular representation (such as a string). Then a separate "formatter" can translate a given `Inspector` to a specific format (such as a string in the case of [`Inspect.toStr`](https://www.roc-lang.org/builtins/Inspect#toStr), but also possibly a structured log format, or an interactive GUI element).
 
-Example formatters:
+Example formatter:
 
 - A [DbgFormatter](https://github.com/roc-lang/roc/blob/16db390d5f95516c95c9676797f85b5b2a75cda9/crates/compiler/builtins/roc/Inspect.roc#L106) which creates a string representation of Roc values, for e.g. debug printing to the console.
-- A [GuiFormatter](https://github.com/roc-lang/roc/blob/main/examples/GuiFormatter.roc) which creates a GUI representation of Roc values for e.g. debug visualization in a graphical application.
 
 ## [Opaque Types](#opaque-types) {#opaque-types}
 
