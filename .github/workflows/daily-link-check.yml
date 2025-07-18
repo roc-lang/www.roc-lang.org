@@ -5,7 +5,7 @@ on:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch: # Allow manual triggering
-  pull_request:
+#  pull_request:
 
 jobs:
   check-links:
