@@ -21,6 +21,7 @@ ERRORS_FILE="$TEMP_DIR/errors"
 IGNORE_LIST=(
     "https://vimeo.com/653510682"
     "https://dl.acm.org/doi/pdf/10.1145/3591260"
+    "https://ayazhafiz.com/articles/23/a-lambda-calculus-with-coroutines-and-heapless-closures"
 )
 
 # Colors for output
