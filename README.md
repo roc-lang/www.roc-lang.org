@@ -4,4 +4,6 @@ Build with:
 ```
 cd website
 roc ./build_website.roc
+# If you want a local deploy for development, do:
+npx http-server ./build -c-1 -p 8080
 ```
