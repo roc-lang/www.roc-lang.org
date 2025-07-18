@@ -8,6 +8,8 @@ import cli.File
 import cli.Env
 import cli.Path
 
+# run with `cd website && roc ./build_website.roc`
+
 latest_stable_tag = "alpha3-rolling"
 
 main! : List Arg => Result {} _
