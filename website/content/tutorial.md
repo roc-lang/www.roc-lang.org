@@ -1542,7 +1542,7 @@ Here, `main!` is calling a function called `Stdout.line!`. More specifically, it
 
 When we write `import pf.Stdout`, it specifies that the `Stdout` module comes from the package we named `pf` in the `packages { pf: ... }` section.
 
-You can find documentation for the `Stdout.line!` function in the [Stdout](https://www.roc-lang.org/packages/basic-cli/Stdout#line) module documentation.
+You can find documentation for the `Stdout.line!` function in the [Stdout](https://roc-lang.github.io/basic-cli/0.19.0/Stdout/#line!) module documentation.
 
 If we would like to include other modules in our application, say `AdditionalModule.roc` and `AnotherModule.roc`, then they can be imported directly like this:
 
