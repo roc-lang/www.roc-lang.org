@@ -1,4 +1,4 @@
-Contains everything needed to build the [Roc website](http://www.roc-lang.org/).
+Contains everything you need to build the [Roc website](http://www.roc-lang.org/).
 
 Build with:
 ```
