@@ -5,7 +5,7 @@ const path = require('path');
 // Configuration
 const WEBSITE_URL = 'https://www.roc-lang.org';
 const MAX_PAGES = 100; // Limit to avoid too many pages
-const MAX_DEPTH = 4; // How deep to crawl
+const MAX_DEPTH = 5; // How deep to crawl
 const EXCLUDE_PATTERNS = [
   /\.(pdf|zip|doc|docx|xls|xlsx|ppt|pptx)$/i, // File downloads
   /#/, // Hash fragments
@@ -17,13 +17,14 @@ const EXCLUDE_PATTERNS = [
 
 async function discoverInternalLinks(page, startUrl, maxPages = MAX_PAGES, maxDepth = MAX_DEPTH) {
   const discovered = new Set();
-  const toVisit = [{ url: startUrl, depth: 0 }];
+  const toVisit = [{ url: startUrl, depth: 0, foundOn: null }];
   const visited = new Set();
+  const discoveryPath = new Map(); // Track where each link was found
   
   console.log('🔍 Discovering internal links...');
   
   while (toVisit.length > 0 && discovered.size < maxPages) {
-    const { url, depth } = toVisit.shift();
+    const { url, depth, foundOn } = toVisit.shift();
     
     if (visited.has(url) || depth > maxDepth) continue;
     visited.add(url);
@@ -58,6 +59,11 @@ async function discoverInternalLinks(page, startUrl, maxPages = MAX_PAGES, maxDe
       const currentPath = normalizedCurrentUrl.pathname.replace(/\/$/, '') || '/';
       discovered.add(currentPath);
       
+      // Record discovery path for current page (except homepage)
+      if (foundOn && !discoveryPath.has(currentPath)) {
+        discoveryPath.set(currentPath, foundOn);
+      }
+      
       // Filter and add new links to visit
       for (const link of links) {
         const linkPath = new URL(link, WEBSITE_URL).pathname.replace(/\/$/, '') || '/';
@@ -66,12 +72,16 @@ async function discoverInternalLinks(page, startUrl, maxPages = MAX_PAGES, maxDe
         const shouldExclude = EXCLUDE_PATTERNS.some(pattern => pattern.test(link));
         
         if (!shouldExclude && !visited.has(link) && depth < maxDepth) {
-          toVisit.push({ url: link, depth: depth + 1 });
+          toVisit.push({ url: link, depth: depth + 1, foundOn: currentPath });
         }
         
         // Add to discovered even if we won't visit (for shallow pages)
         if (!shouldExclude) {
           discovered.add(linkPath);
+          // Record where we found this link if we haven't seen it before
+          if (!discoveryPath.has(linkPath)) {
+            discoveryPath.set(linkPath, currentPath);
+          }
         }
       }
       
@@ -84,7 +94,7 @@ async function discoverInternalLinks(page, startUrl, maxPages = MAX_PAGES, maxDe
   
   const finalPages = Array.from(discovered).slice(0, maxPages);
   console.log(`📋 Discovered ${finalPages.length} pages to check:`, finalPages);
-  return finalPages;
+  return { pages: finalPages, discoveryPath };
 }
 
 async function checkPage(page, url) {
@@ -191,7 +201,7 @@ async function checkPage(page, url) {
   }
 }
 
-async function generateReport(results) {
+async function generateReport(results, discoveryPath) {
   const timestamp = new Date().toISOString();
   const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
   const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
@@ -215,7 +225,18 @@ async function generateReport(results) {
   
   // Detailed results for each page
   for (const result of results) {
+    const pagePath = new URL(result.url).pathname.replace(/\/$/, '') || '/';
     report += `## Page: ${result.url}\n`;
+    
+    // Add discovery path information
+    if (discoveryPath.has(pagePath)) {
+      const foundOnPath = discoveryPath.get(pagePath);
+      report += `**Found on:** ${WEBSITE_URL}${foundOnPath}\n\n`;
+    } else if (pagePath === '/') {
+      report += `**Source:** Homepage (starting point)\n\n`;
+    } else {
+      report += `**Source:** Unknown (possibly homepage)\n\n`;
+    }
     
     if (!result.success) {
       report += `❌ **Failed to load page**\n\n`;
@@ -269,7 +290,9 @@ async function main() {
   const page = await context.newPage();
   
   // Discover internal links starting from homepage
-  const pagesToCheck = await discoverInternalLinks(page, WEBSITE_URL);
+  const discoveryResult = await discoverInternalLinks(page, WEBSITE_URL);
+  const pagesToCheck = discoveryResult.pages;
+  const discoveryPath = discoveryResult.discoveryPath;
   const results = [];
   
   console.log(`\n🧪 Starting console checks on ${pagesToCheck.length} pages...\n`);
@@ -286,7 +309,7 @@ async function main() {
   await browser.close();
   
   // Generate and save report
-  const report = await generateReport(results);
+  const report = await generateReport(results, discoveryPath);
   
   // Ensure results directory exists
   const resultsDir = path.join(process.cwd(), 'results');
