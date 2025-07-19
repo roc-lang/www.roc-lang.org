@@ -65,7 +65,7 @@ resetSourceInputHeight();
 repl.elemSourceInput.addEventListener("input", resetSourceInputHeight);
 repl.elemSourceInput.addEventListener("keydown", onInputKeydown);
 repl.elemSourceInput.addEventListener("keyup", onInputKeyup);
-roc_repl_wasm.default("/repl/roc_repl_wasm_bg.wasm").then(async (instance) => {
+roc_repl_wasm.default({ module_or_path: "/repl/roc_repl_wasm_bg.wasm" }).then(async (instance) => {
   const loadingMessage = repl.elemHistory.querySelector("#loading-message");
 
   if (loadingMessage != null) {
