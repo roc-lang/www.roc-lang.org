@@ -1,0 +1,36 @@
+name: Daily Website Check For Browser Errors or Warnings
+
+on:
+  schedule:
+    # Run daily at 7 AM UTC
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  console-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        
+    - name: Install Playwright browsers
+      run: |
+        npm install playwright
+        npx playwright install chromium
+        
+    - name: Run console check
+      run: node ci_scripts/check_browser_error_warning.js
+
+    - name: Upload results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: console-check-results
+        path: results/
