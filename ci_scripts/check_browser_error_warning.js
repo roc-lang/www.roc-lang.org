@@ -87,9 +87,13 @@ async function discoverInternalLinks(page, startUrl, maxPages = MAX_PAGES, maxDe
   return finalPages;
 }
 
-// Add the missing async checkPage function
 async function checkPage(page, url) {
   console.log(`Checking: ${url}`);
+  
+  // Remove any existing listeners to prevent accumulation
+  page.removeAllListeners('console');
+  page.removeAllListeners('response');
+  page.removeAllListeners('pageerror');
   
   const errors = [];
   const warnings = [];
@@ -119,16 +123,27 @@ async function checkPage(page, url) {
     }
   });
   
-  // Capture network failures
+  // Capture network failures - Fixed to properly categorize failures
   page.on('response', response => {
     if (response.status() >= 400) {
-      networkFailures.push({
-        type: 'network_error',
-        status: response.status(),
-        url: response.url(),
-        page: url,
-        timestamp: new Date().toISOString()
-      });
+      const responseUrl = response.url();
+      const resourceType = response.request().resourceType();
+      const isMainDocument = responseUrl === url;
+      const isFromSameDomain = responseUrl.startsWith(WEBSITE_URL);
+      
+      // Only log failures that are relevant to the current page
+      // Include main document failures and same-domain resource failures
+      if (isMainDocument || (isFromSameDomain && ['stylesheet', 'script', 'image', 'font'].includes(resourceType))) {
+        networkFailures.push({
+          type: 'network_error',
+          status: response.status(),
+          url: responseUrl,
+          page: url,
+          resourceType: resourceType,
+          isMainDocument: isMainDocument,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   });
   
@@ -230,7 +245,10 @@ async function generateReport(results) {
     if (result.networkFailures.length > 0) {
       report += `### Network Failures (${result.networkFailures.length})\n`;
       result.networkFailures.forEach((failure, i) => {
-        report += `${i + 1}. **${failure.status}** - ${failure.url}\n`;
+        const resourceInfo = failure.isMainDocument 
+          ? ' (main document)' 
+          : ` (${failure.resourceType})`;
+        report += `${i + 1}. **${failure.status}** - ${failure.url}${resourceInfo}\n`;
       });
       report += `\n`;
     }
