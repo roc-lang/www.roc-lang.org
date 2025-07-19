@@ -201,6 +201,37 @@ async function checkPage(page, url) {
   }
 }
 
+function countIssues(results) {
+  const errorCounts = new Map();
+  const warningCounts = new Map();
+  const networkFailureCounts = new Map();
+  
+  for (const result of results) {
+    // Count errors
+    for (const error of result.errors) {
+      const key = error.message;
+      errorCounts.set(key, (errorCounts.get(key) || 0) + 1);
+    }
+    
+    // Count warnings
+    for (const warning of result.warnings) {
+      const key = warning.message;
+      warningCounts.set(key, (warningCounts.get(key) || 0) + 1);
+    }
+    
+    // Count network failures
+    for (const failure of result.networkFailures) {
+      const resourceInfo = failure.isMainDocument 
+        ? ' (main document)' 
+        : ` (${failure.resourceType})`;
+      const key = `**${failure.status}** - ${failure.url}${resourceInfo}`;
+      networkFailureCounts.set(key, (networkFailureCounts.get(key) || 0) + 1);
+    }
+  }
+  
+  return { errorCounts, warningCounts, networkFailureCounts };
+}
+
 async function generateReport(results, discoveryPath) {
   const timestamp = new Date().toISOString();
   const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
@@ -270,6 +301,40 @@ async function generateReport(results, discoveryPath) {
           ? ' (main document)' 
           : ` (${failure.resourceType})`;
         report += `${i + 1}. **${failure.status}** - ${failure.url}${resourceInfo}\n`;
+      });
+      report += `\n`;
+    }
+  }
+  
+  // Add issue counts section at the end
+  const { errorCounts, warningCounts, networkFailureCounts } = countIssues(results);
+  
+  if (errorCounts.size > 0 || warningCounts.size > 0 || networkFailureCounts.size > 0) {
+    report += `---\n\n## Issue Frequency Summary\n\n`;
+    
+    if (errorCounts.size > 0) {
+      report += `### Error Frequency\n`;
+      const sortedErrors = Array.from(errorCounts.entries()).sort((a, b) => b[1] - a[1]);
+      sortedErrors.forEach(([message, count]) => {
+        report += `- **${count}x** ${message}\n`;
+      });
+      report += `\n`;
+    }
+    
+    if (warningCounts.size > 0) {
+      report += `### Warning Frequency\n`;
+      const sortedWarnings = Array.from(warningCounts.entries()).sort((a, b) => b[1] - a[1]);
+      sortedWarnings.forEach(([message, count]) => {
+        report += `- **${count}x** ${message}\n`;
+      });
+      report += `\n`;
+    }
+    
+    if (networkFailureCounts.size > 0) {
+      report += `### Network Failure Frequency\n`;
+      const sortedFailures = Array.from(networkFailureCounts.entries()).sort((a, b) => b[1] - a[1]);
+      sortedFailures.forEach(([message, count]) => {
+        report += `- **${count}x** ${message}\n`;
       });
       report += `\n`;
     }
