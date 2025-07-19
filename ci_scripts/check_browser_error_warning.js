@@ -86,6 +86,9 @@ async function discoverInternalLinks(page, startUrl, maxPages = MAX_PAGES, maxDe
   console.log(`📋 Discovered ${finalPages.length} pages to check:`, finalPages);
   return finalPages;
 }
+
+// Add the missing async checkPage function
+async function checkPage(page, url) {
   console.log(`Checking: ${url}`);
   
   const errors = [];
