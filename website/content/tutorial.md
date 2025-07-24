@@ -885,7 +885,7 @@ Here's an example:
 
 ```roc
 List.walk([1, 2, 3, 4, 5], { evens: [], odds: [] }, |state, elem|
-    if Num.is_even(elem, then)
+    if Num.is_even(elem) then
         { state & evens: List.append(state.evens, elem) }
     else
         { state & odds: List.append(state.odds, elem) }
