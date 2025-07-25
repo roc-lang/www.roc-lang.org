@@ -75,7 +75,7 @@ Here are some examples of how it can be used today.
     <pre><samp class="code-snippet">main! <span class="kw">=</span> <span class="kw">|</span>args<span class="kw">|</span>
     Stdout<span class="punctuation section">.</span>line<span class="punctuation section">!</span><span class="punctuation section">(</span><span class="literal">"Hello!"</span><span class="punctuation section">)</span></samp></pre>
         <p>You can use Roc to create scripts and command-line interfaces (CLIs). The compiler produces binary executables, so Roc programs can run on devices that don't have Roc itself installed.</p>
-        <p>As an example, the HTML for this website is generated using a simple Roc script. You can see <a href="https://github.com/roc-lang/roc/blob/main/www/main.roc">the code for it</a> in the main Roc code repository.</p>
+        <p>As an example, the HTML for this website is generated using a <a href="https://github.com/roc-lang/www.roc-lang.org/blob/main/website/static_site_gen.roc">simple Roc script</a></p>
         <p>If you’re looking for a starting point for building a command-line program in Roc, <a href="https://github.com/roc-lang/basic-cli">basic-cli</a> is a popular <a href="/platforms">platform</a> to check out.</p>
     </div>
     <div role="presentation" class="home-examples-column">
