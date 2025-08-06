@@ -4,8 +4,8 @@ app [main!] {
 
 import pf.SSG
 import pf.Types
-import pf.Html exposing [header, nav, div, link, attribute, text, a, span, html, head, body, meta, script, footer]
-import pf.Html.Attributes exposing [id, aria_label, aria_hidden, title, href, class, rel, type, content, lang, charset, name, color]
+import pf.Html exposing [header, nav, div, link, text, a, span, html, head, body, meta, script, footer]
+import pf.Html.Attributes exposing [id, aria_label, aria_hidden, title, href, class, rel, content, lang, charset, name, color]
 import "content/tutorial.md" as tutorial_markdown : Str
 
 import InteractiveRocExample
@@ -84,19 +84,6 @@ transform : Str, Str -> Str
 transform = |page_path_str, html_content|
     Html.render(view(page_path_str, html_content))
 
-preload_woff2 : Str -> Html.Node
-preload_woff2 = |url|
-
-    link([
-        rel("preload"),
-        attribute("as")("font"),
-        type("font/woff2"),
-        href(url),
-        # Necessary for preloading fonts, even if the request won't be cross-origin
-        # https://stackoverflow.com/a/70878420
-        attribute("crossorigin")("anonymous"),
-    ])
-
 view : Str, Str -> Html.Node
 view = |page_path_str, html_content|
     main_body =
@@ -132,11 +119,6 @@ view = |page_path_str, html_content|
             meta([name("description"), content(page_info.description)]),
             meta([name("viewport"), content("width=device-width")]),
             link([rel("icon"), href("/favicon.svg")]),
-            # Preload the latin-regular (but not latin-ext) unicode ranges of our fonts.
-            # The homepage doesn't actually use latin-ext
-            preload_woff2("/fonts/lato-v23-latin/lato-v23-latin-regular.woff2"),
-            preload_woff2("/fonts/source-code-pro-v22-latin/source-code-pro-v22-latin-regular.woff2"),
-            preload_woff2("/fonts/permanent-marker-v16-latin/permanent-marker-v16-latin-regular.woff2"),
             link([rel("prefetch"), href("/repl/roc_repl_wasm.js")]),
             link([rel("stylesheet"), href("/site.css")]),
             # Safari ignores rel="icon" and only respects rel="mask-icon". It will render the SVG with

@@ -141,6 +141,7 @@ main! = |_args|
 
 run_cmd! : Str, List Str => Result {} [BadCmdOutput(Str)]_
 run_cmd! = |cmd_str, args|
+    Stdout.line!("Running command: ${cmd_str} ${Str.join_with(args, " ")}")?
     _ = run_cmd_w_output!(cmd_str, args)?
 
     Ok({})
