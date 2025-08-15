@@ -2082,8 +2082,8 @@ Since open records have a type variable (like `*` in `{ email : Str }*` or `a` i
 
 ```roc
 User a : {
-    email : Str
-    first_name : Str
+    email : Str,
+    first_name : Str,
     last_name : Str
 }a
 ```
