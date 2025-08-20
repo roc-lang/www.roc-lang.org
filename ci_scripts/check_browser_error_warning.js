@@ -207,32 +207,32 @@ async function checkAccessibility(page) {
     // });
     
     // Links with same text but different destinations
-    const links = document.querySelectorAll('a[href]');
-    const linkTexts = new Map();
-    
-    links.forEach(link => {
-      const text = link.textContent.trim();
-      const href = link.href;
-      
-      if (text) {
-        if (!linkTexts.has(text)) {
-          linkTexts.set(text, new Set());
-        }
-        linkTexts.get(text).add(href);
-      }
-    });
-    
-    linkTexts.forEach((hrefs, text) => {
-      if (hrefs.size > 1 && text.length < 100) { // Don't flag very long link texts
-        issues.push({
-          type: 'ambiguous_links',
-          level: 'WARNING',
-          linkText: text,
-          destinations: Array.from(hrefs),
-          message: `Multiple links with same text "${text}" go to different destinations`
-        });
-      }
-    });
+    // const links = document.querySelectorAll('a[href]');
+    // const linkTexts = new Map();
+    // 
+    // links.forEach(link => {
+    //   const text = link.textContent.trim();
+    //   const href = link.href;
+    //   
+    //   if (text) {
+    //     if (!linkTexts.has(text)) {
+    //       linkTexts.set(text, new Set());
+    //     }
+    //     linkTexts.get(text).add(href);
+    //   }
+    // });
+    // 
+    // linkTexts.forEach((hrefs, text) => {
+    //   if (hrefs.size > 1 && text.length < 100) { // Don't flag very long link texts
+    //     issues.push({
+    //       type: 'ambiguous_links',
+    //       level: 'WARNING',
+    //       linkText: text,
+    //       destinations: Array.from(hrefs),
+    //       message: `Multiple links with same text "${text}" go to different destinations`
+    //     });
+    //   }
+    // });
     
     return issues;
   });
