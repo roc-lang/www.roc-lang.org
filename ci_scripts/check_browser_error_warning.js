@@ -156,6 +156,7 @@ async function checkAccessibility(page) {
   
   // Additional DOM-based checks that we'll always run
   const additionalIssues = await page.evaluate(() => {
+    const issues = [];
     
     // Check for other accessibility issues
     
@@ -235,6 +236,8 @@ async function checkAccessibility(page) {
     
     return issues;
   });
+  
+  issues.push(...additionalIssues);
   
   return issues;
 }
