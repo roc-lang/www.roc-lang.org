@@ -4,7 +4,7 @@ const path = require('path');
 
 // Configuration
 const WEBSITE_URL = 'https://www.roc-lang.org';
-const MAX_PAGES = 100; // Limit to avoid too many pages
+const MAX_PAGES = 500; // Limit to avoid too many pages
 const MAX_DEPTH = 5; // How deep to crawl
 const EXCLUDE_PATTERNS = [
   /\.(pdf|zip|doc|docx|xls|xlsx|ppt|pptx)$/i, // File downloads
@@ -14,6 +14,233 @@ const EXCLUDE_PATTERNS = [
   /tel:/, // Phone links
   /javascript:/, // JavaScript links
 ];
+
+// Accessibility checking function using browser's built-in accessibility API
+async function checkAccessibility(page) {
+  const issues = [];
+  
+  // Use Playwright's built-in accessibility snapshot
+  try {
+    const snapshot = await page.accessibility.snapshot();
+    
+    // Parse the accessibility tree for issues
+    function parseAccessibilityTree(node, depth = 0) {
+      if (!node) return;
+      
+      // Check for accessibility violations in the node
+      if (node.role && node.name !== undefined) {
+        // Check for empty names on important roles
+        if (['button', 'link', 'textbox', 'combobox', 'listbox'].includes(node.role) && 
+            (!node.name || node.name.trim() === '')) {
+          issues.push({
+            type: 'missing_accessible_name',
+            level: 'AA_FAIL',
+            role: node.role,
+            element: node.role,
+            message: `${node.role} missing accessible name`
+          });
+        }
+        
+        // Check for duplicate accessible names with different purposes
+        if (node.role === 'link' && node.name) {
+          // This will be handled by our existing duplicate link checker
+        }
+      }
+      
+      // Recursively check children
+      if (node.children) {
+        node.children.forEach(child => parseAccessibilityTree(child, depth + 1));
+      }
+    }
+    
+    if (snapshot) {
+      parseAccessibilityTree(snapshot);
+    }
+    
+  } catch (error) {
+    console.log('  ⚠️  Accessibility snapshot failed:', error.message);
+  }
+  
+  // Use browser's DevTools accessibility audit via CDP
+  const client = await page.context().newCDPSession(page);
+  
+  try {
+    // Enable accessibility domain
+    await client.send('Accessibility.enable');
+    
+    // Get accessibility violations using browser's built-in audit
+    const { accessibilityNode } = await client.send('Accessibility.getFullAXTree');
+    
+    // Function to traverse and check nodes
+    function checkAXNode(node) {
+      if (!node) return;
+      
+      // Check for color contrast issues using browser's data
+      if (node.properties) {
+        for (const prop of node.properties) {
+          if (prop.name === 'colorContrast' && prop.value) {
+            const contrast = parseFloat(prop.value);
+            const isLargeText = node.role === 'text' && 
+                               node.properties.some(p => p.name === 'fontSize' && parseFloat(p.value) >= 18);
+            const minContrast = isLargeText ? 3 : 4.5;
+            
+            if (contrast < minContrast) {
+              issues.push({
+                type: 'contrast',
+                level: 'AA_FAIL',
+                contrast: contrast,
+                required: minContrast,
+                isLargeText: isLargeText,
+                element: node.name || 'text element',
+                message: `Low contrast ratio: ${contrast}:1 (needs ${minContrast}:1)`
+              });
+            }
+          }
+        }
+      }
+      
+      // Check children
+      if (node.children) {
+        node.children.forEach(checkAXNode);
+      }
+    }
+    
+    if (accessibilityNode) {
+      checkAXNode(accessibilityNode);
+    }
+    
+  } catch (error) {
+    console.log('  ⚠️  CDP accessibility audit failed:', error.message);
+    
+    // Fallback to our DOM-based checks if CDP fails
+    const domIssues = await page.evaluate(() => {
+      const issues = [];
+      
+      // Basic DOM-based fallback checks
+      // Missing alt text on images
+      const images = document.querySelectorAll('img:not([alt])');
+      images.forEach((img, index) => {
+        issues.push({
+          type: 'missing_alt',
+          level: 'AA_FAIL',
+          element: `img:nth-of-type(${index + 1})`,
+          src: img.src,
+          message: 'Image missing alt attribute'
+        });
+      });
+      
+      // Form inputs without labels
+      // const inputs = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
+      // inputs.forEach((input, index) => {
+      //   const hasLabel = document.querySelector(`label[for="${input.id}"]`) || 
+      //                   input.closest('label') ||
+      //                   input.getAttribute('aria-label') ||
+      //                   input.getAttribute('aria-labelledby');
+      //   
+      //   if (!hasLabel) {
+      //     issues.push({
+      //       type: 'missing_label',
+      //       level: 'AA_FAIL',
+      //       element: `${input.tagName.toLowerCase()}:nth-of-type(${index + 1})`,
+      //       inputType: input.type || input.tagName.toLowerCase(),
+      //       message: 'Form control missing accessible label'
+      //     });
+      //   }
+      // });
+      
+      return issues;
+    });
+    
+    issues.push(...domIssues);
+  }
+  
+  // Additional DOM-based checks that we'll always run
+  const additionalIssues = await page.evaluate(() => {
+    const issues = [];
+    
+    // Check for other accessibility issues
+    
+    // Missing alt text on images
+    const images = document.querySelectorAll('img:not([alt])');
+    images.forEach((img, index) => {
+      issues.push({
+        type: 'missing_alt',
+        level: 'AA_FAIL',
+        element: `img:nth-of-type(${index + 1})`,
+        src: img.src,
+        message: 'Image missing alt attribute'
+      });
+    });
+    
+    // Empty alt text on decorative images (potential issue)
+    const decorativeImages = document.querySelectorAll('img[alt=""]');
+    decorativeImages.forEach((img, index) => {
+      // Only flag if image seems important (has src and is visible)
+      if (img.src && img.offsetParent !== null && img.naturalWidth > 10 && img.naturalHeight > 10) {
+        issues.push({
+          type: 'empty_alt_warning',
+          level: 'WARNING',
+          element: `img[alt=""]:nth-of-type(${index + 1})`,
+          src: img.src,
+          message: 'Image has empty alt text - ensure it is truly decorative'
+        });
+      }
+    });
+    
+    // Form inputs without labels
+    // const inputs = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
+    // inputs.forEach((input, index) => {
+    //   const hasLabel = document.querySelector(`label[for="${input.id}"]`) || 
+    //                  input.closest('label') ||
+    //                  input.getAttribute('aria-label') ||
+    //                  input.getAttribute('aria-labelledby');
+    //   
+    //   if (!hasLabel) {
+    //     issues.push({
+    //       type: 'missing_label',
+    //       level: 'AA_FAIL',
+    //       element: `${input.tagName.toLowerCase()}:nth-of-type(${index + 1})`,
+    //       inputType: input.type || input.tagName.toLowerCase(),
+    //       message: 'Form control missing accessible label'
+    //     });
+    //   }
+    // });
+    
+    // Links with same text but different destinations
+    // const links = document.querySelectorAll('a[href]');
+    // const linkTexts = new Map();
+    // 
+    // links.forEach(link => {
+    //   const text = link.textContent.trim();
+    //   const href = link.href;
+    //   
+    //   if (text) {
+    //     if (!linkTexts.has(text)) {
+    //       linkTexts.set(text, new Set());
+    //     }
+    //     linkTexts.get(text).add(href);
+    //   }
+    // });
+    // 
+    // linkTexts.forEach((hrefs, text) => {
+    //   if (hrefs.size > 1 && text.length < 100) { // Don't flag very long link texts
+    //     issues.push({
+    //       type: 'ambiguous_links',
+    //       level: 'WARNING',
+    //       linkText: text,
+    //       destinations: Array.from(hrefs),
+    //       message: `Multiple links with same text "${text}" go to different destinations`
+    //     });
+    //   }
+    // });
+    
+    return issues;
+  });
+  
+  issues.push(...additionalIssues);
+  
+  return issues;
+}
 
 async function discoverInternalLinks(page, startUrl, maxPages = MAX_PAGES, maxDepth = MAX_DEPTH) {
   const discovered = new Set();
@@ -108,6 +335,7 @@ async function checkPage(page, url) {
   const errors = [];
   const warnings = [];
   const networkFailures = [];
+  let accessibilityIssues = [];
   
   // Capture console messages
   page.on('console', msg => {
@@ -133,7 +361,7 @@ async function checkPage(page, url) {
     }
   });
   
-  // Capture network failures - Fixed to properly categorize failures
+  // Capture network failures
   page.on('response', response => {
     if (response.status() >= 400) {
       const responseUrl = response.url();
@@ -142,7 +370,6 @@ async function checkPage(page, url) {
       const isFromSameDomain = responseUrl.startsWith(WEBSITE_URL);
       
       // Only log failures that are relevant to the current page
-      // Include main document failures and same-domain resource failures
       if (isMainDocument || (isFromSameDomain && ['stylesheet', 'script', 'image', 'font'].includes(resourceType))) {
         networkFailures.push({
           type: 'network_error',
@@ -177,11 +404,25 @@ async function checkPage(page, url) {
     // Wait a bit more for dynamic content
     await page.waitForTimeout(2000);
     
+    // Run accessibility checks
+    try {
+      accessibilityIssues = await checkAccessibility(page);
+    } catch (error) {
+      console.log(`  ⚠️  Accessibility check failed for ${url}: ${error.message}`);
+      errors.push({
+        type: 'accessibility_check_error',
+        message: `Failed to run accessibility checks: ${error.message}`,
+        url: url,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     return {
       url,
       errors,
       warnings,
       networkFailures,
+      accessibilityIssues,
       success: true
     };
     
@@ -196,6 +437,7 @@ async function checkPage(page, url) {
       }],
       warnings,
       networkFailures,
+      accessibilityIssues: [],
       success: false
     };
   }
@@ -205,6 +447,7 @@ function countIssues(results) {
   const errorCounts = new Map();
   const warningCounts = new Map();
   const networkFailureCounts = new Map();
+  const accessibilityCounts = new Map();
   
   for (const result of results) {
     // Count errors
@@ -227,9 +470,34 @@ function countIssues(results) {
       const key = `**${failure.status}** - ${failure.url}${resourceInfo}`;
       networkFailureCounts.set(key, (networkFailureCounts.get(key) || 0) + 1);
     }
+    
+    // Count accessibility issues
+    for (const issue of result.accessibilityIssues) {
+      let key;
+      switch (issue.type) {
+        case 'contrast':
+          key = `Low contrast (${issue.contrast}:1, needs ${issue.required}:1)`;
+          break;
+        case 'missing_alt':
+          key = 'Image missing alt attribute';
+          break;
+        case 'empty_alt_warning':
+          key = 'Image with empty alt text';
+          break;
+        case 'missing_label':
+          key = 'Form control missing label';
+          break;
+        case 'ambiguous_links':
+          key = `Ambiguous link text: "${issue.linkText}"`;
+          break;
+        default:
+          key = issue.message || issue.type;
+      }
+      accessibilityCounts.set(key, (accessibilityCounts.get(key) || 0) + 1);
+    }
   }
   
-  return { errorCounts, warningCounts, networkFailureCounts };
+  return { errorCounts, warningCounts, networkFailureCounts, accessibilityCounts };
 }
 
 async function generateReport(results, discoveryPath) {
@@ -237,19 +505,22 @@ async function generateReport(results, discoveryPath) {
   const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
   const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
   const totalNetworkFailures = results.reduce((sum, r) => sum + r.networkFailures.length, 0);
+  const totalAccessibilityIssues = results.reduce((sum, r) => sum + r.accessibilityIssues.length, 0);
   
-  let report = `# Website Console Check Report\n`;
+  let report = `# Website Console & Accessibility Check Report\n`;
   report += `**Generated:** ${timestamp}\n`;
   report += `**Website:** ${WEBSITE_URL}\n\n`;
   
   report += `## Summary\n`;
-  report += `- **Total Errors:** ${totalErrors}\n`;
-  report += `- **Total Warnings:** ${totalWarnings}\n`;
+  report += `- **Console Errors:** ${totalErrors}\n`;
+  report += `- **Console Warnings:** ${totalWarnings}\n`;
   report += `- **Network Failures:** ${totalNetworkFailures}\n`;
+  report += `- **Accessibility Issues:** ${totalAccessibilityIssues}\n`;
   report += `- **Pages Checked:** ${results.length}\n\n`;
   
-  if (totalErrors === 0 && totalWarnings === 0 && totalNetworkFailures === 0) {
-    report += `✅ **All pages are clean!** No errors or warnings found.\n\n`;
+  const totalIssues = totalErrors + totalWarnings + totalNetworkFailures + totalAccessibilityIssues;
+  if (totalIssues === 0) {
+    report += `✅ **All pages are clean!** No errors, warnings, or accessibility issues found.\n\n`;
   } else {
     report += `❌ **Issues found** - see details below.\n\n`;
   }
@@ -271,12 +542,16 @@ async function generateReport(results, discoveryPath) {
     
     if (!result.success) {
       report += `❌ **Failed to load page**\n\n`;
-    } else if (result.errors.length === 0 && result.warnings.length === 0 && result.networkFailures.length === 0) {
-      report += `✅ **No issues found**\n\n`;
+    } else {
+      const pageIssues = result.errors.length + result.warnings.length + 
+                        result.networkFailures.length + result.accessibilityIssues.length;
+      if (pageIssues === 0) {
+        report += `✅ **No issues found**\n\n`;
+      }
     }
     
     if (result.errors.length > 0) {
-      report += `### Errors (${result.errors.length})\n`;
+      report += `### Console Errors (${result.errors.length})\n`;
       result.errors.forEach((error, i) => {
         report += `${i + 1}. **${error.type}**: ${error.message}\n`;
         if (error.stack) {
@@ -287,7 +562,7 @@ async function generateReport(results, discoveryPath) {
     }
     
     if (result.warnings.length > 0) {
-      report += `### Warnings (${result.warnings.length})\n`;
+      report += `### Console Warnings (${result.warnings.length})\n`;
       result.warnings.forEach((warning, i) => {
         report += `${i + 1}. ${warning.message}\n`;
       });
@@ -304,16 +579,50 @@ async function generateReport(results, discoveryPath) {
       });
       report += `\n`;
     }
+    
+    if (result.accessibilityIssues.length > 0) {
+      report += `### Accessibility Issues (${result.accessibilityIssues.length})\n`;
+      result.accessibilityIssues.forEach((issue, i) => {
+        switch (issue.type) {
+          case 'contrast':
+            report += `${i + 1}. **Color Contrast** (${issue.level}): `;
+            report += `Text "${issue.text}" has contrast ratio ${issue.contrast}:1 `;
+            report += `(needs ${issue.required}:1). `;
+            report += `Colors: ${issue.colors.foreground} on ${issue.colors.background} `;
+            report += `(Element: ${issue.element})\n`;
+            break;
+          case 'missing_alt':
+            report += `${i + 1}. **Missing Alt Text**: Image without alt attribute `;
+            report += `(${issue.src})\n`;
+            break;
+          case 'empty_alt_warning':
+            report += `${i + 1}. **Empty Alt Warning**: ${issue.message} `;
+            report += `(${issue.src})\n`;
+            break;
+          case 'missing_label':
+            report += `${i + 1}. **Missing Label**: ${issue.message} `;
+            report += `(${issue.inputType} element)\n`;
+            break;
+          case 'ambiguous_links':
+            report += `${i + 1}. **Ambiguous Links**: ${issue.message}\n`;
+            report += `   Destinations: ${issue.destinations.join(', ')}\n`;
+            break;
+          default:
+            report += `${i + 1}. **${issue.type}**: ${issue.message || 'Unknown issue'}\n`;
+        }
+      });
+      report += `\n`;
+    }
   }
   
   // Add issue counts section at the end
-  const { errorCounts, warningCounts, networkFailureCounts } = countIssues(results);
+  const { errorCounts, warningCounts, networkFailureCounts, accessibilityCounts } = countIssues(results);
   
-  if (errorCounts.size > 0 || warningCounts.size > 0 || networkFailureCounts.size > 0) {
+  if (errorCounts.size > 0 || warningCounts.size > 0 || networkFailureCounts.size > 0 || accessibilityCounts.size > 0) {
     report += `---\n\n## Issue Frequency Summary\n\n`;
     
     if (errorCounts.size > 0) {
-      report += `### Error Frequency\n`;
+      report += `### Console Error Frequency\n`;
       const sortedErrors = Array.from(errorCounts.entries()).sort((a, b) => b[1] - a[1]);
       sortedErrors.forEach(([message, count]) => {
         report += `- **${count}x** ${message}\n`;
@@ -322,7 +631,7 @@ async function generateReport(results, discoveryPath) {
     }
     
     if (warningCounts.size > 0) {
-      report += `### Warning Frequency\n`;
+      report += `### Console Warning Frequency\n`;
       const sortedWarnings = Array.from(warningCounts.entries()).sort((a, b) => b[1] - a[1]);
       sortedWarnings.forEach(([message, count]) => {
         report += `- **${count}x** ${message}\n`;
@@ -338,13 +647,22 @@ async function generateReport(results, discoveryPath) {
       });
       report += `\n`;
     }
+    
+    if (accessibilityCounts.size > 0) {
+      report += `### Accessibility Issue Frequency\n`;
+      const sortedAccessibility = Array.from(accessibilityCounts.entries()).sort((a, b) => b[1] - a[1]);
+      sortedAccessibility.forEach(([message, count]) => {
+        report += `- **${count}x** ${message}\n`;
+      });
+      report += `\n`;
+    }
   }
   
   return report;
 }
 
 async function main() {
-  console.log('Starting website console check...');
+  console.log('Starting website console & accessibility check...');
   
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -360,7 +678,7 @@ async function main() {
   const discoveryPath = discoveryResult.discoveryPath;
   const results = [];
   
-  console.log(`\n🧪 Starting console checks on ${pagesToCheck.length} pages...\n`);
+  console.log(`\n🧪 Starting console & accessibility checks on ${pagesToCheck.length} pages...\n`);
   
   for (const pagePath of pagesToCheck) {
     const fullUrl = WEBSITE_URL + pagePath;
@@ -395,11 +713,11 @@ async function main() {
   
   // Exit with error code if issues found
   const totalIssues = results.reduce((sum, r) => 
-    sum + r.errors.length + r.warnings.length + r.networkFailures.length, 0
+    sum + r.errors.length + r.warnings.length + r.networkFailures.length + r.accessibilityIssues.length, 0
   );
   
   if (totalIssues > 0) {
-    console.log(`❌ Found ${totalIssues} issues`);
+    console.log(`❌ Found ${totalIssues} issues (including accessibility)`);
     process.exit(1);
   } else {
     console.log('✅ No issues found');
