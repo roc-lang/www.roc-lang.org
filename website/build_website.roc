@@ -1,4 +1,4 @@
-app [main!] { cli: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { cli: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import cli.Stdout
 import cli.Arg exposing [Arg]
@@ -29,18 +29,18 @@ main! = |_args|
     _ = Dir.delete_all!("examples-main")
     _ = Dir.delete_all!("roc")
 
-    run_cmd!("cp", ["-r", "public", "build"])?
+    Cmd.exec!("cp", ["-r", "public", "build"])?
 
     # Download latest examples
-    run_cmd!("curl", ["-fL", "-o", "examples-main.zip", "https://github.com/roc-lang/examples/archive/refs/heads/main.zip"])?
+    Cmd.exec!("curl", ["-fL", "-o", "examples-main.zip", "https://github.com/roc-lang/examples/archive/refs/heads/main.zip"])?
 
-    run_cmd!("unzip", ["-o", "-q", "examples-main.zip"])?
+    Cmd.exec!("unzip", ["-o", "-q", "examples-main.zip"])?
 
-    run_cmd!("cp", ["-R", "examples-main/examples/", "content/examples/"])?
+    Cmd.exec!("cp", ["-R", "examples-main/examples/", "content/examples/"])?
 
     # replace links in content/examples/index.md to work on the WIP site
     # TODO do this in Roc
-    run_cmd!("perl", ["-pi", "-e", "s|\\]\\(/|\\]\\(/examples/|g", "content/examples/index.md"])?
+    Cmd.exec!("perl", ["-pi", "-e", "s|\\]\\(/|\\]\\(/examples/|g", "content/examples/index.md"])?
 
     Dir.delete_all!("examples-main") ? |err| DeleteExamplesMainDirFailed(err)
     File.delete!("examples-main.zip") ? |err| DeleteExamplesMainZipFailed(err)
@@ -50,11 +50,11 @@ main! = |_args|
     design_assets_tarfile = "roc-lang-design-assets-4d94964.tar.gz"
     design_assets_dir = "roc-lang-design-assets-4d94964"
 
-    run_cmd!("curl", ["-fLJO", "https://github.com/roc-lang/design-assets/tarball/${design_assets_commit}"])?
+    Cmd.exec!("curl", ["-fLJO", "https://github.com/roc-lang/design-assets/tarball/${design_assets_commit}"])?
 
-    run_cmd!("tar", ["-xzf", design_assets_tarfile])?
+    Cmd.exec!("tar", ["-xzf", design_assets_tarfile])?
 
-    run_cmd!("mv", ["${design_assets_dir}/fonts", "build/fonts"])?
+    Cmd.exec!("mv", ["${design_assets_dir}/fonts", "build/fonts"])?
 
     # clean up
     Dir.delete_all!(design_assets_dir) ? |err| DeleteDesignAssetsDirFailed(err)
@@ -67,24 +67,50 @@ main! = |_args|
     _ = File.delete!(repl_tarfile)
 
     # Download the latest stable Web REPL as a zip file.
-    run_cmd!("curl", ["-fLJO", "https://github.com/roc-lang/roc/releases/download/${latest_stable_tag}/${repl_tarfile}"])?
+    Cmd.exec!("curl", ["-fLJO", "https://github.com/roc-lang/roc/releases/download/${latest_stable_tag}/${repl_tarfile}"])?
 
     Dir.create!("build/repl") ? |err| CreateReplDirFailed(err)
 
-    run_cmd!("tar", ["-xzf", repl_tarfile, "-C", "build/repl"])?
+    Cmd.exec!("tar", ["-xzf", repl_tarfile, "-C", "build/repl"])?
 
     File.delete!(repl_tarfile) ? |err| DeleteReplTarFailed(err)
 
-    # git clone latest_stable_tag
-    run_cmd!("git", ["clone", "--branch", latest_stable_tag, "--depth", "1", "https://github.com/roc-lang/roc.git"])?
+    # Download prebuilt docs from releases
+    alpha3_docs_tarfile = "alpha3-docs.tar.gz"
+    alpha4_docs_tarfile = "alpha4-docs.tar.gz"
 
-    # generate docs for builtins
-    run_cmd!("roc", ["docs", "roc/crates/compiler/builtins/roc/main.roc","--output", "build/builtins", "--root-dir", "builtins"])?
+    # Clean up old files
+    _ = File.delete!(alpha3_docs_tarfile)
+    _ = File.delete!(alpha4_docs_tarfile)
+
+    # Download alpha3 docs
+    Cmd.exec!("curl", ["-fL", "-o", alpha3_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha3-rolling/docs.tar.gz"])?
+    Dir.create!("build/builtins") ? |err| CreateBuiltinsDirFailed(err)
+    Dir.create!("build/builtins/alpha3") ? |err| CreateAlpha3DirFailed(err)
+    Cmd.exec!("tar", ["-xzf", alpha3_docs_tarfile, "-C", "build/builtins/alpha3", "--strip-components=1"])?
+    File.delete!(alpha3_docs_tarfile) ? |err| DeleteAlpha3DocsTarFailed(err)
+
+    # Download alpha4 docs
+    Cmd.exec!("curl", ["-fL", "-o", alpha4_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha4-rolling/docs.tar.gz"])?
+    Dir.create!("build/builtins/alpha4") ? |err| CreateAlpha4DirFailed(err)
+    Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/builtins/alpha4", "--strip-components=1"])?
+    File.delete!(alpha4_docs_tarfile) ? |err| DeleteAlpha4DocsTarFailed(err)
+
+    # git clone main branch for latest docs
+    Cmd.exec!("git", ["clone", "--branch", "main", "--depth", "1", "https://github.com/roc-lang/roc.git"])?
+
+    # generate docs for builtins (main branch)
+    Dir.create!("build/builtins/main") ? |err| CreateMainDirFailed(err)
+    Cmd.exec!("roc", ["docs", "roc/crates/compiler/builtins/roc/main.roc","--output", "build/builtins/main", "--root-dir", "builtins/main"])?
     Dir.delete_all!("roc") ? |err| DeleteRocRepoDirFailed(err)
 
-    find_index_stdout = run_cmd_w_output!("find", ["build/builtins", "-type", "f", "-name", "index.html"])?
+    find_index_output =
+        Cmd.new("find")
+        |> Cmd.args(["build/builtins", "-type", "f", "-name", "index.html"])
+        |> Cmd.exec_output!()?
+
     index_clean_paths =
-        Str.split_on(find_index_stdout, "\n")
+        Str.split_on(find_index_output.stdout_utf8, "\n")
         |> List.keep_if(|path| !Str.is_empty(path))
 
     assert(!List.is_empty(index_clean_paths), IndexCleanPathsWasEmpty)?
@@ -99,10 +125,27 @@ main! = |_args|
             ) 
     ) ? |err| BuiltinsDocsReplaceFailed(err)
 
+    # Create redirect index.html in builtins folder
+    redirect_version = latest_stable_tag |> Str.split_on("-") |> List.first()?
+    redirect_html_content =
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=${redirect_version}/index.html">
+            <title>Redirecting to Roc Builtins Documentation</title>
+        </head>
+        <body>
+            <p>Redirecting to <a href="${redirect_version}/index.html">Roc Builtins Documentation</a>...</p>
+        </body>
+        </html>
+        """
+    File.write_utf8!(redirect_html_content, "build/builtins/index.html") ? |err| CreateRedirectIndexFailed(err)
 
     # Generate site markdown content
-    run_cmd!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
-    run_cmd!("./static_site_gen", ["content", "build"])?
+    Cmd.exec!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
+    Cmd.exec!("./static_site_gen", ["content", "build"])?
 
 
     # Add github link to examples
@@ -116,10 +159,13 @@ main! = |_args|
         </svg>
         """
 
-    find_readme_html_output = run_cmd_w_output!("find", [examples_dir, "-type", "f", "-name", "README.html", "-exec", "realpath", "{}", ";"])?
+    find_readme_html =
+        Cmd.new("find")
+        |> Cmd.args([examples_dir, "-type", "f", "-name", "README.html", "-exec", "realpath", "{}", ";"])
+        |> Cmd.exec_output!()?
 
     clean_readme_paths =
-        Str.split_on(find_readme_html_output, "\n")
+        Str.split_on(find_readme_html.stdout_utf8, "\n")
         |> List.keep_if(|path| !Str.is_empty(path))
 
     assert(!List.is_empty(clean_readme_paths), CleanReadmePathsWasEmptyList)?
@@ -139,36 +185,6 @@ main! = |_args|
 
     Stdout.line!("Website built in dir 'website/build'.")
 
-run_cmd! : Str, List Str => Result {} [BadCmdOutput(Str)]_
-run_cmd! = |cmd_str, args|
-    Stdout.line!("Running command: ${cmd_str} ${Str.join_with(args, " ")}")?
-    _ = run_cmd_w_output!(cmd_str, args)?
-
-    Ok({})
-
-run_cmd_w_output! : Str, List Str => Result Str [BadCmdOutput(Str)]_
-run_cmd_w_output! = |cmd_str, args|
-    cmd_out =
-        Cmd.new(cmd_str)
-        |> Cmd.args(args)
-        |> Cmd.output!()
-
-    stdout_utf8 = Str.from_utf8_lossy(cmd_out.stdout)
-
-    when cmd_out.status is
-        Ok(0) ->
-            Ok(stdout_utf8)
-        _ ->
-            stderr_utf8 = Str.from_utf8_lossy(cmd_out.stderr)
-            err_data =
-                """
-                Cmd `${cmd_str} ${Str.join_with(args, " ")}` failed:
-                - status: ${Inspect.to_str(cmd_out.status)}
-                - stdout: ${stdout_utf8}
-                - stderr: ${stderr_utf8}
-                """
-
-            Err(BadCmdOutput(err_data))
 
 replace_in_file! = |file_path_str, search_str, replace_str|
     assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
