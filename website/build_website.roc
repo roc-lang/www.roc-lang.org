@@ -143,6 +143,14 @@ main! = |_args|
         """
     File.write_utf8!(redirect_html_content, "build/builtins/index.html") ? |err| CreateRedirectIndexFailed(err)
 
+    # Create Cloudflare _redirects file
+    redirects_content =
+        """
+        /builtins   /builtins/${redirect_version}/ 301
+        /builtins/  /builtins/${redirect_version}/ 301
+        """
+    File.write_utf8!(redirects_content, "build/_redirects") ? |err| CreateRedirectsFileFailed(err)
+
     # Generate site markdown content
     Cmd.exec!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
     Cmd.exec!("./static_site_gen", ["content", "build"])?
