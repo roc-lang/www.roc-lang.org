@@ -146,15 +146,8 @@ main! = |_args|
     # Create Cloudflare _redirects file
     redirects_content =
         """
-        # prevent loops if someone is already under /builtins/redirect_version/
-        /builtins/${redirect_version}/*   /builtins/${redirect_version}/:splat   200
-
-        # handle the bare paths
-        /builtins             /builtins/${redirect_version}/        301
-        /builtins/            /builtins/${redirect_version}/        301
-
-        # forward everything else
-        /builtins/*           /builtins/${redirect_version}/:splat  301
+        /builtins   /builtins/${redirect_version}/ 301
+        /builtins/  /builtins/${redirect_version}/ 301
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? |err| CreateRedirectsFileFailed(err)
 
