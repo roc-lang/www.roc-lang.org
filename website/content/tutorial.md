@@ -2370,4 +2370,4 @@ You've completed the tutorial, well done!
 If you are looking for more resources to learn Roc, check out [these links](/install#additional-learning-resources).
 
 </section>
-<script type="text/javascript" src="/builtins/search.js" defer></script>
+<script type="text/javascript" src="/builtins/main/search.js" defer></script>
