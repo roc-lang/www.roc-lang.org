@@ -148,6 +148,9 @@ main! = |_args|
         """
         /builtins   /builtins/${redirect_version}/ 301
         /builtins/  /builtins/${redirect_version}/ 301
+        /builtins/stable   /builtins/${redirect_version}/ 301
+        /builtins/stable/  /builtins/${redirect_version}/ 301
+        /builtins/stable/* /builtins/${redirect_version}/:splat 301
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? |err| CreateRedirectsFileFailed(err)
 
