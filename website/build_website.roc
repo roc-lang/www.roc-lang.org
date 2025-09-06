@@ -146,11 +146,48 @@ main! = |_args|
     # Create Cloudflare _redirects file
     redirects_content =
         """
-        /builtins   /builtins/${redirect_version}/ 301
-        /builtins/  /builtins/${redirect_version}/ 301
-        /builtins/stable   /builtins/${redirect_version}/ 301
-        /builtins/stable/  /builtins/${redirect_version}/ 301
-        /builtins/stable/* /builtins/${redirect_version}/:splat 301
+        /builtins           /builtins/${redirect_version}/ 301
+        /builtins/          /builtins/${redirect_version}/ 301
+        /builtins/stable    /builtins/${redirect_version}/ 301
+        /builtins/stable/   /builtins/${redirect_version}/ 301
+        /builtins/stable/*  /builtins/${redirect_version}/:splat 301
+        /builtins/llms.txt  /builtins/${redirect_version}/llms.txt 301
+        /buitlins/Str       /builtins/${redirect_version}/Str 301
+        /builtins/Str/      /builtins/${redirect_version}/Str/ 301
+        /builtins/Str/*     /builtins/${redirect_version}/Str/:splat 301
+        /builtins/Bool      /builtins/${redirect_version}/Bool 301
+        /builtins/Bool/     /builtins/${redirect_version}/Bool/ 301
+        /builtins/Bool/*    /builtins/${redirect_version}/Bool/:splat 301
+        /builtins/List      /builtins/${redirect_version}/List 301
+        /builtins/List/     /builtins/${redirect_version}/List/ 301
+        /builtins/List/*    /builtins/${redirect_version}/List/:splat
+        /builtins/Result    /builtins/${redirect_version}/Result 301
+        /builtins/Result/   /builtins/${redirect_version}/Result/ 301
+        /builtins/Result/*  /builtins/${redirect_version}/Result/:splat
+        /builtins/Num       /builtins/${redirect_version}/Num 301
+        /builtins/Num/      /builtins/${redirect_version}/Num/ 301
+        /builtins/Num/*     /builtins/${redirect_version}/Num/:splat 301
+        /builtins/Dict      /builtins/${redirect_version}/Dict 301
+        /builtins/Dict/     /builtins/${redirect_version}/Dict/ 301
+        /builtins/Dict/*    /builtins/${redirect_version}/Dict/:splat 301
+        /builtins/Set       /builtins/${redirect_version}/Set 301
+        /builtins/Set/      /builtins/${redirect_version}/Set/ 301
+        /builtins/Set/*     /builtins/${redirect_version}/Set/:splat
+        /builtins/Decode    /builtins/${redirect_version}/Decode 301
+        /builtins/Decode/   /builtins/${redirect_version}/Decode/ 301
+        /builtins/Decode/*  /builtins/${redirect_version}/Decode/:splat
+        /builtins/Encode    /builtins/${redirect_version}/Encode 301
+        /builtins/Encode/   /builtins/${redirect_version}/Encode/ 301
+        /builtins/Encode/*  /builtins/${redirect_version}/Encode/:splat
+        /builtins/Hash      /builtins/${redirect_version}/Hash 301
+        /builtins/Hash/     /builtins/${redirect_version}/Hash/ 301
+        /builtins/Hash/*    /builtins/${redirect_version}/Hash/:splat
+        /builtins/Box       /build/builtins/${redirect_version}/Box 301
+        /builtins/Box/      /build/builtins/${redirect_version}/Box/ 301
+        /builtins/Box/*     /build/builtins/${redirect_version}/
+        /builtins/Inspect   /builtins/${redirect_version}/Inspect 301
+        /builtins/Inspect/  /builtins/${redirect_version}/Inspect/ 301
+        /builtins/Inspect/* /builtins/${redirect_version}/Inspect/:splat
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? |err| CreateRedirectsFileFailed(err)
 
