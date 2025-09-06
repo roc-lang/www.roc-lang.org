@@ -152,7 +152,7 @@ main! = |_args|
         /builtins/stable/   /builtins/${redirect_version}/ 301
         /builtins/stable/*  /builtins/${redirect_version}/:splat 301
         /builtins/llms.txt  /builtins/${redirect_version}/llms.txt 301
-        /builins/Str        /builtins/${redirect_version}/Str 301
+        /builtins/Str       /builtins/${redirect_version}/Str 301
         /builtins/Str/      /builtins/${redirect_version}/Str/ 301
         /builtins/Str/*     /builtins/${redirect_version}/Str/:splat 301
         /builtins/Bool      /builtins/${redirect_version}/Bool 301
