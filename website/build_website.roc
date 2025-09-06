@@ -152,7 +152,7 @@ main! = |_args|
         /builtins/stable/   /builtins/${redirect_version}/ 301
         /builtins/stable/*  /builtins/${redirect_version}/:splat 301
         /builtins/llms.txt  /builtins/${redirect_version}/llms.txt 301
-        /buitlins/Str       /builtins/${redirect_version}/Str 301
+        /builins/Str        /builtins/${redirect_version}/Str 301
         /builtins/Str/      /builtins/${redirect_version}/Str/ 301
         /builtins/Str/*     /builtins/${redirect_version}/Str/:splat 301
         /builtins/Bool      /builtins/${redirect_version}/Bool 301
@@ -182,9 +182,9 @@ main! = |_args|
         /builtins/Hash      /builtins/${redirect_version}/Hash 301
         /builtins/Hash/     /builtins/${redirect_version}/Hash/ 301
         /builtins/Hash/*    /builtins/${redirect_version}/Hash/:splat
-        /builtins/Box       /build/builtins/${redirect_version}/Box 301
-        /builtins/Box/      /build/builtins/${redirect_version}/Box/ 301
-        /builtins/Box/*     /build/builtins/${redirect_version}/
+        /builtins/Box       /builtins/${redirect_version}/Box 301
+        /builtins/Box/      /builtins/${redirect_version}/Box/ 301
+        /builtins/Box/*     /builtins/${redirect_version}/
         /builtins/Inspect   /builtins/${redirect_version}/Inspect 301
         /builtins/Inspect/  /builtins/${redirect_version}/Inspect/ 301
         /builtins/Inspect/* /builtins/${redirect_version}/Inspect/:splat
