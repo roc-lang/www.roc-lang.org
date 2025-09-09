@@ -841,7 +841,7 @@ Here's what this does:
   - If the `Str.to_u64` function returns an `Err` value, then the `?` operator immediately interrupts the `get_letter` function and makes it return this error.
   - For example, if we call `get_letter("abc")`, then the call to `Str.to_u64` returns `Err(InvalidNumStr)`, and the `?` keyword ensures that the `get_letter` function returns this error immediately, without executing the rest of the function.
 
-Thanks to the `?` postfix operator, your code can focus on the "happy path" (where nothing fails) and simply bubble up to the caller any error that might occur. Your error handling code can be neatly separated, and you can rest assured that you won't forget to handle any errors, since the compiler will let you know. See this [code example](https://www.roc-lang.org/examples/Results/README.html) for more details on error handling.
+Thanks to the `?` postfix operator, your code can focus on the "happy path" (where nothing fails) and simply bubble up to the caller any error that might occur. Your error handling code can be neatly separated, and you can rest assured that you won't forget to handle any errors, since the compiler will let you know. See this [code example](https://www.roc-lang.org/examples/ErrorHandlingBasic/README) for more details on error handling.
 
 ### [Recovering from errors with the `??` infix operator](#recovering-from-errors) {#recovering-from-errors}
 
@@ -1924,7 +1924,7 @@ Here the `?` is just syntax sugar that does the same thing as the `?` postfix
 operator, put passes any error that would be returned to the function (or in
 this case tag) before it is returned.
 
-See the [Error Handling example](https://www.roc-lang.org/examples/ErrorHandling/README.html) for a more detailed explanation of error handling in a larger program.
+See the [Error Handling example](https://www.roc-lang.org/examples/ErrorHandlingRealWorld/README) for a more detailed explanation of error handling in a larger program.
 
 ### [Displaying Roc values with `Inspect.to_str`](#inspect) {#inspect}
 
@@ -2361,7 +2361,7 @@ Here are various Roc expressions involving operators, and what they desugar to.
 | `!a`                         | `Bool.not(a)`                                                                 |
 | <code>a \|> f</code>         | `f(a)`                                                                        |
 | <code>f a b \|> g x y</code> | `g(f(a, b), x y)`                                                              |
-| `f?`                         | [see example](https://www.roc-lang.org/examples/DesugaringTry/README.html)   |
+| `f?`                         | [see example](https://www.roc-lang.org/examples/TryOperatorDesugaring/README)   |
 
 ### [Additional Resources](#additional-resources) {#additional-resources}
 
