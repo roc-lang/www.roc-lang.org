@@ -8,13 +8,13 @@ which includes the Roc compiler and some helpful utilities.
 1. Download the latest roc alpha release using the terminal:
 
     ```sh
-    curl -OL https://github.com/roc-lang/roc/releases/download/alpha3-rolling/roc-linux_arm64-alpha3-rolling.tar.gz
+    curl -OL https://github.com/roc-lang/roc/releases/download/alpha4-rolling/roc-linux_arm64-alpha4-rolling.tar.gz
     ```
 
 1. Untar the archive:
 
     ```sh
-    tar -xf roc-linux_arm64-alpha3-rolling.tar.gz
+    tar -xf roc-linux_arm64-alpha4-rolling.tar.gz
     cd roc_night<TAB TO AUTOCOMPLETE>
     ```
 

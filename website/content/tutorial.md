@@ -131,7 +131,7 @@ Let's move out of the REPL and create our first Roc application!
 Make a file named `main.roc` and put this in it:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 
@@ -1513,7 +1513,7 @@ Besides being built into the compiler, the builtin modules are different from ot
 Let's take a closer look at the part of `main.roc` above the `main` def:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 ```
@@ -1647,7 +1647,7 @@ We'll use these four operations to learn about effects.
 Let's revisit that first application.
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 
@@ -1676,7 +1676,7 @@ Note that to call this `Stdin.line!`, you need to provide the unit value `{}` as
 Let's change `main!` to read a line from `stdin`, and then print what we got:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 import pf.Stdin
@@ -1770,7 +1770,7 @@ In other words, adding this annotation effectively opted us out of `basic-cli`'s
 Here's one way we can handle those errors:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 import pf.Stdin
@@ -1822,7 +1822,7 @@ Furthermore, if a variable can't possibly contain any useful information, then w
 Let's revisit an earlier example:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 import pf.Stdin
@@ -1868,7 +1868,7 @@ If an error happened here, we wouldn't know which effectful function was the cau
 One option is to "tag the error" using `Result.map_err` to wrap the error in a [tag](#tags) like so:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 import pf.Stdin
@@ -1908,7 +1908,7 @@ The above example could be rewritten to the following with no change to how it
 would behave:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/Hj-J_zxz7V9YurCSTFcFdu6cQJie4guzsPMUi5kBYUk.tar.br" }
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
 import pf.Stdin

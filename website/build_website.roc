@@ -10,7 +10,7 @@ import cli.Path
 
 # run with: `cd website && roc ./build_website.roc`
 
-latest_stable_tag = "alpha3-rolling"
+latest_stable_tag = "alpha4-rolling"
 
 main! : List Arg => Result {} _
 main! = |_args|
