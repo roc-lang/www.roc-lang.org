@@ -4,17 +4,17 @@ An Ability defines a set of functions that can be implemented by different types
 
 Abilities are used to constrain the types of function arguments to only those which implement the required functions.
 
-The function `toJson` below is an example which uses the `Encoding` Ability.
+The function `to_json` below is an example which uses the `Encoding` Ability.
 
 ```roc
-toJson : a -> List U8 where a implements Encoding
-toJson = \val ->
-    val |> Encode.toBytes JSON.encoder
+to_json : a -> List U8 where a implements Encoding
+to_json = |val|
+    Encode.to_bytes(val, Json.utf8)
 ```
 
-By specifying the type variable `a` implements the `Encoding` Ability, this function can make use of `Encode.toBytes` and `JSON.encoder` to serialise `val`, without knowing its specific type.
+By specifying the type variable `a` implements the `Encoding` Ability, this function can make use of `Encode.to_bytes` and `Json.utf8` to serialise `val`, without knowing its specific type.
 
-All types which implement the `Encoding` Ability can therefore use the `Encode.toBytes` (and also `Encode.append`) functions to conveniently serialise values to bytes.
+All types which implement the `Encoding` Ability can therefore use the `Encode.to_bytes` (and also `Encode.append`) functions to conveniently serialise values to bytes.
 
 - [Builtins](#builtins)
   - [`Eq` Ability](#eq-ability)
@@ -34,11 +34,11 @@ Roc's Builtin types such as numbers, records, and tags, are automatically derive
 
 ### [`Eq` Ability](#eq-ability) {#eq-ability}
 
-The `Eq` Ability defines the `isEq` function, which can be used to compare two values for structural equality. The infix operator `==` can be used as shorthand for `isEq`.
+The `Eq` Ability defines the `is_eq` function, which can be used to compare two values for structural equality. The infix operator `==` can be used as shorthand for `is_eq`.
 
 `Eq` is not derived for `F32` or `F64` as these types do not support structural equality. If you need to compare floating point numbers, you must provide your own function for comparison.
 
-**Example** showing the use of `isEq` and `==` to compare two values.
+**Example** showing the use of `is_eq` and `==` to compare two values.
 
 ```roc
 Colors : [Red, Green, Blue]
@@ -46,7 +46,7 @@ Colors : [Red, Green, Blue]
 red = Red
 blue = Blue
 
-expect isEq red Red # true
+expect is_eq red Red # true
 expect red == blue # false
 ```
 
@@ -55,7 +55,7 @@ expect red == blue # false
 ```roc
 # Bool.roc
 Eq implements
-    isEq : a, a -> Bool where a implements Eq
+    is_eq : a, a -> Bool where a implements Eq
 ```
 
 **Structural equality** is defined as follows:
@@ -63,8 +63,8 @@ Eq implements
 1. Tags are equal if their name and also contents are equal.
 2. Records are equal if their fields are equal.
 3. The collections `Str`, `List`, `Dict`, and `Set` are equal iff they are the same length and their elements are equal.
-4. `Num` values are equal if their numbers are equal. However, if both inputs are _NaN_ then `isEq` returns `Bool.false`. Refer to `Num.isNaN` for more detail.
-5. Functions cannot be compared for structural equality, therefore Roc cannot derive `isEq` for types that contain functions.
+4. `Num` values are equal if their numbers are equal. However, if both inputs are _NaN_ then `is_eq` returns `Bool.false`. Refer to `Num.isNaN` for more detail.
+5. Functions cannot be compared for structural equality, therefore Roc cannot derive `is_eq` for types that contain functions.
 
 ### [`Hash` Ability](#hash-ability) {#hash-ability}
 
@@ -94,26 +94,26 @@ Sort implements
 
 ### [`Encoding` Ability](#encoding-ability) {#encoding-ability}
 
-The `Encoding` Ability defines `toEncoder` which can be used with an Encoder to serialise value from Roc to bytes using the `Encoding.toBytes` and `Encoding.append` functions.
+The `Encoding` Ability defines `to_encoder` which can be used with an Encoder to serialise value from Roc to bytes using the `Encoding.to_bytes` and `Encoding.append` functions.
 
 Functions are not serialisable, therefore Roc does not derive `Encoding` for types that contain functions.
 
 Encoding for `Dict` values **has not been implemented**, see [#5294](https://github.com/roc-lang/roc/issues/5294) for more details. If you would like to help implement this, please let us know.
 
-**Example** showing the use of `Encoding.toBytes` to serialise a Roc `List (Str, U32)` to a [JSON](https://www.json.org/json-en.html) encoded string.
+**Example** showing the use of `Encoding.to_bytes` to serialise a Roc `List (Str, U32)` to a [JSON](https://www.json.org/json-en.html) encoded string.
 
 ```roc
 bytes : List U8
-bytes = "[[\"Apples\",10],[\"Bananas\",12],[\"Oranges\",5]]" |> Str.toUtf8
+bytes = "[[\"Apples\",10],[\"Bananas\",12],[\"Oranges\",5]]" |> Str.to_utf8
 
-fruitBasket : List (Str, U32)
-fruitBasket = [
+fruit_basket : List (Str, U32)
+fruit_basket = [
     ("Apples", 10),
     ("Bananas", 12),
     ("Oranges", 5)
 ]
 
-expect Encode.toBytes fruitBasket json == bytes # true
+expect Encode.to_bytes(fruit_basket, Json.utf8) == bytes # true
 ```
 
 **Definition** of the `Encoding` Ability.
@@ -121,16 +121,16 @@ expect Encode.toBytes fruitBasket json == bytes # true
 ```roc
 # Encode.roc
 Encoding implements
-    toEncoder : val -> Encoder fmt where val implements Encoding, fmt implements EncoderFormatting
+    to_encoder : val -> Encoder fmt where val implements Encoding, fmt implements EncoderFormatting
 ```
 
 ### [`Decoding` Ability](#decoding-ability) {#decoding-ability}
 
-The `Decoding` Ability defines `decoder` which can be used with a Decoder to de-serialise from bytes to Roc values using the `Decoding.fromBytesPartial` and `Decoding.fromBytes` functions.
+The `Decoding` Ability defines `decoder` which can be used with a Decoder to de-serialise from bytes to Roc values using the `Decoding.from_bytes_partial` and `Decoding.from_bytes` functions.
 
 Decoding for `Dict` values **has not been implemented**, see [#5294](https://github.com/roc-lang/roc/issues/5294) for more details. If you would like to help implement this, please let us know.
 
-**Example** showing the use of `Decoding.fromBytes` to decode a Roc `List (U32, Str)` from a [JSON](https://www.json.org/json-en.html) encoded string.
+**Example** showing the use of `Decoding.from_bytes` to decode a Roc `List (U32, Str)` from a [JSON](https://www.json.org/json-en.html) encoded string.
 
 ```roc
 bytes : List U8
@@ -142,10 +142,10 @@ bytes =
         [ 5, \"Little Ducks\" ]
     ]
     """
-    |> Str.toUtf8
+    |> Str.to_utf8
 
 result : Result (List (U32, Str)) _
-result = Decode.fromBytes bytes json
+result = Decode.from_bytes(bytes, Json.utf8)
 
 expect result == Ok [(10, "Green Bottles"), (12, "Buckle My Shoe"), (5, "Little Ducks")] # true
 ```
@@ -168,13 +168,13 @@ Every Roc value has the `Inspect` ability automatically, although some of them (
 
 ```roc
 Inspect implements
-    toInspector : val -> Inspector f
+    to_inspector : val -> Inspector f
         where
             val implements Inspect,
             f implements InspectFormatter
 ```
 
-The `toInspector` function takes a value and returns an `Inspector` which describes how to abstractly represent that value's contents in a way that doesn't tie it to a particular representation (such as a string). Then a separate "formatter" can translate a given `Inspector` to a specific format (such as a string in the case of [`Inspect.toStr`](https://www.roc-lang.org/builtins/Inspect#toStr), but also possibly a structured log format, or an interactive GUI element).
+The `to_inspector` function takes a value and returns an `Inspector` which describes how to abstractly represent that value's contents in a way that doesn't tie it to a particular representation (such as a string). Then a separate "formatter" can translate a given `Inspector` to a specific format (such as a string in the case of [`Inspect.to_str`](https://www.roc-lang.org/builtins/Inspect#to_str), but also possibly a structured log format, or an interactive GUI element).
 
 Example formatter:
 
@@ -198,7 +198,8 @@ For example you can automatically derive the `Eq` and `Hash` abilities using `im
 StatsDB := Dict Str { score : Dec, average : Dec } implements [ Eq, Hash ]
 
 add : StatsDB, Str, { score : Dec, average : Dec } -> StatsDB
-add = \@StatsDB db, name, stats -> db |> Dict.insert name stats |> @StatsDB
+add = |@StatsDB db, name, stats|
+    db |> Dict.insert name stats |> @StatsDB
 
 expect
     db1 = Dict.empty {} |> @StatsDB |> add "John" { score: 10, average: 10 }
@@ -219,39 +220,39 @@ Color := [
         RgbaF32 F32 F32 F32 F32,
     ]
     implements [
-        Eq { isEq: colorEquality },
+        Eq { is_eq: color_equality },
     ]
 
 # Note that Eq is not available for an F32, hence we provide a custom implementation here.
-colorEquality : Color, Color -> Bool
-colorEquality = \a, b -> colorToU8 a == colorToU8 b
+color_equality : Color, Color -> Bool
+color_equality = |a, b| color_to_u8(a) == color_to_u8(b)
 
-colorToU8 : Color -> (U8, U8, U8, U8)
-colorToU8 = \@Color c->
+color_to_u8 : Color -> (U8, U8, U8, U8)
+color_to_u8 = |@Color c|
     when c is
-        RgbaU8 r g b a -> (r, g, b, a)
-        RgbaF32 r g b a -> (f32toU8 r, f32toU8 g, f32toU8 b, f32toU8 a)
+        RgbaU8(r, g, b, a) -> (r, g, b, a)
+        RgbaF32(r, g, b, a) -> (f32_to_u8(r), f32_to_u8(g), f32_to_u8(b), f32_to_u8(a))
 
-f32toU8 : F32 -> U8
-f32toU8 = \f ->
+f32_to_u8 : F32 -> U8
+f32_to_u8 = |f|
     Num.floor (f * 255.0)
 
-fromU8 : U8, U8, U8, U8 -> Color
-fromU8 = \r, g, b, a -> @Color (RgbaU8 r g b a)
+from_u8 : U8, U8, U8, U8 -> Color
+from_u8 = |r, g, b, a| @Color (RgbaU8(r, g, b, a))
 
-fromI16 : I16, I16, I16, I16 -> Result Color [OutOfRange]
-fromI16 = \r, g, b, a ->
+from_i16 : I16, I16, I16, I16 -> Result Color [OutOfRange]
+from_i16 = |r, g, b, a|
     if r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 255 then
-        Err OutOfRange
+        Err(OutOfRange)
     else
-        Ok (@Color (RgbaU8 (Num.toU8 r) (Num.toU8 g) (Num.toU8 b) (Num.toU8 a)))
+        Ok(@Color(RgbaU8(Num.to_u8(r), Num.to_u8(g), Num.to_u8(b), Num.to_u8(a))))
 
-fromF32 : F32, F32, F32, F32 -> Result Color [OutOfRange]
-fromF32 = \r, g, b, a ->
+from_f32 : F32, F32, F32, F32 -> Result Color [OutOfRange]
+from_f32 = |r, g, b, a|
     if r < 0.0 || r > 1.0 || g < 0.0 || g > 1.0 || b < 0.0 || b > 1.0 || a < 0.0 || a > 1.0 then
-        Err OutOfRange
+        Err(OutOfRange)
     else
-        Ok (@Color (RgbaF32 r g b a))
+        Ok(@Color(RgbaF32(r, g, b, a)))
 ```
 
 ## [Advanced Topic: Defining a new Ability](#defining-a-new-ability) {#defining-a-new-ability}
@@ -262,21 +263,21 @@ It is possible to define a new Ability in addition to those provided in builtins
 
 ```roc
 CustomInspect implements
-    inspectMe : val -> Str where val implements CustomInspect
+    inspect_me : val -> Str where val implements CustomInspect
 
 inspect : val -> Str where val implements CustomInspect
-inspect = \val -> inspectMe val
+inspect = |val| inspect_me val
 
 Color := [Red, Green, Blue]
     implements [
         Eq,
         CustomInspect {
-            inspectMe: inspectColor,
+            inspect_me: inspect_color,
         },
     ]
 
-inspectColor : Color -> Str
-inspectColor = \@Color color ->
+inspect_color : Color -> Str
+inspect_color = |@Color color|
     when color is
         Red -> "Red"
         Green -> "Green"
@@ -284,7 +285,7 @@ inspectColor = \@Color color ->
 
 expect
     [@Color Red, @Color Green, @Color Blue]
-    |> List.map inspect
-    |> Str.joinWith ","
-    |> Bool.isEq "Red,Green,Blue"
+    |> List.map(inspect)
+    |> Str.join_with(",")
+    |> Bool.is_eq("Red,Green,Blue")
 ```
