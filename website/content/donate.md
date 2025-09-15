@@ -7,7 +7,7 @@ You can donate to Roc's development using:
 - [Liberapay](https://liberapay.com/roc_lang)
 - [GitHub Sponsors](https://github.com/sponsors/roc-lang)
 
-All donations go through the [Roc Programming Language Foundation](https://foundation.roc-lang.org/), a registered <a href="https://en.wikipedia.org/wiki/501(c)(3)_organization">US <span class="nowrap">501(c)(3)</span> nonprofit organization</a>, which means these donations are tax-exempt in the US.
+All donations go through the [Roc Programming Language Foundation](/foundation), a registered <a href="https://en.wikipedia.org/wiki/501(c)(3)_organization">US <span class="nowrap">501(c)(3)</span> nonprofit organization</a>, which means these donations are tax-exempt in the US.
 
 It also means that the foundation's tax filings are a [matter of public record](https://en.wikipedia.org/wiki/501(c)(3)_organization#Transparency), so you have real transparency into how your donations are advancing Roc!
 

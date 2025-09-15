@@ -175,7 +175,7 @@ view =
             p(
                 [id("final-tutorial-link")],
                 [
-                    a([class("btn-small"), href("/tutorial")], [text("Start Tutorial")]),
+                    a([class("btn-small"), href("/tutorial")], [text("Tutorial")]),
                 ],
             ),
         ],
