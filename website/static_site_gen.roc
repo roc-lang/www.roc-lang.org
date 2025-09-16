@@ -40,6 +40,7 @@ page_data =
     |> Dict.insert("/friendly.html", { title: "Friendly | Roc", description: "What does it mean that the Roc programming language is friendly?" })
     |> Dict.insert("/functional.html", { title: "Functional | Roc", description: "What does it mean that the Roc programming language is functional?" })
     |> Dict.insert("/index.html", { title: "The Roc Programming Language", description: "A fast, friendly, functional language." })
+    |> Dict.insert("/foundation.html", { title: "Foundation | Roc", description: "Learn about the Roc Programming Language Foundation." })
     |> Dict.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
     |> Dict.insert("/plans.html", { title: "Planned Changes | Roc", description: "Planned changes to the Roc programming language." })
     |> Dict.insert("/platforms.html", { title: "Platforms and Apps | Roc", description: "Learn about the platforms and applications architecture in the Roc programming language." })

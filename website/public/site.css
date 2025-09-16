@@ -1607,3 +1607,7 @@ code .dim {
     text-decoration: underline;
     font-weight: bold;
 }
+
+#rplf-h1 {
+    color: var(--heading-color);
+}
