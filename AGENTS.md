@@ -557,7 +557,7 @@ if_demo = |num|
 
 tuple_demo : {} -> (Str, U32)
 tuple_demo = |{}|
-    # tuples can contain mutltiple types
+    # tuples can contain multiple types
     # they are allocated on the stack
     ("Roc", 1)
 
