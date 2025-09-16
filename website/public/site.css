@@ -35,8 +35,6 @@
     --body-max-width: 1024px;
     --dark-code-bg: #202746;
 
-    --home-goals-first-letter: var(--primary-2);
-
     /* Tutorial */
     --header-link-color: #1bbcb3;
     --header-link-hover: #222;
@@ -114,8 +112,9 @@ hr {
 
 .btn-small {
     white-space: nowrap;
-    border: 4px solid var(--violet);
-    color: var(--text-color) !important;
+    background: #7c38f5;
+    border: 4px solid #9b6bf2;
+    color: #fff !important;
     cursor: pointer;
     text-decoration: none !important;
     padding: 12px;
@@ -233,8 +232,8 @@ h1 {
 h2 {
     display: inline-block;
     font-size: 2.5rem;
-    line-height: 3.5rem;
-    border-bottom: 4px solid var(--violet);
+    line-height: 5rem;
+    border-bottom: 4px solid var(--dark-cyan);
     padding: 0;
     margin: 0;
     margin-bottom: 2rem;
@@ -275,10 +274,14 @@ h3 {
     font-size: 1.5rem;
 }
 
+#top-bar,
+#top-bar nav {
+    background-color: var(--gray-bg);
+}
+
 #top-bar {
     box-sizing: border-box;
     width: 100%;
-    font-size: var(--font-size-normal);
 }
 
 #top-bar nav {
@@ -412,6 +415,7 @@ pre > code {
 
 #homepage-repl-container #repl {
     flex: 1;
+    border: 2px solid #444;
     font-size: var(--font-size-normal);
     min-height: 0; /* On /repl on mobile, this expands to fill the screen, which we don't want */
     margin-right: 6px;
@@ -543,6 +547,10 @@ details {
     background-color: var(--dark-code-bg);
 }
 
+#homepage-tagline {
+    font-size: 20px;
+}
+
 .nowrap {
     white-space: nowrap;
 }
@@ -631,6 +639,10 @@ details {
         margin: 30px auto;
     }
 
+    #homepage-tagline {
+        margin-top: 0;
+    }
+
     #homepage-h1 {
         /* TODO remove !important from repl.css (increasing specificity instead), and then this one too. */
         font-size: 48px !important;
@@ -642,6 +654,10 @@ details {
     #first-code-sample {
         margin: 64px auto;
         margin-bottom: 0;
+    }
+
+    #homepage-tagline {
+        font-size: 16px;
     }
 
     .home-goals-container,
@@ -820,8 +836,6 @@ details {
         --gray: #6e6e6e;
         --heading-color: #eee;
 
-        --home-goals-first-letter: var(--primary-1);
-
         /* Tutorial */
         --header-link-color: #9c7cea;
         --header-link-hover: #ddd;
@@ -866,6 +880,11 @@ details {
     th,
     td {
         border-color: var(--gray);
+    }
+
+    #first-code-sample,
+    #homepage-repl-container #repl {
+        border: 1px solid #ddd;
     }
 
     .home-goals-content:hover {
@@ -1016,7 +1035,8 @@ code .dim {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 20px;
+    border: 4px solid var(--light-cyan);
     color: inherit;
     cursor: pointer;
 }
@@ -1029,7 +1049,6 @@ code .dim {
 
 .home-goals-learn-more {
     text-decoration: underline;
-    color: var(--heading-color)
 }
 
 .home-examples-container {
@@ -1049,7 +1068,7 @@ code .dim {
 
 .home-examples-column:not(:last-of-type) {
     padding-right: 24px;
-    border-right: 3px solid var(--primary-1);
+    border-right: 2px solid var(--primary-1);
 }
 
 /* Wider screens */
@@ -1073,17 +1092,16 @@ code .dim {
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 32px;
+    border-bottom: none;
     font-family: inherit;
+    text-transform: lowercase;
     padding-bottom: 42px;
     padding-top: 2px;
+    font-style: italic;
     letter-spacing: 1px;
     word-spacing: 3px;
     margin: 0;
-    color: var(--heading-color); 
-}
-
-.home-goals-content h3::first-letter {
-  color: var(--home-goals-first-letter);
+    color: var(--text-color);
 }
 
 .home-goals-description {
@@ -1588,4 +1606,8 @@ code .dim {
     color: var(--link-color);
     text-decoration: underline;
     font-weight: bold;
+}
+
+#rplf-h1 {
+    color: var(--heading-color);
 }
