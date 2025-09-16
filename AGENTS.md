@@ -4,6 +4,10 @@ See README.md for build instructions.
 
 ## general roc instructions
 
+After you've made changes use `roc check edited_file.roc` to confirm it is free of errors.
+Once `roc check` succeeds, you can run code with `roc file.roc`.
+To run all top level expects, use `roc test file.roc`.
+
 The Roc stdlib supports these functions (require no import):
 ```
 Str.Utf8Problem : [ InvalidStartByte, UnexpectedEndOfSequence, ExpectedContinuation, OverlongEncoding, CodepointTooLarge, EncodesSurrogateHalf ]

@@ -133,20 +133,30 @@ build_with_cache! = |{}|
 
     # 3) Only rebuild site output if content/public changed since last time
     last_build_millis = read_cache_millis!(cache_marker_path) |> Result.with_default(0i128)
-    latest_watch_millis = max_mtime_in_dirs_millis!(["content", "public"]) |> Result.with_default(0i128)
+    latest_content_millis = max_mtime_in_dirs_millis!(["content"]) |> Result.with_default(0i128)
+    latest_public_millis = max_mtime_in_dirs_millis!(["public"]) |> Result.with_default(0i128)
 
-    if latest_watch_millis > last_build_millis then
-        # We need to update build/ output
-        # Copy public → build, then run generator
-        Cmd.exec!("cp", ["-r", "public", "build"])?
+    content_changed = latest_content_millis > last_build_millis
+    public_changed = latest_public_millis > last_build_millis
 
-        Cmd.exec!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
-        Cmd.exec!("./static_site_gen", ["content", "build"])?
+    if content_changed || public_changed then
+        # Copy public → build if public changed
+        if public_changed then
+            Cmd.exec!("cp", ["-r", "public/.", "build/"])?
+        else
+            {}
 
-        # Patching steps that affect builtins and examples HTML (idempotent)
-        patch_builtins_html!({})?
-        write_builtins_redirects!({})?
-        add_github_links_to_examples!({})?
+        # Only run static site generation if content changed
+        if content_changed then
+            Cmd.exec!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
+            Cmd.exec!("./static_site_gen", ["content", "build"])?
+
+            # Patching steps that affect builtins and examples HTML (idempotent)
+            patch_builtins_html!({})?
+            write_builtins_redirects!({})?
+            add_github_links_to_examples!({})?
+        else
+            Stdout.line!("Content unchanged; skipping static site generation.")?
 
         write_cache_millis!(cache_marker_path)?
     else
