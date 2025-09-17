@@ -62,7 +62,7 @@
 
 ## [Examples](#examples) {#examples}
 
-Roc is a young language. It doesn't even have a numbered release yet, just nightly builds!
+Roc is a young language. It doesn't even have a numbered release yet, just alpha builds!
 
 However, it can already be used for several things if you're up for being an early adopter—<br>
 with all the bugs and missing features which come with that territory.

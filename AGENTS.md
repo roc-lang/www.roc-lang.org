@@ -4,6 +4,10 @@ See README.md for build instructions.
 
 ## general roc instructions
 
+After you've made changes use `roc check edited_file.roc` to confirm it is free of errors.
+Once `roc check` succeeds, you can run code with `roc file.roc`.
+To run all top level expects, use `roc test file.roc`.
+
 The Roc stdlib supports these functions (require no import):
 ```
 Str.Utf8Problem : [ InvalidStartByte, UnexpectedEndOfSequence, ExpectedContinuation, OverlongEncoding, CodepointTooLarge, EncodesSurrogateHalf ]
@@ -393,6 +397,9 @@ Inspect.to_str : val -> Str where val implements Inspect
 
 The Docs website is: https://www.roc-lang.org/builtins/alpha4/
 Examples are at: https://github.com/roc-lang/examples/tree/main/examples
+
+- Do not "hide failures" with `Result.with_default`, prefer `?` for error handling.
+- You do not need to explicitly add |err| if it is the only argument, so do `File.delete!(my_file) ? DeleteMyFileFailed` instead of `File.delete!(my_file) ? |err|DeleteMyFileFailed(err)`.
 
 ### Roc Syntax Overview Demo
 
