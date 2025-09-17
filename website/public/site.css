@@ -415,7 +415,6 @@ pre > code {
 
 #homepage-repl-container #repl {
     flex: 1;
-    border: 2px solid #444;
     font-size: var(--font-size-normal);
     min-height: 0; /* On /repl on mobile, this expands to fill the screen, which we don't want */
     margin-right: 6px;
@@ -880,11 +879,6 @@ details {
     th,
     td {
         border-color: var(--gray);
-    }
-
-    #first-code-sample,
-    #homepage-repl-container #repl {
-        border: 1px solid #ddd;
     }
 
     .home-goals-content:hover {
