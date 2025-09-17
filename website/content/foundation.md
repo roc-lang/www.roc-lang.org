@@ -25,7 +25,7 @@ USA
 
 ## Public Documents
 
-- [990N](/foundationDocs/990N2025.webp)
+- [990N](/foundationDocs/990N2025.pdf)
 - [1023-EZ](/foundationDocs/1023EZ.pdf)
 - [IRS Determination Letter](/foundationDocs/determinationLetter.pdf)
 
