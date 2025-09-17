@@ -22,7 +22,7 @@ main! = |raw_args|
     args = List.map(raw_args, Arg.display)
     use_cache = List.any(args, |a| a == "--cache")
 
-    cwd_path = Env.cwd!({}) ? |err| EncCwdFailed(err)
+    cwd_path = Env.cwd!({}) ? EncCwdFailed
     cwd_path_str = Path.display(cwd_path)
 
     if !(Str.ends_with(cwd_path_str, "/website")) then
@@ -58,8 +58,8 @@ full_clean_build! = |{}|
     Cmd.exec!("cp", ["-R", "examples-main/examples/", "content/examples/"])?
     # replace links in content/examples/index.md to work on the WIP site
     Cmd.exec!("perl", ["-pi", "-e", "s|\\]\\(/|\\]\\(/examples/|g", "content/examples/index.md"])?
-    Dir.delete_all!("examples-main") ? |err| DeleteExamplesMainDirFailed(err)
-    File.delete!("examples-main.zip") ? |err| DeleteExamplesMainZipFailed(err)
+    Dir.delete_all!("examples-main") ? DeleteExamplesMainDirFailed
+    File.delete!("examples-main.zip") ? DeleteExamplesMainZipFailed
 
     # download fonts just-in-time so we don't have to bloat the repo with them.
     design_assets_commit = "4d949642ebc56ca455cf270b288382788bce5873"
@@ -69,15 +69,16 @@ full_clean_build! = |{}|
     Cmd.exec!("curl", ["-fLJO", "https://github.com/roc-lang/design-assets/tarball/${design_assets_commit}"])?
     Cmd.exec!("tar", ["-xzf", design_assets_tarfile])?
     Cmd.exec!("mv", ["${design_assets_dir}/fonts", "build/fonts"])?
-    Dir.delete_all!(design_assets_dir) ? |err| DeleteDesignAssetsDirFailed(err)
-    File.delete!(design_assets_tarfile) ? |err| DeleteDesignAssetsTarFailed(err)
+    Dir.delete_all!(design_assets_dir) ? DeleteDesignAssetsDirFailed
+    File.delete!(design_assets_tarfile) ? DeleteDesignAssetsTarFailed
 
     repl_tarfile = "roc_repl_wasm.tar.gz"
     _ = File.delete!(repl_tarfile)
+    # Download the latest stable Web REPL archive.
     Cmd.exec!("curl", ["-fLJO", "https://github.com/roc-lang/roc/releases/download/${latest_stable_tag}/${repl_tarfile}"])?
-    Dir.create!("build/repl") ? |err| CreateReplDirFailed(err)
+    Dir.create!("build/repl") ? CreateReplDirFailed
     Cmd.exec!("tar", ["-xzf", repl_tarfile, "-C", "build/repl"])?
-    File.delete!(repl_tarfile) ? |err| DeleteReplTarFailed(err)
+    File.delete!(repl_tarfile) ? DeleteReplTarFailed
 
     # Download prebuilt docs from releases
     alpha3_docs_tarfile = "alpha3-docs.tar.gz"
@@ -87,24 +88,24 @@ full_clean_build! = |{}|
 
     # Download alpha3 docs
     Cmd.exec!("curl", ["-fL", "-o", alpha3_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha3-rolling/docs.tar.gz"])?
-    Dir.create!("build/builtins") ? |err| CreateBuiltinsDirFailed(err)
-    Dir.create!("build/builtins/alpha3") ? |err| CreateAlpha3DirFailed(err)
+    Dir.create!("build/builtins") ? CreateBuiltinsDirFailed
+    Dir.create!("build/builtins/alpha3") ? CreateAlpha3DirFailed
     Cmd.exec!("tar", ["-xzf", alpha3_docs_tarfile, "-C", "build/builtins/alpha3", "--strip-components=1"])?
-    File.delete!(alpha3_docs_tarfile) ? |err| DeleteAlpha3DocsTarFailed(err)
+    File.delete!(alpha3_docs_tarfile) ? DeleteAlpha3DocsTarFailed
 
     # Download alpha4 docs
     Cmd.exec!("curl", ["-fL", "-o", alpha4_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha4-rolling/docs.tar.gz"])?
-    Dir.create!("build/builtins/alpha4") ? |err| CreateAlpha4DirFailed(err)
+    Dir.create!("build/builtins/alpha4") ? CreateAlpha4DirFailed
     Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/builtins/alpha4", "--strip-components=1"])?
-    File.delete!(alpha4_docs_tarfile) ? |err| DeleteAlpha4DocsTarFailed(err)
+    File.delete!(alpha4_docs_tarfile) ? DeleteAlpha4DocsTarFailed
 
     # git clone main branch for latest docs
     Cmd.exec!("git", ["clone", "--branch", "main", "--depth", "1", "https://github.com/roc-lang/roc.git"])?
 
     # generate docs for builtins (main branch)
-    Dir.create!("build/builtins/main") ? |err| CreateMainDirFailed(err)
+    Dir.create!("build/builtins/main") ? CreateMainDirFailed
     Cmd.exec!("roc", ["docs", "roc/crates/compiler/builtins/roc/main.roc","--output", "build/builtins/main", "--root-dir", "builtins/main"])?
-    Dir.delete_all!("roc") ? |err| DeleteRocRepoDirFailed(err)
+    Dir.delete_all!("roc") ? DeleteRocRepoDirFailed
 
     patch_builtins_html!({})?
     write_builtins_redirects!({})?
@@ -211,7 +212,7 @@ ensure_repl_present! = |{}|
         repl_tarfile = "roc_repl_wasm.tar.gz"
         _ = File.delete!(repl_tarfile)
         Cmd.exec!("curl", ["-fLJO", "https://github.com/roc-lang/roc/releases/download/${latest_stable_tag}/${repl_tarfile}"])?
-        Dir.create!("build/repl") ? |err| CreateReplDirFailed(err)
+        Dir.create!("build/repl") ? CreateReplDirFailed
         Cmd.exec!("tar", ["-xzf", repl_tarfile, "-C", "build/repl"])?
         _ = File.delete!(repl_tarfile)
         Ok({})
@@ -228,7 +229,7 @@ ensure_builtins_present! = |{}|
         alpha3_docs_tarfile = "alpha3-docs.tar.gz"
         _ = File.delete!(alpha3_docs_tarfile)
         Cmd.exec!("curl", ["-fL", "-o", alpha3_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha3-rolling/docs.tar.gz"])?
-        Dir.create!("build/builtins/alpha3") ? |err| CreateAlpha3DirFailed(err)
+        Dir.create!("build/builtins/alpha3") ? CreateAlpha3DirFailed
         Cmd.exec!("tar", ["-xzf", alpha3_docs_tarfile, "-C", "build/builtins/alpha3", "--strip-components=1"])?
         File.delete!(alpha3_docs_tarfile)?
     else
@@ -238,7 +239,7 @@ ensure_builtins_present! = |{}|
         alpha4_docs_tarfile = "alpha4-docs.tar.gz"
         _ = File.delete!(alpha4_docs_tarfile)
         Cmd.exec!("curl", ["-fL", "-o", alpha4_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha4-rolling/docs.tar.gz"])?
-        Dir.create!("build/builtins/alpha4") ? |err| CreateAlpha4DirFailed(err)
+        Dir.create!("build/builtins/alpha4") ? CreateAlpha4DirFailed
         Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/builtins/alpha4", "--strip-components=1"])?
         File.delete!(alpha4_docs_tarfile)?
     else
@@ -246,7 +247,7 @@ ensure_builtins_present! = |{}|
 
     if !main_ok then
         Cmd.exec!("git", ["clone", "--branch", "main", "--depth", "1", "https://github.com/roc-lang/roc.git"])?
-        Dir.create!("build/builtins/main") ? |err| CreateMainDirFailed(err)
+        Dir.create!("build/builtins/main") ? CreateMainDirFailed
         Cmd.exec!("roc", ["docs", "roc/crates/compiler/builtins/roc/main.roc","--output", "build/builtins/main", "--root-dir", "builtins/main"])?
         Dir.delete_all!("roc")?
     else
@@ -279,7 +280,7 @@ patch_builtins_html! = |{}|
                 "<\nav>",
                 """<div class="builtins-tip"><b>Tip:</b> <a href="/different-names">Some names</a> differ from other languages.</div></nav>"""
             )
-    ) ? |err| BuiltinsDocsReplaceFailed(err)
+    ) ? BuiltinsDocsReplaceFailed
 
     Ok({})
 
@@ -302,7 +303,7 @@ write_builtins_redirects! = |{}|
         </body>
         </html>
         """
-    File.write_utf8!(redirect_html_content, "build/builtins/index.html") ? |err| CreateRedirectIndexFailed(err)
+    File.write_utf8!(redirect_html_content, "build/builtins/index.html") ? CreateRedirectIndexFailed
 
     redirects_content =
         """
@@ -350,7 +351,7 @@ write_builtins_redirects! = |{}|
         /builtins/Inspect/  /builtins/${redirect_version}/Inspect/ 301
         /builtins/Inspect/* /builtins/${redirect_version}/Inspect/:splat
         """
-    File.write_utf8!(redirects_content, "build/_redirects") ? |err| CreateRedirectsFileFailed(err)
+    File.write_utf8!(redirects_content, "build/_redirects") ? CreateRedirectsFileFailed
 
     Ok({})
 
@@ -392,7 +393,7 @@ add_github_links_to_examples! = |{}|
                     "</h1>",
                     """</h1><a id="gh-example-link" href="${specific_example_link}" aria-label="view on github">${github_logo_svg}</a>"""
                 )
-        ) ? |err| ExamplesReadmeReplaceFailed(err)
+        ) ? ExamplesReadmeReplaceFailed
 
         Ok({})
 
@@ -463,7 +464,7 @@ list_files_recursive! : Path => Result (List Path) _
 list_files_recursive! = |p|
     when Path.type!(p) is
         Ok(IsFile) ->
-            Ok(List.single(p))
+            Ok([p])
 
         Ok(IsDir) ->
             children = Path.list_dir!(p)?

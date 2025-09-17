@@ -398,6 +398,9 @@ Inspect.to_str : val -> Str where val implements Inspect
 The Docs website is: https://www.roc-lang.org/builtins/alpha4/
 Examples are at: https://github.com/roc-lang/examples/tree/main/examples
 
+- Do not "hide failures" with `Result.with_default`, prefer `?` for error handling.
+- You do not need to explicitly add |err| if it is the only argument, so do `File.delete!(my_file) ? DeleteMyFileFailed` instead of `File.delete!(my_file) ? |err|DeleteMyFileFailed(err)`.
+
 ### Roc Syntax Overview Demo
 
 ```
