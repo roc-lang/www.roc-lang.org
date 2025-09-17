@@ -136,19 +136,23 @@ build_with_cache! = |{}|
     last_build_millis = read_cache_millis!(cache_marker_path) |> Result.with_default(0i128)
     latest_content_millis = max_mtime_in_dirs_millis!(["content"]) |> Result.with_default(0i128)
     latest_public_millis = max_mtime_in_dirs_millis!(["public"]) |> Result.with_default(0i128)
+    static_site_gen_millis =
+        File.time_modified!("static_site_gen.roc")?
+        |> Utc.to_millis_since_epoch
 
     content_changed = latest_content_millis > last_build_millis
     public_changed = latest_public_millis > last_build_millis
+    static_site_gen_changed = static_site_gen_millis > last_build_millis
 
-    if content_changed || public_changed then
+    if content_changed || public_changed || static_site_gen_changed then
         # Copy public → build if public changed
         if public_changed then
             Cmd.exec!("cp", ["-r", "public/.", "build/"])?
         else
             {}
 
-        # Only run static site generation if content changed
-        if content_changed then
+        # Only run static site generation if content or generator changed
+        if content_changed || static_site_gen_changed then
             Cmd.exec!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
             Cmd.exec!("./static_site_gen", ["content", "build"])?
 
@@ -157,11 +161,11 @@ build_with_cache! = |{}|
             write_builtins_redirects!({})?
             add_github_links_to_examples!({})?
         else
-            Stdout.line!("Content unchanged; skipping static site generation.")?
+            Stdout.line!("Content and static_site_gen.roc unchanged; skipping static site generation.")?
 
         write_cache_millis!(cache_marker_path)?
     else
-        Stdout.line!("No changes detected in content/ or public/ since last cached build; skipping site generation.")?
+        Stdout.line!("No changes detected in content/, public/, or static_site_gen.roc since last cached build; skipping site generation.")?
 
 
     Ok({})

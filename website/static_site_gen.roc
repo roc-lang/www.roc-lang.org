@@ -14,7 +14,7 @@ main! = |{ input_dir, output_dir }|
 
     try(SSG.write_file!({ output_dir, relpath: Types.to_rel_path("llms.txt"), content: tutorial_markdown }))
 
-    # get the path and url of markdown files in content directory
+    # get the path and url of markdown files in content dir
     files = try(SSG.files!(input_dir))
 
     process_file! = |{ path, relpath, url }|
@@ -156,7 +156,7 @@ view_navbar = |page_path_str|
 
     header([id("top-bar")], [
         nav([aria_label("primary")], [
-            a(home_link_attrs, [roc_logo, span([class("home-link-text")], [text("Roc")])]),
+            a(home_link_attrs, [roc_logo]),
             div([id("top-bar-links")], [
                 a([href("/tutorial")], [text("tutorial")]),
                 a([href("/install")], [text("install")]),
