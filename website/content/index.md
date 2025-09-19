@@ -1,20 +1,44 @@
 <div role="presentation" id="homepage-intro-outer">
-<div role="presentation" id="homepage-intro-box">
-<h1 id="homepage-h1">Roc</h1>
-<svg id="homepage-logo" aria-labelledby="logo-svg-title logo-svg-desc" width="240" height="240" viewBox="0 0 51 53" fill="none" xmlns="http://www.w3.org/2000/svg"><title id="logo-svg-title">The Roc logo</title><desc id="logo-svg-desc">A purple origami bird made of six triangles</desc><path d="M23.6751 22.7086L17.655 53L27.4527 45.2132L26.4673 39.3424L23.6751 22.7086Z" class="logo-dark"/><path d="M37.2438 19.0101L44.0315 26.3689L45 22L45.9665 16.6324L37.2438 19.0101Z" class="logo-light"/><path d="M23.8834 3.21052L0 0L23.6751 22.7086L23.8834 3.21052Z" class="logo-light"/><path d="M44.0315 26.3689L23.6751 22.7086L26.4673 39.3424L44.0315 26.3689Z" class="logo-light"/><path d="M50.5 22L45.9665 16.6324L45 22H50.5Z" class="logo-dark"/><path d="M23.6751 22.7086L44.0315 26.3689L37.2438 19.0101L23.8834 3.21052L23.6751 22.7086Z" class="logo-dark"/>
+<h1 id="screenreader-only">Roc</h1>
+<svg id="homepage-logo" viewBox="0 0 807.30553 377.7276" width="807" height="378" xmlns="http://www.w3.org/2000/svg">
+  <title>bird + Roc</title>
+  <desc>A purple origami bird made of six triangles, alongside the text Roc.</desc>
+  <style>
+    .logo-dark { fill: #6C3BDC; }
+    .logo-light { fill: #8A66DE; }
+  </style>
+  
+  <!-- Bird logo -->
+  <g transform="matrix(7.129633,0,0,7.129633,0,-0.11353333)">
+    <path d="M 23.6751,22.7086 17.655,53 27.4527,45.2132 26.4673,39.3424 Z" class="logo-dark" />
+    <path d="M 37.2438,19.0101 44.0315,26.3689 45,22 45.9665,16.6324 Z" class="logo-light" />
+    <path d="M 23.8834,3.21052 0,0 23.6751,22.7086 Z" class="logo-light" />
+    <path d="M 44.0315,26.3689 23.6751,22.7086 26.4673,39.3424 Z" class="logo-light" />
+    <path d="M 50.5,22 45.9665,16.6324 45,22 Z" class="logo-dark" />
+    <path d="M 23.6751,22.7086 44.0315,26.3689 37.2438,19.0101 23.8834,3.21052 Z" class="logo-dark" />
+  </g>
+  
+  <!-- "Roc" text -->
+  <g transform="matrix(12.126295,0,0,12.126295,280.47867,-48.131702)">
+    <g transform="translate(-59.009755,-43.538955)">
+      <g transform="translate(7.0947118,17.489272)" fill="#fcf9fd">
+        <path d="m 62.046469,53.484477 v 6.378228 h -3.036714 v -16.32375 h 4.978405 q 1.670757,0 2.856092,0.349956 1.196623,0.338667 1.95298,0.959557 0.767645,0.620889 1.117601,1.490135 0.361245,0.857956 0.361245,1.896535 0,0.82409 -0.248356,1.557868 -0.237067,0.733779 -0.699912,1.33209 -0.451556,0.598312 -1.12889,1.049868 -0.666045,0.451556 -1.524002,0.72249 0.575734,0.327378 0.993424,0.936978 l 4.086582,6.028273 H 69.02301 q -0.395112,0 -0.677334,-0.158044 -0.270934,-0.158045 -0.462845,-0.451556 l -3.431826,-5.226761 q -0.191911,-0.293512 -0.428978,-0.41769 -0.225778,-0.124177 -0.677334,-0.124177 z m 0,-2.178758 h 1.896535 q 0.857957,0 1.490135,-0.214489 0.643468,-0.214489 1.049868,-0.587023 0.417689,-0.383823 0.62089,-0.903112 0.2032,-0.51929 0.2032,-1.140179 0,-1.241779 -0.82409,-1.907824 -0.812801,-0.666045 -2.494847,-0.666045 h -1.941691 z" />
+        <path d="m 78.483124,48.099671 q 1.298223,0 2.348091,0.417689 1.061157,0.41769 1.806224,1.185335 0.745067,0.767645 1.151468,1.873957 0.4064,1.106313 0.4064,2.47227 0,1.377245 -0.4064,2.483558 -0.406401,1.106312 -1.151468,1.885246 -0.745067,0.778934 -1.806224,1.196623 -1.049868,0.41769 -2.348091,0.41769 -1.298224,0 -2.35938,-0.41769 -1.061157,-0.417689 -1.817513,-1.196623 -0.745068,-0.778934 -1.162757,-1.885246 -0.406401,-1.106313 -0.406401,-2.483558 0,-1.365957 0.406401,-2.47227 0.417689,-1.106312 1.162757,-1.873957 0.756356,-0.767645 1.817513,-1.185335 1.061156,-0.417689 2.35938,-0.417689 z m 0,9.787477 q 1.444979,0 2.133602,-0.970846 0.699912,-0.970845 0.699912,-2.844803 0,-1.873957 -0.699912,-2.856091 -0.688623,-0.982135 -2.133602,-0.982135 -1.467557,0 -2.167469,0.993423 -0.699912,0.982135 -0.699912,2.844803 0,1.862669 0.699912,2.844803 0.699912,0.970846 2.167469,0.970846 z" />
+        <path d="m 94.513374,50.729985 q -0.124178,0.158044 -0.248356,0.248356 -0.112889,0.09031 -0.338667,0.09031 -0.214489,0 -0.417689,-0.124178 -0.203201,-0.135467 -0.485423,-0.293511 -0.282223,-0.169334 -0.677334,-0.293512 -0.383823,-0.135467 -0.959557,-0.135467 -0.733778,0 -1.286934,0.270934 -0.553156,0.259645 -0.92569,0.756356 -0.361245,0.496712 -0.541867,1.207913 -0.180623,0.699911 -0.180623,1.591735 0,0.925689 0.191911,1.648179 0.203201,0.72249 0.575734,1.219201 0.372534,0.485423 0.903112,0.745068 0.530579,0.248355 1.196624,0.248355 0.666045,0 1.072445,-0.158044 0.41769,-0.169334 0.699912,-0.361245 0.282223,-0.2032 0.485423,-0.361245 0.214489,-0.169333 0.474134,-0.169333 0.338667,0 0.508,0.259644 l 0.801512,1.016001 q -0.462845,0.541868 -1.004712,0.914401 -0.541867,0.361245 -1.12889,0.587023 -0.575734,0.214489 -1.196623,0.304801 -0.62089,0.09031 -1.230491,0.09031 -1.072445,0 -2.020713,-0.395112 -0.948267,-0.4064 -1.659468,-1.174045 -0.699912,-0.767646 -1.117601,-1.873958 -0.406401,-1.117601 -0.406401,-2.540002 0,-1.275646 0.361245,-2.359381 0.372534,-1.095023 1.083735,-1.885246 0.7112,-0.801512 1.761068,-1.253068 1.049868,-0.451556 2.415825,-0.451556 1.298223,0 2.269069,0.417689 0.982134,0.41769 1.761068,1.196624 z" />
+      </g>
+    </g>
+  </g>
 </svg>
 
-<p id="homepage-tagline">A fast, friendly, functional language.</p>
 <pre id="first-code-sample"><samp class="code-snippet">credits <span class="kw">=</span> List<span class="punctuation section">.</span>map<span class="punctuation section">(</span>songs<span class="punctuation section">,</span> <span class="kw">|</span>song<span class="kw">|</span>
     <span class="string">"Performed by </span><span class="kw">${</span>song<span class="punctuation section">.</span>artist<span class="kw">}</span><span class="string">"</span><br><span class="punctuation section">)</span></samp></pre>
-</div>
 </div>
 
 <section class="home-goals-container" aria-label="Roc's Design: Fast, Friendly, Functional">
     <div role="presentation" class="home-goals-column">
         <a href="/fast" class="home-goals-content">
             <h3 class="home-goals-title">Fast</h3>
-            <p class="home-goals-description">Roc code is designed to build fast and <span class="nowrap">run fast</span>. It compiles to machine code or WebAssembly.</p>
+            <p class="home-goals-description">Designed to build fast and <span class="nowrap">run fast</span>. Generate machine code or WebAssembly.</p>
             <p class="home-goals-learn-more">What does <i>fast</i> mean here?</p>
         </a>
     </div>
@@ -41,7 +65,7 @@
 <div id="homepage-repl-container" role="presentation">
     <div id="repl-description" role="presentation">
         <p>You can try Roc using this read-eval-print loop (<a href="https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop">REPL</a>), which is running in your browser in <a href="https://webassembly.org">WebAssembly</a>.</p>
-        <p><code>Shift-Enter</code> adds a newline.</p>
+        </br>
         <p>Try entering <code>0.1 + 0.2</code>
         <svg id="repl-arrow" role="presentation" width="100" height="50" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
           <polygon points="70,20 30,20 30,15 0,25 30,35 30,30 70,30"/>
@@ -62,12 +86,8 @@
 
 ## [Examples](#examples) {#examples}
 
-Roc is a young language. It doesn't even have a numbered release yet, just alpha builds!
-
-However, it can already be used for several things if you're up for being an early adopter—<br>
-with all the bugs and missing features which come with that territory.
-
-Here are some examples of how it can be used today.
+TODO add Some kind of work in progress sticker to the header instead.
+Roc is still a work in progress, but here are some examples of how it can be used today.
 
 <div role="presentation" class="home-examples-container">
     <div role="presentation" class="home-examples-column">
