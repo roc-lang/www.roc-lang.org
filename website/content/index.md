@@ -1,20 +1,44 @@
 <div role="presentation" id="homepage-intro-outer">
-<div role="presentation" id="homepage-intro-box">
-<h1 id="homepage-h1">Roc</h1>
-<svg id="homepage-logo" aria-labelledby="logo-svg-title logo-svg-desc" width="240" height="240" viewBox="0 0 51 53" fill="none" xmlns="http://www.w3.org/2000/svg"><title id="logo-svg-title">The Roc logo</title><desc id="logo-svg-desc">A purple origami bird made of six triangles</desc><path d="M23.6751 22.7086L17.655 53L27.4527 45.2132L26.4673 39.3424L23.6751 22.7086Z" class="logo-dark"/><path d="M37.2438 19.0101L44.0315 26.3689L45 22L45.9665 16.6324L37.2438 19.0101Z" class="logo-light"/><path d="M23.8834 3.21052L0 0L23.6751 22.7086L23.8834 3.21052Z" class="logo-light"/><path d="M44.0315 26.3689L23.6751 22.7086L26.4673 39.3424L44.0315 26.3689Z" class="logo-light"/><path d="M50.5 22L45.9665 16.6324L45 22H50.5Z" class="logo-dark"/><path d="M23.6751 22.7086L44.0315 26.3689L37.2438 19.0101L23.8834 3.21052L23.6751 22.7086Z" class="logo-dark"/>
+<h1 id="screenreader-only">Roc</h1>
+<svg id="homepage-logo" viewBox="0 0 807.30553 377.7276" width="807" height="378" xmlns="http://www.w3.org/2000/svg">
+  <title>bird + Roc</title>
+  <desc>A purple origami bird made of six triangles, alongside the text Roc.</desc>
+  <style>
+    .logo-dark { fill: #6C3BDC; }
+    .logo-light { fill: #8A66DE; }
+  </style>
+  
+  <!-- Bird logo -->
+  <g transform="matrix(7.129633,0,0,7.129633,0,-0.11353333)">
+    <path d="M 23.6751,22.7086 17.655,53 27.4527,45.2132 26.4673,39.3424 Z" class="logo-dark" />
+    <path d="M 37.2438,19.0101 44.0315,26.3689 45,22 45.9665,16.6324 Z" class="logo-light" />
+    <path d="M 23.8834,3.21052 0,0 23.6751,22.7086 Z" class="logo-light" />
+    <path d="M 44.0315,26.3689 23.6751,22.7086 26.4673,39.3424 Z" class="logo-light" />
+    <path d="M 50.5,22 45.9665,16.6324 45,22 Z" class="logo-dark" />
+    <path d="M 23.6751,22.7086 44.0315,26.3689 37.2438,19.0101 23.8834,3.21052 Z" class="logo-dark" />
+  </g>
+  
+  <!-- "Roc" text -->
+  <g transform="matrix(12.126295,0,0,12.126295,280.47867,-48.131702)">
+    <g transform="translate(-59.009755,-43.538955)">
+      <g transform="translate(7.0947118,17.489272)" fill="#fcf9fd">
+        <path d="m 62.046469,53.484477 v 6.378228 h -3.036714 v -16.32375 h 4.978405 q 1.670757,0 2.856092,0.349956 1.196623,0.338667 1.95298,0.959557 0.767645,0.620889 1.117601,1.490135 0.361245,0.857956 0.361245,1.896535 0,0.82409 -0.248356,1.557868 -0.237067,0.733779 -0.699912,1.33209 -0.451556,0.598312 -1.12889,1.049868 -0.666045,0.451556 -1.524002,0.72249 0.575734,0.327378 0.993424,0.936978 l 4.086582,6.028273 H 69.02301 q -0.395112,0 -0.677334,-0.158044 -0.270934,-0.158045 -0.462845,-0.451556 l -3.431826,-5.226761 q -0.191911,-0.293512 -0.428978,-0.41769 -0.225778,-0.124177 -0.677334,-0.124177 z m 0,-2.178758 h 1.896535 q 0.857957,0 1.490135,-0.214489 0.643468,-0.214489 1.049868,-0.587023 0.417689,-0.383823 0.62089,-0.903112 0.2032,-0.51929 0.2032,-1.140179 0,-1.241779 -0.82409,-1.907824 -0.812801,-0.666045 -2.494847,-0.666045 h -1.941691 z" />
+        <path d="m 78.483124,48.099671 q 1.298223,0 2.348091,0.417689 1.061157,0.41769 1.806224,1.185335 0.745067,0.767645 1.151468,1.873957 0.4064,1.106313 0.4064,2.47227 0,1.377245 -0.4064,2.483558 -0.406401,1.106312 -1.151468,1.885246 -0.745067,0.778934 -1.806224,1.196623 -1.049868,0.41769 -2.348091,0.41769 -1.298224,0 -2.35938,-0.41769 -1.061157,-0.417689 -1.817513,-1.196623 -0.745068,-0.778934 -1.162757,-1.885246 -0.406401,-1.106313 -0.406401,-2.483558 0,-1.365957 0.406401,-2.47227 0.417689,-1.106312 1.162757,-1.873957 0.756356,-0.767645 1.817513,-1.185335 1.061156,-0.417689 2.35938,-0.417689 z m 0,9.787477 q 1.444979,0 2.133602,-0.970846 0.699912,-0.970845 0.699912,-2.844803 0,-1.873957 -0.699912,-2.856091 -0.688623,-0.982135 -2.133602,-0.982135 -1.467557,0 -2.167469,0.993423 -0.699912,0.982135 -0.699912,2.844803 0,1.862669 0.699912,2.844803 0.699912,0.970846 2.167469,0.970846 z" />
+        <path d="m 94.513374,50.729985 q -0.124178,0.158044 -0.248356,0.248356 -0.112889,0.09031 -0.338667,0.09031 -0.214489,0 -0.417689,-0.124178 -0.203201,-0.135467 -0.485423,-0.293511 -0.282223,-0.169334 -0.677334,-0.293512 -0.383823,-0.135467 -0.959557,-0.135467 -0.733778,0 -1.286934,0.270934 -0.553156,0.259645 -0.92569,0.756356 -0.361245,0.496712 -0.541867,1.207913 -0.180623,0.699911 -0.180623,1.591735 0,0.925689 0.191911,1.648179 0.203201,0.72249 0.575734,1.219201 0.372534,0.485423 0.903112,0.745068 0.530579,0.248355 1.196624,0.248355 0.666045,0 1.072445,-0.158044 0.41769,-0.169334 0.699912,-0.361245 0.282223,-0.2032 0.485423,-0.361245 0.214489,-0.169333 0.474134,-0.169333 0.338667,0 0.508,0.259644 l 0.801512,1.016001 q -0.462845,0.541868 -1.004712,0.914401 -0.541867,0.361245 -1.12889,0.587023 -0.575734,0.214489 -1.196623,0.304801 -0.62089,0.09031 -1.230491,0.09031 -1.072445,0 -2.020713,-0.395112 -0.948267,-0.4064 -1.659468,-1.174045 -0.699912,-0.767646 -1.117601,-1.873958 -0.406401,-1.117601 -0.406401,-2.540002 0,-1.275646 0.361245,-2.359381 0.372534,-1.095023 1.083735,-1.885246 0.7112,-0.801512 1.761068,-1.253068 1.049868,-0.451556 2.415825,-0.451556 1.298223,0 2.269069,0.417689 0.982134,0.41769 1.761068,1.196624 z" />
+      </g>
+    </g>
+  </g>
 </svg>
 
-<p id="homepage-tagline">A fast, friendly, functional language.</p>
 <pre id="first-code-sample"><samp class="code-snippet">credits <span class="kw">=</span> List<span class="punctuation section">.</span>map<span class="punctuation section">(</span>songs<span class="punctuation section">,</span> <span class="kw">|</span>song<span class="kw">|</span>
     <span class="string">"Performed by </span><span class="kw">${</span>song<span class="punctuation section">.</span>artist<span class="kw">}</span><span class="string">"</span><br><span class="punctuation section">)</span></samp></pre>
-</div>
 </div>
 
 <section class="home-goals-container" aria-label="Roc's Design: Fast, Friendly, Functional">
     <div role="presentation" class="home-goals-column">
         <a href="/fast" class="home-goals-content">
             <h3 class="home-goals-title">Fast</h3>
-            <p class="home-goals-description">Roc code is designed to build fast and <span class="nowrap">run fast</span>. It compiles to machine code or WebAssembly.</p>
+            <p class="home-goals-description">Designed to build fast and <span class="nowrap">run fast</span>. Generate machine code or WebAssembly.</p>
             <p class="home-goals-learn-more">What does <i>fast</i> mean here?</p>
         </a>
     </div>
@@ -41,7 +65,7 @@
 <div id="homepage-repl-container" role="presentation">
     <div id="repl-description" role="presentation">
         <p>You can try Roc using this read-eval-print loop (<a href="https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop">REPL</a>), which is running in your browser in <a href="https://webassembly.org">WebAssembly</a>.</p>
-        <p><code>Shift-Enter</code> adds a newline.</p>
+        </br>
         <p>Try entering <code>0.1 + 0.2</code>
         <svg id="repl-arrow" role="presentation" width="100" height="50" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
           <polygon points="70,20 30,20 30,15 0,25 30,35 30,30 70,30"/>
@@ -62,12 +86,8 @@
 
 ## [Examples](#examples) {#examples}
 
-Roc is a young language. It doesn't even have a numbered release yet, just alpha builds!
-
-However, it can already be used for several things if you're up for being an early adopter—<br>
-with all the bugs and missing features which come with that territory.
-
-Here are some examples of how it can be used today.
+TODO add Some kind of work in progress sticker to the header instead.
+Roc is still a work in progress, but here are some examples of how it can be used today.
 
 <div role="presentation" class="home-examples-container">
     <div role="presentation" class="home-examples-column">
@@ -118,7 +138,7 @@ The [tutorial](/tutorial) introduces these gradually and in more depth, but this
 
 ## [Sponsors](#sponsors) {#sponsors}
 
-We are very grateful for our corporate sponsors! They are [Lambda Class](https://lambdaclass.com), <a href="https://www.ohne-makler.net"><span class="nowrap">ohne-makler</span></a>, and [Decem](https://www.decem.com.au).
+We are very grateful for our corporate sponsors!
 
 <p id="sponsor-logos" aria-hidden="true"> <!-- aria-hidden because for screen readers this whole section is redundant with the preceding paragraph -->
     <a href="https://lambdaclass.com"><svg class="logo-lambda-class" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 191 52"><path d="M56.42,35.71l-8.04-18.12-7.81,17.59c-1.07,2.29-1.91,3.14-3.98,3.29h-5.74l10.41-23.55h-4.13l2.99-6.65h8.19c3.22,0,4.67,.99,6.28,4.82l7.96,17.82V14.91h-2.84l-3.44-6.65h8.96c3.22,0,4.67,.99,6.28,4.82l7.89,17.89,7.88-17.89c1.68-3.75,3.06-4.82,6.28-4.82h2.6v30.28h-6.81v-14.99l-5.36,12.16c-1.15,2.14-2.3,2.75-4.67,2.75-.92,.1-1.85-.09-2.66-.55-.81-.45-1.46-1.14-1.86-1.98l-5.51-12.39v14.91l-8.34,.08c-2.37,0-3.37-.69-4.52-2.83Z"/><path d="M0,52l3.83-8.64h3.6c3.22,0,3.98-.99,5.59-4.82L29.7,0h10.1L21.13,43.36H61.47l-3.83,8.64H0Z"/><path d="M191,52h-57.64l-3.83-8.64h40.34l-11.02-25.62-7.43,16.75c-1.46,3.14-2.22,4.05-5.21,4.13h-4.98l2.14-4.74c-1.42,1.5-3.12,2.69-5.02,3.51-1.9,.82-3.94,1.23-6,1.23l-8.34-.08V18.35h6.66v13.53h1.76c2.23,0,4.38-.89,5.95-2.46,1.58-1.58,2.47-3.72,2.47-5.95s-.89-4.37-2.47-5.95c-1.58-1.58-3.72-2.46-5.95-2.46h-8.34l-3.44-6.65h11.79c4.02,0,7.87,1.61,10.71,4.44,2.84,2.84,4.44,6.68,4.45,10.7,.01,.41-.01,.82-.08,1.22l7.27-16.36-3.44-8.41h10.11l16.54,38.54c1.68,3.75,2.37,4.82,5.59,4.82h3.6l3.83,8.64Z"/><path d="M117.36,20.26c.52-1.1,.78-2.3,.76-3.52,0-1.11-.21-2.2-.63-3.22-.42-1.02-1.04-1.95-1.82-2.73-.78-.78-1.71-1.4-2.74-1.82-1.02-.42-2.12-.64-3.23-.63h-9.95v6.65h9.95c.45,0,.88,.18,1.19,.49,.32,.32,.49,.74,.49,1.19s-.18,.87-.49,1.19c-.32,.32-.74,.49-1.19,.49h-9.95v20.11l11.71,.08c2.14,0,4.22-.67,5.95-1.93,1.73-1.26,3.01-3.03,3.67-5.06,.65-2.03,.65-4.22-.02-6.25-.67-2.03-1.97-3.79-3.7-5.04h0Zm-5.89,11.55h-5.05v-6.73h5.12c.45,0,.89,.09,1.3,.26,.41,.17,.79,.42,1.1,.74,.31,.32,.56,.69,.73,1.11,.17,.41,.25,.86,.25,1.3,0,.45-.1,.89-.27,1.29-.18,.41-.43,.78-.75,1.09-.32,.31-.7,.55-1.11,.71-.42,.16-.86,.24-1.31,.23h0Z"/><path d="M75.32,49.49c-.31,.35-.69,.63-1.12,.83-.48,.21-1.01,.31-1.54,.3-.5,0-1-.08-1.46-.26-.43-.17-.83-.42-1.16-.74-.33-.32-.6-.71-.78-1.14-.19-.47-.29-.96-.28-1.47,0-.51,.09-1.02,.29-1.49,.18-.43,.44-.81,.78-1.13,.34-.32,.74-.56,1.18-.72,.47-.17,.96-.26,1.46-.25,.49,0,.97,.09,1.43,.26,.44,.15,.83,.41,1.14,.75l-1.12,1.12c-.15-.21-.37-.38-.61-.47-.24-.1-.51-.15-.77-.15-.27,0-.55,.05-.8,.16-.24,.1-.45,.25-.62,.44-.18,.19-.32,.42-.41,.66-.1,.27-.15,.55-.14,.83,0,.29,.05,.58,.14,.85,.09,.24,.23,.47,.4,.66,.17,.18,.38,.33,.61,.43,.25,.1,.51,.16,.78,.15,.3,0,.59-.06,.86-.19,.23-.12,.43-.29,.59-.5l1.15,1.08Zm5.43,.95v-6.83h1.66v5.39h2.65v1.44h-4.31Zm14.44,0l-.53-1.34h-2.65l-.5,1.34h-1.8l2.87-6.83h1.6l2.84,6.83h-1.84Zm-1.84-5.01l-.87,2.35h1.72l-.85-2.35Zm12.58-.05c-.15-.19-.34-.33-.56-.43-.21-.1-.43-.16-.66-.16-.11,0-.22,0-.33,.03-.11,.02-.21,.06-.3,.11-.09,.05-.17,.13-.23,.21-.06,.1-.1,.22-.09,.33,0,.1,.02,.2,.07,.29,.05,.08,.13,.15,.21,.2,.11,.06,.22,.12,.33,.16,.13,.05,.27,.1,.43,.15,.23,.08,.47,.16,.73,.26,.24,.09,.48,.22,.69,.37,.21,.16,.38,.35,.51,.58,.14,.26,.21,.56,.2,.85,0,.35-.07,.7-.22,1.02-.14,.28-.33,.52-.58,.71-.25,.19-.54,.33-.84,.41-.32,.09-.65,.14-.98,.14-.49,0-.97-.09-1.42-.26-.43-.15-.82-.4-1.14-.73l1.08-1.1c.18,.22,.41,.39,.66,.52,.25,.13,.53,.2,.82,.21,.12,0,.24-.01,.36-.04,.11-.02,.21-.07,.3-.13,.09-.06,.16-.14,.21-.23,.05-.11,.08-.23,.08-.35,0-.12-.03-.23-.1-.33-.07-.1-.17-.18-.28-.25-.14-.08-.29-.15-.44-.2-.18-.06-.38-.13-.6-.2-.22-.07-.43-.15-.64-.25-.21-.09-.4-.22-.56-.37-.17-.16-.3-.34-.4-.55-.11-.25-.16-.52-.15-.79-.01-.34,.07-.68,.23-.97,.15-.26,.36-.49,.61-.67,.26-.18,.55-.31,.85-.38,.31-.08,.63-.12,.96-.12,.4,0,.8,.07,1.18,.21,.39,.13,.75,.35,1.06,.63l-1.06,1.11Zm10.43,0c-.15-.19-.34-.33-.56-.43-.21-.1-.43-.16-.66-.16-.11,0-.22,0-.33,.03-.11,.02-.21,.06-.3,.11-.09,.05-.17,.13-.23,.21-.06,.1-.1,.22-.09,.33,0,.1,.02,.2,.07,.29,.05,.08,.13,.15,.21,.2,.11,.06,.22,.12,.33,.16,.13,.05,.27,.1,.44,.15,.23,.08,.47,.16,.72,.26,.24,.09,.48,.22,.69,.37,.21,.16,.38,.35,.51,.58,.14,.26,.21,.56,.2,.85,0,.35-.07,.7-.22,1.02-.14,.28-.33,.52-.58,.71-.25,.19-.54,.33-.84,.41-.32,.09-.65,.14-.98,.14-.49,0-.97-.09-1.42-.26-.43-.15-.82-.4-1.14-.73l1.08-1.1c.18,.22,.41,.39,.66,.52,.25,.13,.53,.2,.82,.21,.12,0,.24-.01,.36-.04,.11-.02,.21-.07,.3-.13,.09-.06,.16-.14,.21-.23,.05-.11,.08-.23,.08-.35,0-.12-.03-.23-.1-.33-.07-.1-.17-.18-.28-.25-.14-.08-.29-.15-.44-.2-.18-.06-.38-.13-.6-.2-.22-.07-.43-.15-.64-.25-.21-.09-.4-.22-.56-.37-.17-.16-.3-.34-.4-.55-.11-.25-.16-.52-.15-.79-.01-.34,.07-.68,.23-.97,.15-.26,.36-.49,.61-.67,.26-.18,.55-.31,.85-.38,.31-.08,.63-.12,.96-.12,.4,0,.8,.07,1.18,.21,.39,.13,.75,.35,1.06,.63l-1.06,1.11Z"/></svg></a>
@@ -127,7 +147,7 @@ We are very grateful for our corporate sponsors! They are [Lambda Class](https:/
     </a>
 </p>
 
-If you would like your organization to become an official sponsor of Roc's development, please [DM Richard Feldman on Zulip](https://roc.zulipchat.com/#narrow/pm-with/281383-user281383)!
+If you would like your *organization* to become an official sponsor of Roc's development, please [DM Richard Feldman on Zulip](https://roc.zulipchat.com/#narrow/pm-with/281383-user281383)!
 
 We'd also like to express our gratitude to our generous [individual sponsors](https://github.com/sponsors/roc-lang/)! A special thanks to those sponsoring $25/month or more:
 
@@ -159,7 +179,7 @@ We'd also like to express our gratitude to our generous [individual sponsors](ht
     <li><a href="https://github.com/ayazhafiz">Ayaz Hafiz</a></li>
 </ul>
 
-Thank you all for your contributions! Roc would not be what it is without your generosity. 💜
+Roc would not be what it is without your generosity. 💜
 
 We are currently trying to raise $4,000 USD/month in donations to fund one longtime Roc contributor to continue his work on Roc full-time. We are a small group trying to do big things, and every donation helps! You can donate using:
 

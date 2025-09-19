@@ -11,4 +11,4 @@ All donations go through the [Roc Programming Language Foundation](/foundation),
 
 It also means that the foundation's tax filings are a [matter of public record](https://en.wikipedia.org/wiki/501(c)(3)_organization#Transparency), so you have real transparency into how your donations are advancing Roc!
 
-If you would like your organization to become an official sponsor of Roc's development, please [DM Richard Feldman on Zulip](https://roc.zulipchat.com/#narrow/pm-with/281383-user281383). We'd love to talk to you!
+If you would like your *organization* to become an official sponsor of Roc's development, please [DM Richard Feldman on Zulip](https://roc.zulipchat.com/#narrow/pm-with/281383-user281383). We'd love to talk to you!

@@ -24,6 +24,7 @@
     --body-bg-color: #ffffff;
     --border-color: #717171;
     --faded-color: #4c4c4c;
+    --underline-color: var(--primary-1);
     --font-sans: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial,
         sans-serif;
     --font-mono: "Source Code Pro", SFMono-Regular, Consolas, "Liberation Mono",
@@ -31,7 +32,7 @@
     --top-header-height: 67px;
     --sidebar-width: 280px;
 
-    --font-size-normal: 18px;
+    --font-size-normal: 20px;
     --body-max-width: 1024px;
     --dark-code-bg: #202746;
 
@@ -112,12 +113,12 @@ hr {
 
 .btn-small {
     white-space: nowrap;
-    background: #7c38f5;
-    border: 4px solid #9b6bf2;
-    color: #fff !important;
+    border: 5px solid var(--underline-color);
+    color: var(--heading-color) !important;
     cursor: pointer;
     text-decoration: none !important;
     padding: 12px;
+    letter-spacing: 0.02em;
 }
 
 .btn-small .roc-logo {
@@ -130,6 +131,7 @@ hr {
 .btn-small:hover {
     background: #9b6bf2;
     border-color: #7c38f5;
+    color: white !important;
 }
 
 #individual-sponsors {
@@ -175,10 +177,6 @@ hr {
 
 #sponsor-logos .logo-decem .cls-1 {
     fill: #04021e;
-}
-
-#sponsor-logos + p {
-    margin-bottom: 3em;
 }
 
 /* Used for e.g. displaying the instruction "Click" on desktop and "Touch" on mobile.
@@ -232,8 +230,8 @@ h1 {
 h2 {
     display: inline-block;
     font-size: 2.5rem;
-    line-height: 5rem;
-    border-bottom: 4px solid var(--dark-cyan);
+    line-height: 3.3rem;
+    border-bottom: 5px solid var(--underline-color);
     padding: 0;
     margin: 0;
     margin-bottom: 2rem;
@@ -284,6 +282,14 @@ h3 {
     width: 100%;
 }
 
+@media only screen and (min-width: 1024px) {
+    #top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+}
+
 #top-bar nav {
     max-width: var(--body-max-width);
     margin: 0 auto;
@@ -303,15 +309,12 @@ h3 {
     display: block;
 }
 
-.home-link-text {
-    padding: 8px;
-    font-size: 24px;
-    position: relative;
-    top: -0.6rem;
-}
-
 .home-examples-title {
     margin-bottom: 4px;
+}
+
+#top-bar-links {
+    margin: 0 auto;
 }
 
 #top-bar-links a,
@@ -326,7 +329,8 @@ h3 {
 main {
     max-width: var(--body-max-width);
     margin: auto;
-    padding: 12px;
+    padding: 24px;
+    padding-top: 0px;
     box-sizing: border-box;
 }
 
@@ -415,7 +419,6 @@ pre > code {
 
 #homepage-repl-container #repl {
     flex: 1;
-    border: 2px solid #444;
     font-size: var(--font-size-normal);
     min-height: 0; /* On /repl on mobile, this expands to fill the screen, which we don't want */
     margin-right: 6px;
@@ -500,39 +503,42 @@ details {
 
 /* Homepage */
 #homepage-intro-outer {
-    margin: 60px auto;
     text-align: center;
 }
 
-#homepage-intro-box {
-    position: relative;
-    display: inline-block;
-    text-align: left;
-}
-
-#homepage-h1 {
-    color: #222;
-    text-shadow: none;
-    font-family: inherit;
-    font-size: 64px;
-    padding: 0;
-    padding-top: 60px;
-    position: relative;
-    left: -5px;
+#screenreader-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 #homepage-logo {
-    height: 176px;
+    height: 140px;
     width: auto;
-    position: absolute;
-    left: -200px;
-    top: -100px;
+    margin-top: 70px;
+    margin-bottom: 70px;
 }
 
 #first-code-sample {
-    margin-top: 60px;
+    margin-top: 0;
+    margin-bottom: 0;
     line-height: 1.85em;
     color: #fcf9fd;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#first-code-sample .code-snippet {
+    text-align: left;
 }
 
 #first-code-sample .kw,
@@ -545,10 +551,8 @@ details {
 #first-code-sample,
 #first-code-sample .code-snippet {
     background-color: var(--dark-code-bg);
-}
-
-#homepage-tagline {
-    font-size: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 .nowrap {
@@ -558,8 +562,12 @@ details {
 /* Mobile-friendly screen width */
 @media only screen and (max-width: 1023px) {
     :root {
-        --font-size-normal: 16px;
+        --font-size-normal: 22px;
         --body-max-width: none;
+    }
+
+    #first-code-sample > .code-snippet {
+        font-size: 18px; /* Reduce font size for narrow displays */
     }
 
     #tutorial-main main,
@@ -582,12 +590,9 @@ details {
     }
 
     #homepage-logo {
-        /* The bird runs off the screen unless we shrink it */
-        height: 80px;
-        width: auto;
-        position: absolute;
-        left: 227px;
-        top: -28px;
+        height: 120px;
+        margin-top: 50px;
+        margin-bottom: 50px;
     }
 
     #homepage-main #nav-home-link {
@@ -617,10 +622,6 @@ details {
         padding: 6px 0;
     }
 
-    .home-link-text {
-        display: none; /* Don't show "Roc" in the header next to the logo, to save space */
-    }
-
     h1 code,
     h2 code,
     h3 code,
@@ -634,30 +635,10 @@ details {
     }
 
     /* Homepage */
-
-    #homepage-intro-box {
-        margin: 30px auto;
-    }
-
-    #homepage-tagline {
-        margin-top: 0;
-    }
-
     #homepage-h1 {
         /* TODO remove !important from repl.css (increasing specificity instead), and then this one too. */
         font-size: 48px !important;
-        padding: 0;
-        margin: 0;
-        text-align: left;
-    }
-
-    #first-code-sample {
-        margin: 64px auto;
-        margin-bottom: 0;
-    }
-
-    #homepage-tagline {
-        font-size: 16px;
+        text-align: center;
     }
 
     .home-goals-container,
@@ -724,15 +705,18 @@ details {
 
 /* iPhone SE and similar */
 @media only screen and (max-width: 320px) {
-    #homepage-logo {
+    /*#homepage-logo {*/
         /* The bird runs off the screen unless we shrink it */
-        left: 188px;
-        top: -30px;
-    }
+        /*left: 188px;
+        top: -30px;*/
 
     :root {
-        --font-size-normal: 14px;
+        --font-size-normal: 15px;
         --body-max-width: 320px;
+    }
+
+    #first-code-sample > .code-snippet {
+        font-size: 15px; /* Reduce font size for very narrow displays */
     }
 }
 
@@ -835,6 +819,7 @@ details {
         --faded-color: #bbbbbb;
         --gray: #6e6e6e;
         --heading-color: #eee;
+        --underline-color: var(--violet);
 
         /* Tutorial */
         --header-link-color: #9c7cea;
@@ -880,11 +865,6 @@ details {
     th,
     td {
         border-color: var(--gray);
-    }
-
-    #first-code-sample,
-    #homepage-repl-container #repl {
-        border: 1px solid #ddd;
     }
 
     .home-goals-content:hover {
@@ -1020,7 +1000,8 @@ code .dim {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    gap: 45px;
+    row-gap: 0;
+    column-gap: 40px;
     width: 100%;
 }
 
@@ -1035,8 +1016,7 @@ code .dim {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    border: 4px solid var(--light-cyan);
+    padding: 0;
     color: inherit;
     cursor: pointer;
 }
@@ -1088,25 +1068,20 @@ code .dim {
 }
 
 .home-goals-title {
+    align-self: flex-start;
     padding: 0;
     font-weight: bold;
-    margin-bottom: 10px;
     font-size: 32px;
-    border-bottom: none;
+    border-bottom: 5px solid var(--underline-color);
     font-family: inherit;
-    text-transform: lowercase;
-    padding-bottom: 42px;
-    padding-top: 2px;
-    font-style: italic;
+    line-height: 3.1rem; /*line-height is most consitent across devices for underline distance*/
     letter-spacing: 1px;
     word-spacing: 3px;
-    margin: 0;
-    color: var(--text-color);
+    color: var(--heading-color);
 }
 
 .home-goals-description {
     line-height: 1.5;
-    margin-bottom: 2em;
 }
 
 /* Interactive example on homepage */
