@@ -232,7 +232,7 @@ h1 {
 h2 {
     display: inline-block;
     font-size: 2.5rem;
-    line-height: 5rem;
+    line-height: 3.3rem;
     border-bottom: 4px solid var(--dark-cyan);
     padding: 0;
     margin: 0;
