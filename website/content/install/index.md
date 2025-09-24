@@ -37,7 +37,7 @@ Here are some Getting Started guides for different operating systems:
   - Features: syntax highlighting, completion, type hints, jump to source
   - search and install roc extension (action `zed: extensions`)
   - in case of errors look into the Zed log (action `zed: open log`)
-- For other editors like Vim, Helix or Emacs [see](https://github.com/faldor20/tree-sitter-roc)
+- For other editors like Vim, Helix or Emacs, see [tree-sitter-roc](https://github.com/faldor20/tree-sitter-roc)
 
 ### [Tutorial](#tutorial) {#tutorial}
 
