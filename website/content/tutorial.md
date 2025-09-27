@@ -55,24 +55,32 @@ Try typing this in the REPL and pressing Enter:
 
 The REPL should cheerfully display the following:
 
-<pre><samp><span class="literal">"Hello, World!" </span><span class="colon">:</span> Str</samp></pre>
+<pre><samp><span class="literal">"Hello, World!"</samp></pre>
 
 Congratulations! You've just written your first Roc code.
 
-### [Naming Things](#naming-things) {#naming-things}
+### [Expressions and Statements](#expressions-and-statements) {#expressions-and-statements}
 
-When you entered the _expression_ `"Hello, World!"`, the REPL printed it back out. It also printed `: Str`, because `Str` is that expression's type. We'll talk about types later; for now, let's ignore the `:` and whatever comes after it whenever we see them.
-
-You can assign specific names to expressions. Try entering these lines:
+When you entered the _expression_ `"Hello, World!"`, the REPL printed it back out.
+You can give specific names to expressions using an assignment _statement_. Try entering these lines:
 
 ```
 greeting = "Hi"
 audience = "World"
 ```
 
+<pre><samp class="repl-prompt">greeting <span class="kw">=</span> <span class="str">"Hi"</span></samp></pre>
+<pre><samp class="repl-prompt">audience <span class="kw">=</span> <span class="str">"World"</span></samp></pre>
+
 From now until you exit the REPL, you can refer to either `greeting` or `audience` by those names! We'll use these later on in the tutorial.
 
-### [Arithmetic](#arithmetic) {#arithmetic}
+The difference between an _expression_ like `"Hi"` and a _statement_ like `greeting = "Hi"` is:
+* An expression evaluates to a value.
+* A statement does not evaluate to a value.
+
+`"Hi"` is already a value, which counts as "evaluating to" one. In contrast, `greeting = "Hi"` does some work (namely, assigning the name `greeting` to the value `"Hi"`), but it does not evaluate to a value.
+
+### [Operators](#operators) {#operators}
 
 Now let's try using an _operator_, specifically the `+` operator. Enter this:
 
@@ -80,35 +88,77 @@ Now let's try using an _operator_, specifically the `+` operator. Enter this:
 
 You should see this output:
 
-<pre><samp>2 <span class="colon">:</span> Num * <span class="comment"></span></samp></pre>
+<pre><samp>2</samp></pre>
 
-According to the REPL, one plus one equals two. Sounds right!
+According to the REPL, the expression one plus one evaluates to two. Sounds right!
 
 Roc will respect [order of operations](https://en.wikipedia.org/wiki/Order_of_operations) when using multiple arithmetic operators like `+` and `-`, but you can use parentheses to specify exactly how they should be grouped.
 
 <pre><samp><span class="repl-prompt">1 <span class="op">+</span> 2 <span class="op">*</span> (3 <span class="op">-</span> 4)
 
--1 <span class="colon">:</span> Num *
+-1
 </span></samp></pre>
 
-### [Calling Functions](#calling-functions) {#calling-functions}
+### [Functions](#functions) {#functions}
 
-Let's try calling a function:
+It's very common to define your own functions in Roc:
 
-<pre><samp><span class="repl-prompt">Str.concat("Hi ", "there.")</span>
+<pre><samp class="repl-prompt">add <span class="kw">=</span> <span class="kw">|</span>first<span class="comma">,</span> second<span class="kw">|</span> first <span class="op">+</span> second</samp></pre>
 
-<span class="literal">"Hi there."</span> <span class="colon">:</span> Str
-</samp></pre>
+This defines a function that takes two arguments (named `first` and `second`), adds them together, and returns that number.
 
-Here we're calling the `Str.concat` function and passing two arguments: the string `"Hi "` and the string `"there."`. This _concatenates_ the two strings together (that is, it puts one after the other) and returns the resulting combined string of `"Hi there."`.
+We used an ordinary _assignment statement_ (with `=`) to assign the name `add` to this function, just like we did to name some string values earlier. This works because functions are ordinary values in Roc. To emphasize this, normal <span class="kw">=</span> assignment is the only syntax in Roc for naming a function.
 
-The `Str.concat` function has a dot in its name. In `Str.concat`, `Str` is the name of a _module_, and `concat` is the name of a function inside that module.
+We can call the `add` function we just created like so:
 
-We'll get into more depth about modules later, but for now you can think of a module as a named collection of functions. Eventually we'll discuss how to use them for more than that.
+<pre><samp class="repl-prompt">add(1, 2)</pre>
+
+This should print `3`.
+
+Roc has certain builtin functions that are always in scope, which you can call without having to define them first. For example:
+
+<pre><samp><span class="repl-prompt">Str.concat("Hi ", "there")</span>
+
+<span class="literal">"Hi there"</span></samp></pre>
+
+Here we're calling the `Str.concat` function and passing two arguments: the string `"Hi "` and the string `"there"`. This _concatenates_ the two strings together (that is, it puts one after the other) and returns the resulting combined string of `"Hi there"`.
+
+### [Methods](#methods) {#methods}
+
+The `Str.concat` function has a dot in its name. In `Str.concat`, `Str` (short for "string") is the name of a _type_, and `concat` is the name of a function associated with that type. We use the term _method_ to refer to functions that are associated with types.
+
+Roc methods are ordinary functions in every way other than being associated with a type. It's accurate to call `Str.concat` both a function (because it is one) and a method (because it's associated with the `Str` type).
+
+### [Static Dispatch](#static-dispatch) {#static-dispatch}
+
+`Str.concat` is a method associated with the `Str` type, and that method's first argument also happens to be a `Str`.
+
+Whenever we're in this common situation—where a method's first argument is the same type as the method's associated type—we can call that method in either of these two styles:
+
+```
+Str.concat("Hi ", "there")
+"Hi ".concat("there")
+```
+
+The second style is called _static dispatch_. The way it works is:
+
+* The expression before the `.` is the _subject_ of the static dispatch call.
+* Assuming that subject's type has a method named `concat`, this code calls that method.
+* The subject itself (`"Hi"`) will be the first argument passed to the method, and any others (`"there"` in this example) will be passed as the remaining arguments.
+
+This is called _static_ dispatch because Roc infers the subject's type _statically_—that is, at compile time. This means if the subject's type doesn't have the specified method (`concat` in this example), you'll get a compile error.
+
+Static dispatch is the most popular way to call methods that support it. It's concise, and Roc compiles all static dispatch calls into ordinary function calls behind the scenes, so there's never any runtime cost to using it.
+
+### [Operator Overloading](#operator-overloading) {#operator-overloading}
+
+Arithmetic operators in Roc are syntax sugar for static dispatch calls. For example, `a + b` is syntax sugar for `a.plus(b)`, which means there's no difference at runtime between writing `a + b` or `a.plus(b)`. Similarly, `a * b` is syntax sugar for `a.times(b)`. The [Operator Desugaring Table](https://www.roc-lang.org/tutorial#operator-desugaring-table) at the end of this tutorial has a complete list of what each operator desugars to.
+
+This means all it takes to make `+` work on a given type is to give it a method named `plus`, and all it takes to make `*` work on it is to give it a `times` method. Enabling operators to work on new types is known as [operator overloading](https://en.wikipedia.org/wiki/Operator_overloading), and it's useful when defining custom number types in Roc.
 
 ### [String Interpolation](#string-interpolation) {#string-interpolation}
 
-An alternative syntax for `Str.concat` is _string interpolation_, which looks like this:
+String concatenation is so common that Roc has dedicated _string interpolation_ syntax that you can use instead of `Str.concat`. It looks like this:
 
 <pre><samp class="repl-prompt"><span class="literal">"<span class="str-esc">${</span><span class="str-interp">greeting</span><span class="str-esc">}</span> there, <span class="str-esc">${</span><span class="str-interp">audience</span><span class="str-esc">}</span>."</span></samp></pre>
 
@@ -120,9 +170,9 @@ Str.concat(greeting, Str.concat(" there, ", Str.concat(audience, ".")))
 
 You can put entire single-line expressions inside the parentheses in string interpolation. For example:
 
-<pre><samp class="repl-prompt"><span class="literal">"Two plus three is: <span class="str-esc">${</span><span class="str-interp">Num.to_str(2 + 3)</span><span class="str-esc">}</span>"</span></samp></pre>
+<pre><samp class="repl-prompt"><span class="literal">"Two plus three is: <span class="str-esc">${</span><span class="str-interp">(2 + 3).to_str()</span><span class="str-esc">}</span>"</span></samp></pre>
 
-By the way, there are many other ways to put strings together! Check out the [documentation](https://www.roc-lang.org/builtins/Str) for the `Str` module for more.
+Note that we explicitly called the `.to_str()` method on the number that the expression `(2 + 3)` evaluates to. Some languages implicitly convert values inside string interpolation to strings, but in general Roc's design favors explicit type conversions.
 
 ## [Building an Application](#building-an-application) {#building-an-application}
 
@@ -131,86 +181,176 @@ Let's move out of the REPL and create our first Roc application!
 Make a file named `main.roc` and put this in it:
 
 ```roc
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
-
-import pf.Stdout
-
-main! = |_args|
-    Stdout.line!("Hi there, from inside a Roc app. 🎉")
+main! = |_env|
+    echo!("Hello, World!")
 ```
 
 Try running this with:
 
 <samp>roc main.roc</samp>
 
-You should see a message about a file being downloaded, followed by this:
+You should see this:
 
-<samp>Hi there, from inside a Roc app. 🎉</samp>
+<samp>Hello, World!</samp>
 
-Congratulations, you've written your first Roc application! We'll go over what the parts above `main` do later, but let's play around a bit first.
+Congratulations, you've written your first Roc application!
 
-### [Defs](#defs) {#defs}
+`main.roc` defines a function named `main!` which calls a function named `echo!` passing the string `"Hello, World!"`.
+This `main!` function takes one argument (the program's environment), but we aren't using that argument yet,
+so we put an `_` at the beginning of its name to indicate that it's an _unused_ argument for now. The `!` at the end of
+these functions' names is a naming convention we'll discuss later.
 
-Try replacing the `main` line with this:
+When we ran `roc main.roc`, the `roc` CLI built this program and called the `main!` function it defined (passing the
+"program environment" argument which we aren't using yet), and that `main!` function called `echo!("Hello, World!")`,
+which printed that string to the screen.
+
+> You can build a standalone executable by running `roc build main.roc`, which will create a binary executable file named either `main` (on macOS and Linux) or `main.exe` (on Windows) in the current directory. You can also build executables that will run on other systems by using the `--target` flag, e.g. `roc build --target=wasm32 main.roc` or `roc build --target=x64linux main.roc`.
+
+### [Block Expression](#block-expression) {#block-expressions}
+
+Try replacing your `main.roc` file with this:
 
 ```roc
 birds = 3
-
 iguanas = 2
+total = birds + iguanas
 
-total = Num.to_str(birds + iguanas)
-
-main! = |_args|
-    Stdout.line!("There are ${total} animals.")
+main! = |_env|
+    echo!("There are ${total.to_str()} animals.")
 ```
 
-Now run `roc main.roc` again. This time the "Downloading ..." message won't appear; the file has been cached from last time, and won't need to be downloaded again.
-
-You should see this:
+Now run `roc main.roc` again. You should see this:
 
 <samp>There are 5 animals.</samp>
 
-`main.roc` now has four definitions (_defs_ for short) `birds`, <span class="nowrap">`iguanas`,</span> `total`, and `main!`.
+`main.roc` now has four assignments: `birds`, <span class="nowrap">`iguanas`,</span> `total`, and `main!`.
 
-A definition names an expression.
-
-- The first two defs assign the names `birds` and `iguanas` to the expressions `3` and `2`.
-- The next def assigns the name `total` to the expression `Num.to_str(birds + iguanas)`.
-
-Once we have a def, we can use its name in other expressions. For example, the `total` expression refers to `birds` and `iguanas`, and `Stdout.line!("There are ${total} animals.")` refers to `total`.
-
-You can name a def using any combination of letters and numbers, but they have to start with a lowercase letter.
-
-**Note:** Defs are constant; they can't be reassigned. We'd get an error if we wrote these two defs in the same scope:
+These are all called _top-level assignments_ because they are at the file's top-level [scope](https://en.wikipedia.org/wiki/Scope_(computer_science)). We can nest scopes underneath it in several ways, but the most straightforward way is with a _block expression_. Try replacing the contents of `main.roc` with this:
 
 ```roc
-birds = 3
-birds = 2
+total = {
+	birds = 3
+	iguanas = 2
+
+	birds + iguanas
+}
+
+main! = |_env|
+    echo!("There are ${total.to_str()} animals.")
 ```
 
-### [Defining Functions](#defining-functions) {#defining-functions}
+Here, we have two _top-level assingments_ (`total` and `main!`) and two assignments inside a _block expression_ (`birds` and `iguanas`).
 
-So far we've called functions like `Num.to_str`, `Str.concat`, and `Stdout.line`. Next let's try defining a function of our own.
+The `{` opens the block and the `}` closes it. Inside the block, we have a new scope where we can run as many statements as we like (here we've written two assignment statements, `birds = 3` and `iguanas = 2`), followed by a _closing expression_ (`birds + iguanas`) in this case. The entire block expression evaluates to this closing expression, which is why `total` ends up evaluating to `birds + iguanas` just like before.
+
+You can nest blocks as deeply as you like. For example, we could move `total` from the top-level into `main!` by making the body of the `main!` function a block too:
 
 ```roc
-birds = 3
+main! = |_env| {
+    total = {
+    	birds = 3
+    	iguanas = 2
 
-iguanas = 2
+    	birds + iguanas
+    }
 
-total = add_and_stringify(birds, iguanas)
-
-main! = |_args|
-    Stdout.line!("There are ${total} animals.")
-
-add_and_stringify = |num1, num2|
-    Num.to_str(num1 + num2)
+    echo!("There are ${total.to_str()} animals.")
+}
 ```
 
-This new `add_and_stringify` function we've defined accepts two numbers, adds them, calls `Num.to_str` on the result, and returns that.
+### [`if`-`else` Expressions](#if-else) {#if-else}
 
-The `|num1, num2|` syntax defines a function's arguments, and the expression after the final `|` is the body of the function. Whenever a function gets called, its body expression gets evaluated and returned.
+Let's make our animal-counting program pluralize its words correctly,
+by printing "1 animal" if there's one animal or "___ animals" otherwise,
+instead of the "1 animals" like it does now.
 
-### [`if`-`then`-`else` expressions](#if-then-else) {#if-then-else}
+We can do this by writing a function named `pluralize` to handle this:
+
+```roc
+main! = |_env| {
+    total = {
+    	birds = 3
+    	iguanas = 2
+
+    	birds + iguanas
+    }
+    pluralized = pluralize(total, "animal", "animals")
+
+    echo!("There are ${total} ${pluralized}.")
+}
+
+pluralize = |count, singular, plural| {
+	if count == 1 { singular } else { plural }
+}
+```
+
+This `pluralize` function uses `if` to decide whether to evaluate to the `singular` or `plural`.
+Just like blocks, numbers, strings, and function calls, `if` is an expression in Roc. This function
+evaluates to either `singular` or `plural` depending on whether `count` is 1.
+
+### [`roc fmt`](#roc-fmt) {#roc-fmt}
+
+The curly braces around `singular` and `plural` here are normal block expressions, just like
+with `total = { ... }` above. Same with the curly braces around the `if` itself. All of these
+curly braces are optional, and the function would do the same thing if we removed them:
+
+```roc
+pluralize = |count, singular, plural|
+	if count == 1 singular else plural
+```
+
+If you run `roc fmt` on this code, it will add the curly braces we had earlier even though they
+aren't required. That's because the standard style in Roc is to put blocks around function bodies
+and `if`/`else` branches. This way it's always easy to see where the `if` condition ends (it's
+not obvious at a glance that the `1` in `1 singular` is the end of the condition), and function
+bodies—which often need a block because they use statements—consistently have curly braces around them.
+
+> One of the design philosophies behind `roc fmt` is that it should never have any configuration options.
+> It's inevitable that different programmers will have different stylistic preferences; having the
+> language include a built-in automatic formatting tool with no configuration options eliminates
+> time-consuming code style arguments for anyone who uses the standard tool.
+
+### [Pure functions](#pure-functions) {#pure-functions}
+
+You might have noticed that although the `main!` and `echo!` functions have names ending in `!`, our
+new `pluralize` function did not follow that naming convention.
+
+This is because `pluralize` is a [pure functions](https://en.wikipedia.org/wiki/Pure_function), whereas
+`main!` and `echo!` have side effects. Roc's compiler statically infers which functions have side effects,
+and makes use of that distinction in useful ways we'll see later. Effectful functions can only be called
+from other effectful functions, so `main!` is effectful because it calls the effectful `echo!` function.
+
+An easy way to tell a function has side effects is when calling it multiple times with the same arguments
+changes the program's observable behavior. For example, calling `echo!` multiple times with the same
+string prints it multiple times. In contrast, calling `pluralize` multiple times with the same arguments
+will give you the same answer, but it won't change the program's behavior.
+
+> Calling a pure function repeatedly with the same arguments could run the system out of memory, which would
+> change observable program behavior. However, running out of memory terminates a Roc program immediately,
+> at which point a function's purity can be of no further consequence since the program has ended. As such,
+> memory usage isn't considered observable program behavior in Roc's definition of pure functions.
+
+In Roc, you never need to guess which functions are pure. If your function calls an effectful function (one
+whose name ends in `!`), and you give it a name that doesn't end in `!`, the compiler will warn you to update
+its name. That said, it's a warning, so you can ignore it and run the program anyway; this can be useful in
+situations where you want to (for example) debug a chain of pure function calls by writing diagnostics to a
+file. You can ignore the warning while debugging, and then remove the effects after you've fixed the bug.
+
+### [`Result`](#result) {#result}
+
+### [Pattern Matching](#pattern-matching) {#pattern-matching}
+
+- remainder of echo! platform
+    - Result and match from env vars
+    - introduce `app` module for packages
+        - explain package security
+        - import JSON package and use it
+- introduce basic-cli and platforms
+    - Stdout and Stderr
+        - maybe go through the example of printing 100 things (`for` loop?) and `| head 100` and like `?? crash "Writing to stdout failed!"`
+        - the point is that `Stdout.line` returning a `Result` means you can gracefully handle a broken pipe so that your CLI can work correctly with `| head` and such.
+        - but if you don't care, you can always just use `?`
+
 
 Let's modify this function to return an empty string if the numbers add to zero.
 
