@@ -214,12 +214,21 @@ check_url() {
                 fi
             fi
         else
-            if [[ "$is_external" == "true" ]]; then
-                echo -e "${RED}✗${NC} $url ($status_code) ${BLUE}[external]${NC}"
+            # Special handling: ignore HTTP 429 (Too Many Requests) for every.org links
+            if [[ "$status_code" == "429" && "$url" =~ every\.org ]]; then
+                if [[ "$is_external" == "true" ]]; then
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - rate limited, ignoring) ${BLUE}[external]${NC}"
+                else
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - rate limited, ignoring)"
+                fi
             else
-                echo -e "${RED}✗${NC} $url ($status_code)"
+                if [[ "$is_external" == "true" ]]; then
+                    echo -e "${RED}✗${NC} $url ($status_code) ${BLUE}[external]${NC}"
+                else
+                    echo -e "${RED}✗${NC} $url ($status_code)"
+                fi
+                echo "$url - HTTP $status_code" >> "$ERRORS_FILE"
             fi
-            echo "$url - HTTP $status_code" >> "$ERRORS_FILE"
         fi
     else
         if [[ "$is_external" == "true" ]]; then
