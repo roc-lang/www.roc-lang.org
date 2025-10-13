@@ -158,22 +158,25 @@ hr {
     padding-bottom: 36px;
     min-width: 308px; /* Widest logo plus padding - Firefox on Android needs this */
     max-width: none !important;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 48px;
 }
 
 #sponsor-logos svg {
     height: 64px;
-    margin-right: 72px;
     margin-top: 32px;
 }
 
 #sponsor-logos .logo-lambda-class {
     position: relative;
     top: 14px;
-    height: 4.5rem;
+    height: 4rem;
     fill: #000;
 }
 
-#sponsor-logos .logo-martian .cls-1 {
+#sponsor-logos .logo-martian path {
     fill: #04021e;
 }
 
@@ -596,6 +599,13 @@ details {
 
     #sponsor-logos {
         padding: 4px;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 24px !important;
+    }
+
+    #sponsor-logos svg {
+        margin-top: 0 !important;
     }
 
     .home-examples-column {
@@ -891,7 +901,7 @@ details {
         background-color: #481870 !important;
     }
 
-    #sponsor-logos .logo-martian .cls-1 {
+    #sponsor-logos .logo-martian path {
         fill: #fff;
     }
 
