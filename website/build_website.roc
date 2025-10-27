@@ -350,7 +350,6 @@ write_builtins_redirects! = |{}|
         /builtins/Inspect   /builtins/${redirect_version}/Inspect 301
         /builtins/Inspect/  /builtins/${redirect_version}/Inspect/ 301
         /builtins/Inspect/* /builtins/${redirect_version}/Inspect/:splat
-        https://foundation.roc-lang.org/* https://roc-lang.org/foundation/:splat 301
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? CreateRedirectsFileFailed
 
