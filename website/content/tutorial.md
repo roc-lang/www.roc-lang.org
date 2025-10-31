@@ -1360,7 +1360,7 @@ Ideally, Roc programs would never crash. However, there are some situations wher
 2.  When the system runs out of memory.
 3.  When a variable-length collection (like a `List` or `Str`) gets too long to be representable in the operating system's address space. (A 64-bit operating system's address space can represent several [exabytes](https://en.wikipedia.org/wiki/Byte#Multiple-byte_units) of data, so this case should not come up often.)
 
-Crashes in Roc are not like [try/catch exceptions](https://en.wikipedia.org/wiki/Exception_handling) found in some other programming languages. There is no way to "catch" a crash. It immediately ends the program, and what happens next is defined by the [platform](https://github.com/roc-lang/roc/wiki/Roc-concepts-explained#platform). For example, a command-line interface platform might exit with a nonzero [exit code](https://en.wikipedia.org/wiki/Exit_status), whereas a web server platform might have the current request respond with a [HTTP 500 error](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#500).
+Crashes in Roc are not like [try/catch exceptions](https://en.wikipedia.org/wiki/Exception_handling) found in some other programming languages. There is no way to "catch" a crash. It immediately ends the program, and what happens next is defined by the [platform](https://www.roc-lang.org/platforms). For example, a command-line interface platform might exit with a nonzero [exit code](https://en.wikipedia.org/wiki/Exit_status), whereas a web server platform might have the current request respond with a [HTTP 500 error](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#500).
 
 ### [Crashing in unreachable branches](#crashing-in-unreachable-branches) {#crashing-in-unreachable-branches}
 
@@ -1520,7 +1520,7 @@ import pf.Stdout
 
 This is known as a _module header_. Every `.roc` file is a _module_, and there are different types of modules. We know this particular one is an _application module_ because it begins with the `app` keyword.
 
-The line `app [main!]` shows that this module is a Roc application and which [platform](https://github.com/roc-lang/roc/wiki/Roc-concepts-explained#platform) it is built on.
+The line `app [main!]` shows that this module is a Roc application and which [platform](https://www.roc-lang.org/platforms) it is built on.
 
 The `{ pf: platform "https://...tar.br" }` part says four things:
 
