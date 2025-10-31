@@ -806,16 +806,16 @@ Result.isOk(List.get(["a", "b", "c"], 1))
 
 ```roc
 # Running this will produce `Ok("c")`
-Result.try(Str.to_u64("2"), listGet)
+Result.try(Str.to_u64("2"), list_get)
 
-listGet : U64 -> Result Str [OutOfBounds]
-listGet = |index|
+list_get : U64 -> Result Str [OutOfBounds]
+list_get = |index|
     List.get(["a", "b", "c", "d"], index)
 
 # Notes:
 #  - `Str.to_u64("2")` parses the string "2" to the integer 2, and returns `Ok(2)` (more on
 #    integer types later)
-#  - since parsing is successful, `Result.try` passes 2 to the `listGet` function
+#  - since parsing is successful, `Result.try` passes 2 to the `list_get` function
 #  - passing "abc" or "1000" instead of "2" would have resulted in `Err(InvalidNumStr)`
 #    or `Err(OutOfBounds)` respectively
 ```
