@@ -41,13 +41,13 @@ page_data =
     |> Dict.insert("/functional.html", { title: "Functional | Roc", description: "What does it mean that the Roc programming language is functional?" })
     |> Dict.insert("/index.html", { title: "The Roc Programming Language", description: "A fast, friendly, functional language." })
     |> Dict.insert("/foundation.html", { title: "Foundation | Roc", description: "Learn about the Roc Programming Language Foundation." })
-    |> Dict.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
     |> Dict.insert("/plans.html", { title: "Planned Changes | Roc", description: "Planned changes to the Roc programming language." })
     |> Dict.insert("/platforms.html", { title: "Platforms and Apps | Roc", description: "Learn about the platforms and applications architecture in the Roc programming language." })
     |> Dict.insert("/tutorial.html", { title: "Tutorial | Roc", description: "Learn the Roc programming language." })
     |> Dict.insert("/different-names.html", { title: "Different Names | Roc", description: "Names of things in Roc that differ from other languages." })
     |> Dict.insert("/repl/index.html", { title: "REPL | Roc", description: "Try the Roc programming language in an online REPL." })
     |> Dict.insert("/examples/index.html", { title: "Examples | Roc", description: "All kinds of examples implemented in the Roc programming language." })
+    |> Dict.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
     |> Dict.insert("/install/other.html", { title: "Getting started on other systems | Roc", description: "Roc installation guide for other systems" })
     |> Dict.insert("/install/linux_x86_64.html", { title: "Getting started on Linux x86_64 | Roc", description: "Roc installation guide for Linux x86_64" })
     |> Dict.insert("/install/linux_arm64.html", { title: "Getting started on Linux arm64 | Roc", description: "Roc installation guide for Linux arm64" })
@@ -56,6 +56,14 @@ page_data =
     |> Dict.insert("/install/windows.html", { title: "Getting started on Windows | Roc", description: "Roc installation guide for Windows" })
     |> Dict.insert("/install/nix.html", { title: "Getting started with Nix | Roc", description: "Roc installation guide for Nix" })
     |> Dict.insert("/install/getting_started.html", { title: "Getting started | Roc", description: "How to get started with Roc" })
+    |> Dict.insert("/installnew/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
+    |> Dict.insert("/installnew/other.html", { title: "Install on other systems | Roc", description: "Roc installation guide for other systems" })
+    |> Dict.insert("/installnew/linux_x86_64.html", { title: "Install on Linux x86_64 | Roc", description: "Roc installation guide for Linux x86_64" })
+    |> Dict.insert("/installnew/linux_arm64.html", { title: "Install on Linux arm64 | Roc", description: "Roc installation guide for Linux arm64" })
+    |> Dict.insert("/installnew/macos_apple_silicon.html", { title: "Install on MacOS arm64 | Roc", description: "Roc installation guide for MacOS Apple Silicon" })
+    |> Dict.insert("/installnew/macos_x86_64.html", { title: "Install on MacOS x86_64 | Roc", description: "Roc installation guide for MacOS x86_64" })
+    |> Dict.insert("/installnew/windows.html", { title: "Install on Windows | Roc", description: "Roc installation guide for Windows" })
+    |> Dict.insert("/installnew/nix.html", { title: "Usage on Nix | Roc", description: "Roc usage guide for Nix" })
 
 get_page_info : Str -> { title : Str, description : Str }
 get_page_info = |page_path_str|
@@ -70,7 +78,7 @@ get_page_info = |page_path_str|
                 |> (|page_title|
                     { title: "$(page_title) | Roc", description: "$(page_title) example in the Roc programming language." })
             else
-                crash("Web page $(page_path_str) did not have a title and description specified in the page_data Dict. Please add one.")
+                crash("Web page $(page_path_str) did not have a title and description specified in the page_data Dict (website/static_site_gen.roc). Please add one.")
 
 unwrap_or_crash : Result a b, Str -> a where b implements Inspect
 unwrap_or_crash = |result, error_msg|
