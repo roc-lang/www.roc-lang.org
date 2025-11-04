@@ -174,7 +174,7 @@ jobs:
           PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
           Set-Location website\content\installnew\install_scripts
-          "y" | pwsh -ExecutionPolicy Bypass -File .\Install-Roc.ps1
+          "y" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
 
       - name: Verify PATH was updated
         shell: pwsh
