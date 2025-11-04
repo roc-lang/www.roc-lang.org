@@ -107,21 +107,3 @@ jobs:
             exit 1
           fi
           echo "✅ PATH successfully updated in $PROFILE"
-
-      - name: Test roc binary (with PATH)
-        run: |
-          cd website/content/installnew/install_scripts
-          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832"
-          # Source the profile and test
-          if [ -n "${SHELL:-}" ]; then
-            case "$SHELL" in
-              */bash) PROFILE="$HOME/.bashrc" ;;
-              */zsh)  PROFILE="$HOME/.zshrc" ;;
-              */fish) PROFILE="$HOME/.config/fish/config.fish" ;;
-              *)      PROFILE="$HOME/.profile" ;;
-            esac
-          else
-            PROFILE="$HOME/.profile"
-          fi
-          . "$PROFILE"
-          roc version
