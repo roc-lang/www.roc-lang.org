@@ -2,36 +2,26 @@
 
 ## How to install Roc
 
-1. Open a powershell terminal and download the latest Roc release:
+1. Open **PowerShell** (you can press **Win + X → Windows PowerShell**).
+
+2. Download and run the Roc installer script:
 
     ```powershell
-    Invoke-WebRequest -Uri "TODO: ADD LINK HERE" -OutFile "roc.zip"
+    irm https://roc-lang.org/installnew/install_roc.ps1 | pwsh
     ```
 
-1. Unzip the archive:
+    > If your PowerShell says scripts are blocked, run PowerShell **as Administrator** just for the install, or start it like this:
+    >
+    > ```powershell
+    > powershell -ExecutionPolicy Bypass
+    > ```
+
+3. Close that PowerShell window and open a **new** one so the updated PATH is picked up.
+
+4. In the new PowerShell, download and run Hello World:
 
     ```powershell
-    Expand-Archive .\roc.zip -DestinationPath "$env:USERPROFILE\roc"
-    cd "$env:USERPROFILE\roc\<TODO FOLDER NAME>"
-    ```
-
-1. To be able to run the `roc` command anywhere on your system; execute:
-
-    ```powershell
-    setx PATH "$env:PATH;$env:USERPROFILE\roc\<TODO FOLDER NAME>"
-    ```
-
-1. To make sure everything worked, execute:
-
-   ```powershell
-   # Open a new powershell terminal first!
-   roc version
-   ```
-
-1. Download and run hello world:
-
-    ```powershell
-    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/roc-lang/examples/refs/heads/main/examples/HelloWorld/main.roc" -OutFile "main.roc"
+    curl.exe -OL https://raw.githubusercontent.com/roc-lang/examples/refs/heads/main/examples/HelloWorld/main.roc
     roc main.roc
     ```
 

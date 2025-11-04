@@ -40,6 +40,7 @@ $Url = "$BaseUrl/$File"
 Write-Host "➡️  Step 1: Downloading Roc for $Platform ($ArchName)..."
 $downloadPath = Join-Path $PWD $File
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Invoke-WebRequest -Uri $Url -OutFile $downloadPath -UseBasicParsing
 Write-Host "✅ Download complete: $downloadPath"
 Write-Host ""

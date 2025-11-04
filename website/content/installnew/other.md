@@ -8,7 +8,7 @@ Note: if your system is in this "other" category, that means we did not test Roc
 
     ```sh
     curl -OL https://raw.githubusercontent.com/roc-lang/examples/refs/heads/main/examples/HelloWorld/main.roc
-    roc main.roc
+    ./zig-out/bin/roc main.roc
     ```
 
 ## Next Steps
