@@ -36,3 +36,92 @@ jobs:
       - run: |
           cd website
           roc check build_website.roc
+
+  test-install-script:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+          - os: macos-15
+            platform: macos
+            arch: apple_silicon
+          - os: macos-15-intel
+            platform: macos
+            arch: x86_64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test install script (answer no to PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          bash unix.sh <<< "n"
+
+      - name: Verify installation (no PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832"
+          if [ ! -d "$DIR_NAME" ]; then
+            echo "Error: Installation directory $DIR_NAME not found"
+            exit 1
+          fi
+
+      - name: Test roc binary (no PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832"
+          "$DIR_NAME/roc" version
+
+      - name: Clean up for second test
+        run: |
+          cd website/content/installnew/install_scripts
+          rm -rf roc_nightly-*
+
+      - name: Test install script (answer yes to PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          bash unix.sh <<< "y"
+
+      - name: Verify PATH was updated
+        run: |
+          # Detect shell profile based on SHELL
+          if [ -n "${SHELL:-}" ]; then
+            case "$SHELL" in
+              */bash) PROFILE="$HOME/.bashrc" ;;
+              */zsh)  PROFILE="$HOME/.zshrc" ;;
+              */fish) PROFILE="$HOME/.config/fish/config.fish" ;;
+              *)      PROFILE="$HOME/.profile" ;;
+            esac
+          else
+            PROFILE="$HOME/.profile"
+          fi
+
+          if ! grep -q "roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832" "$PROFILE"; then
+            echo "Error: PATH not updated in $PROFILE"
+            exit 1
+          fi
+          echo "✅ PATH successfully updated in $PROFILE"
+
+      - name: Test roc binary (with PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832"
+          # Source the profile and test
+          if [ -n "${SHELL:-}" ]; then
+            case "$SHELL" in
+              */bash) PROFILE="$HOME/.bashrc" ;;
+              */zsh)  PROFILE="$HOME/.zshrc" ;;
+              */fish) PROFILE="$HOME/.config/fish/config.fish" ;;
+              *)      PROFILE="$HOME/.profile" ;;
+            esac
+          else
+            PROFILE="$HOME/.profile"
+          fi
+          . "$PROFILE"
+          roc version

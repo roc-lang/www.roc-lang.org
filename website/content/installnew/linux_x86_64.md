@@ -2,16 +2,16 @@
 
 ## How to install Roc
 
-1. Download the latest roc alpha release using the terminal:
+1. Download the latest roc nightly release using the terminal:
 
     ```sh
-    curl -OL TODO
+    curl -OL https://github.com/roc-lang/nightlies/releases/download/nightly-2025-October-31-8553832/roc_nightly-linux_x86_64-2025-10-31-8553832.tar.gz
     ```
 
 1. Untar the archive:
 
     ```sh
-    tar -xf roc-linux_x86_64-alpha4-rolling.tar.gz
+    tar -xf roc_nightly-linux_x86_64<TAB TO AUTOCOMPLETE>
     cd roc_night<TAB TO AUTOCOMPLETE>
     ```
 
