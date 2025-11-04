@@ -79,7 +79,6 @@ You can add that folder to your Windows user PATH so you can run `roc`
 from any new PowerShell or CMD window.
 "@
 
-# If the zip unpacks to a subfolder containing roc.exe, adjust this:
 $folderToAdd = $installDir
 
 # ---- Ask to add to PATH ----
@@ -96,7 +95,6 @@ if ($answer -match '^(y|Y)$') {
         Write-Host "ℹ️  PATH already contains $folderToAdd"
     } else {
         $newPath = if ($currentPath) { "$currentPath;$folderToAdd" } else { $folderToAdd }
-        # <- you said “feel free to use SetEnvironmentVariable” so here:
         [System.Environment]::SetEnvironmentVariable("Path", $newPath, "User")
         Write-Host "✅ Added Roc to your user PATH."
         Write-Host "   (Open a new terminal for it to take effect.)"

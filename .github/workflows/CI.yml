@@ -8,6 +8,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ROC_NIGHTLY_VERSION: 2025-10-31-8553832
 
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
@@ -66,7 +68,7 @@ jobs:
       - name: Verify installation (no PATH)
         run: |
           cd website/content/installnew/install_scripts
-          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832"
+          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
           if [ ! -d "$DIR_NAME" ]; then
             echo "Error: Installation directory $DIR_NAME not found"
             exit 1
@@ -75,7 +77,7 @@ jobs:
       - name: Test roc binary (no PATH)
         run: |
           cd website/content/installnew/install_scripts
-          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832"
+          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
           "$DIR_NAME/roc" version
 
       - name: Clean up for second test
@@ -102,7 +104,7 @@ jobs:
             PROFILE="$HOME/.profile"
           fi
 
-          if ! grep -q "roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-2025-10-31-8553832" "$PROFILE"; then
+          if ! grep -q "roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}" "$PROFILE"; then
             echo "Error: PATH not updated in $PROFILE"
             exit 1
           fi
@@ -140,7 +142,7 @@ jobs:
         shell: pwsh
         run: |
           Set-Location website\content\installnew\install_scripts
-          $dirName = "roc_nightly-windows_${{ matrix.arch }}-2025-10-31-8553832"
+          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
           if (-not (Test-Path $dirName)) {
             Write-Error "❌ Installation directory $dirName not found"
           } else {
@@ -152,7 +154,7 @@ jobs:
         shell: pwsh
         run: |
           Set-Location website\content\installnew\install_scripts
-          $dirName = "roc_nightly-windows_x86_64-2025-10-31-8553832"
+          $dirName = "roc_nightly-windows_x86_64-${{ env.ROC_NIGHTLY_VERSION }}"
           $rocPath = Join-Path $dirName "roc.exe"
           if (-not (Test-Path $rocPath)) {
             Write-Host "❌ roc.exe not found at $rocPath"
@@ -184,7 +186,7 @@ jobs:
         env:
           PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
-          $dirName = "roc_nightly-windows_${{ matrix.arch }}-2025-10-31-8553832"
+          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
 
           # The script uses SetEnvironmentVariable("Path", "User")
           $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
@@ -204,7 +206,7 @@ jobs:
       - name: Test roc binary (after PATH update)
         shell: pwsh
         run: |
-          $dirName = "roc_nightly-windows_${{ matrix.arch }}-2025-10-31-8553832"
+          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
           $rocPath = Join-Path $PWD "website\content\installnew\install_scripts\$dirName\roc.exe"
 
           # Pull the updated user PATH and merge into current session
