@@ -52,7 +52,7 @@ case "${PLATFORM}_${ARCH_NAME}" in
 esac
 
 echo "➡️  Step 1: Downloading Roc for ${PLATFORM} (${ARCH_NAME})..."
-curl -fL -O "$URL"
+curl --proto '=https' --tlsv1.2 -fL -O "$URL"
 echo "✅ Download complete: $FILE"
 echo
 
