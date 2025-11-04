@@ -58,10 +58,7 @@ page_data =
     |> Dict.insert("/install/getting_started.html", { title: "Getting started | Roc", description: "How to get started with Roc" })
     |> Dict.insert("/installnew/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
     |> Dict.insert("/installnew/other.html", { title: "Install on other systems | Roc", description: "Roc installation guide for other systems" })
-    |> Dict.insert("/installnew/linux_x86_64.html", { title: "Install on Linux x86_64 | Roc", description: "Roc installation guide for Linux x86_64" })
-    |> Dict.insert("/installnew/linux_arm64.html", { title: "Install on Linux arm64 | Roc", description: "Roc installation guide for Linux arm64" })
-    |> Dict.insert("/installnew/macos_apple_silicon.html", { title: "Install on MacOS arm64 | Roc", description: "Roc installation guide for MacOS Apple Silicon" })
-    |> Dict.insert("/installnew/macos_x86_64.html", { title: "Install on MacOS x86_64 | Roc", description: "Roc installation guide for MacOS x86_64" })
+    |> Dict.insert("/installnew/unix.html", { title: "Install on Unix | Roc", description: "Roc installation guide for Unix" })
     |> Dict.insert("/installnew/windows.html", { title: "Install on Windows | Roc", description: "Roc installation guide for Windows" })
     |> Dict.insert("/installnew/nix.html", { title: "Usage on Nix | Roc", description: "Roc usage guide for Nix" })
 
