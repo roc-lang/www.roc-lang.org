@@ -63,11 +63,7 @@ Write-Host "📦 Step 3: Extracting files..."
 $installDirName = "roc_nightly-$Platform`_$ArchName-$VersionDate-$BuildId"
 $installDir     = Join-Path $PWD $installDirName
 
-if (!(Test-Path $installDir)) {
-    New-Item -ItemType Directory -Path $installDir | Out-Null
-}
-
-Expand-Archive -Path $downloadPath -DestinationPath $installDir -Force
+Expand-Archive -Path $downloadPath -DestinationPath $PWD -Force
 
 Write-Host "✅ Roc was extracted to: $installDir"
 Write-Host ""
