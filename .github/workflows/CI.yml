@@ -134,6 +134,7 @@ jobs:
           PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
           Set-Location website\content\installnew\install_scripts
+          ls
           "n" | pwsh -ExecutionPolicy Bypass -File .\install-roc.ps1
 
       - name: Verify installation (no PATH)
