@@ -8,6 +8,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ROC_NIGHTLY_VERSION: 2025-10-31-8553832
 
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
@@ -36,3 +38,180 @@ jobs:
       - run: |
           cd website
           roc check build_website.roc
+
+  test-install-script-unix:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+          - os: macos-15
+            platform: macos
+            arch: apple_silicon
+          - os: macos-15-intel
+            platform: macos
+            arch: x86_64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test install script (answer no to PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          bash install_roc.sh <<< "n"
+
+      - name: Verify installation (no PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          if [ ! -d "$DIR_NAME" ]; then
+            echo "Error: Installation directory $DIR_NAME not found"
+            exit 1
+          fi
+
+      - name: Test roc binary (no PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          "$DIR_NAME/roc" version
+
+      - name: Clean up for second test
+        run: |
+          cd website/content/installnew/install_scripts
+          rm -rf roc_nightly-*
+
+      - name: Test install script (answer yes to PATH)
+        run: |
+          cd website/content/installnew/install_scripts
+          bash install_roc.sh <<< "y"
+
+      - name: Verify PATH was updated
+        run: |
+          # Detect shell profile based on SHELL
+          if [ -n "${SHELL:-}" ]; then
+            case "$SHELL" in
+              */bash) PROFILE="$HOME/.bashrc" ;;
+              */zsh)  PROFILE="$HOME/.zshrc" ;;
+              */fish) PROFILE="$HOME/.config/fish/config.fish" ;;
+              *)      PROFILE="$HOME/.profile" ;;
+            esac
+          else
+            PROFILE="$HOME/.profile"
+          fi
+
+          if ! grep -q "roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}" "$PROFILE"; then
+            echo "Error: PATH not updated in $PROFILE"
+            exit 1
+          fi
+          echo "✅ PATH successfully updated in $PROFILE"
+
+  test-install-script-windows:
+    strategy:
+      matrix:
+        include:
+          - os: windows-2022
+            arch: x86_64
+            proc_arch: AMD64
+          - os: windows-2025
+            arch: x86_64
+            proc_arch: AMD64
+          - os: windows-11-arm
+            arch: arm64
+            proc_arch: ARM64
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test install script (answer no to PATH)
+        shell: pwsh
+        env:
+          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
+        run: |
+          Set-Location website\content\installnew\install_scripts
+          "n" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
+
+      - name: Verify installation (no PATH)
+        shell: pwsh
+        run: |
+          Set-Location website\content\installnew\install_scripts
+          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          if (-not (Test-Path $dirName)) {
+            Write-Error "❌ Installation directory $dirName not found"
+          } else {
+            Write-Host "✅ Found $dirName"
+          }
+
+      - name: Test roc binary (no PATH) – x86_64 only
+        if: ${{ matrix.arch == 'x86_64' }}
+        shell: pwsh
+        run: |
+          Set-Location website\content\installnew\install_scripts
+          $dirName = "roc_nightly-windows_x86_64-${{ env.ROC_NIGHTLY_VERSION }}"
+          $rocPath = Join-Path $dirName "roc.exe"
+          if (-not (Test-Path $rocPath)) {
+            Write-Host "❌ roc.exe not found at $rocPath"
+            Write-Host "Contents of ${dirName}:"
+            Get-ChildItem $dirName -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $_" }
+            exit 1
+          } else {
+            Write-Host "Running roc.exe version..."
+            & $rocPath version
+          }
+
+      - name: Clean up for second test
+        shell: pwsh
+        run: |
+          Set-Location website\content\installnew\install_scripts
+          Get-Item .\roc_nightly-* -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
+          Write-Host "🧹 Cleaned up previous installation directories"
+
+      - name: Test install script (answer yes to PATH)
+        shell: pwsh
+        env:
+          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
+        run: |
+          Set-Location website\content\installnew\install_scripts
+          "y" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
+
+      - name: Verify PATH was updated
+        shell: pwsh
+        env:
+          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
+        run: |
+          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+
+          # The script uses SetEnvironmentVariable("Path", "User")
+          $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+
+          if ([string]::IsNullOrEmpty($userPath)) {
+            Write-Error "❌ User PATH is empty or not readable"
+            exit 1
+          }
+
+          if ($userPath -notlike "*$dirName*") {
+            Write-Error "❌ PATH not updated with $dirName"
+            exit 1
+          } else {
+            Write-Host "✅ PATH successfully updated with $dirName"
+          }
+
+      - name: Test roc binary (after PATH update)
+        shell: pwsh
+        run: |
+          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          $rocPath = Join-Path $PWD "website\content\installnew\install_scripts\$dirName\roc.exe"
+
+          # Pull the updated user PATH and merge into current session
+          $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+          $env:PATH = "$userPath;$env:PATH"
+
+          Write-Host "Running roc.exe version..."
+          roc.exe version
