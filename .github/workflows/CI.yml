@@ -155,7 +155,10 @@ jobs:
           $dirName = "roc_nightly-windows_x86_64-2025-10-31-8553832"
           $rocPath = Join-Path $dirName "roc.exe"
           if (-not (Test-Path $rocPath)) {
-            Write-Error "❌ roc.exe not found at $rocPath"
+            Write-Host "❌ roc.exe not found at $rocPath"
+            Write-Host "Contents of $dirName:"
+            Get-ChildItem $dirName -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $_" }
+            exit 1
           } else {
             Write-Host "Running roc.exe version..."
             & $rocPath version
