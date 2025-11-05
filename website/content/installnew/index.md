@@ -8,7 +8,7 @@
 <!-- TODO docker release  -->
 - [Linux or macOS](/installnew/unix)
 - [Windows](/installnew/windows)
-- [Other Systems](/installnew/other)
+- [Other](/installnew/other)
 
 <!-- TODO mention editor plugins once they are up to date  -->
 
