@@ -1,0 +1,6 @@
+name = "roc-website-worker"
+compatibility_date = "2025-07-18"
+
+[assets]
+directory = "./website/build"
+not_found_handling = "404-page
