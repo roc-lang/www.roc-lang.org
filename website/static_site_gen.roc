@@ -61,6 +61,7 @@ page_data =
     |> Dict.insert("/installnew/unix.html", { title: "Install on Unix | Roc", description: "Roc installation guide for Unix" })
     |> Dict.insert("/installnew/windows.html", { title: "Install on Windows | Roc", description: "Roc installation guide for Windows" })
     |> Dict.insert("/installnew/nix.html", { title: "Usage on Nix | Roc", description: "Roc usage guide for Nix" })
+    |> Dict.insert("/404.html", { title: "Page Not Found | Roc", description: "The page you requested could not be found." })
 
 get_page_info : Str -> { title : Str, description : Str }
 get_page_info = |page_path_str|

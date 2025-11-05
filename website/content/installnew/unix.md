@@ -5,7 +5,7 @@
 1. Download the roc install script and execute it:
 
     ```sh
-    curl --proto '=https' --tlsv1.2 -sSf https://roc-lang.org/installnew/install_roc.sh | sh 
+    curl --proto '=https' --tlsv1.2 -sSf https://roc-lang.org/install_roc.sh | sh 
     ```
 
 1. In a new terminal, download and run hello world:

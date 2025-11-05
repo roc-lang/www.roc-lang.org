@@ -7,7 +7,7 @@
 2. Download and run the Roc installer script:
 
     ```powershell
-    irm https://roc-lang.org/installnew/install_roc.ps1 | pwsh
+    irm https://roc-lang.org/install_roc.ps1 | pwsh
     ```
 
     > If your PowerShell says scripts are blocked, run PowerShell **as Administrator** just for the install, or start it like this:
