@@ -135,13 +135,13 @@ jobs:
         env:
           PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
-          Set-Location website\content\installnew\install_scripts
+          Set-Location website\content
           "n" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
 
       - name: Verify installation (no PATH)
         shell: pwsh
         run: |
-          Set-Location website\content\installnew\install_scripts
+          Set-Location website\content
           $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
           if (-not (Test-Path $dirName)) {
             Write-Error "❌ Installation directory $dirName not found"
@@ -153,7 +153,7 @@ jobs:
         if: ${{ matrix.arch == 'x86_64' }}
         shell: pwsh
         run: |
-          Set-Location website\content\installnew\install_scripts
+          Set-Location website\content
           $dirName = "roc_nightly-windows_x86_64-${{ env.ROC_NIGHTLY_VERSION }}"
           $rocPath = Join-Path $dirName "roc.exe"
           if (-not (Test-Path $rocPath)) {
@@ -169,7 +169,7 @@ jobs:
       - name: Clean up for second test
         shell: pwsh
         run: |
-          Set-Location website\content\installnew\install_scripts
+          Set-Location website\content
           Get-Item .\roc_nightly-* -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
           Write-Host "🧹 Cleaned up previous installation directories"
 
@@ -178,7 +178,7 @@ jobs:
         env:
           PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
-          Set-Location website\content\installnew\install_scripts
+          Set-Location website\content
           "y" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
 
       - name: Verify PATH was updated
@@ -207,7 +207,7 @@ jobs:
         shell: pwsh
         run: |
           $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
-          $rocPath = Join-Path $PWD "website\content\installnew\install_scripts\$dirName\roc.exe"
+          $rocPath = Join-Path $PWD "website\content\$dirName\roc.exe"
 
           # Pull the updated user PATH and merge into current session
           $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
