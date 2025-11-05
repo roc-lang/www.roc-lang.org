@@ -112,7 +112,7 @@ else
 fi
 
 # ---- Ask to add Roc to PATH ----
-read -r -p "Would you like me to add Roc to your PATH automatically? [y/N] " ANSWER
+read -r -p "Would you like me to add Roc to your PATH automatically? [y/N] " ANSWER </dev/tty
 if [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ]; then
     # note: using printf here avoids a literal "\n" being written
     printf '\nexport PATH="$PATH:%s"\n' "$INSTALL_DIR" >> "$PROFILE"
