@@ -3,6 +3,7 @@
 # Based on your 2025-10-31 nightly.
 
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ---- Configuration ----
 $VersionDate = "2025-10-31"

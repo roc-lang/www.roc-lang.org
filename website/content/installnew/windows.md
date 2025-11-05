@@ -2,12 +2,12 @@
 
 ## How to install Roc
 
-1. Open **PowerShell** (you can press **Win + X → Windows PowerShell**).
+1. Open a  **PowerShell Terminal** (you can press **Win + X → Terminal**).
 
 2. Download and run the Roc installer script:
 
     ```powershell
-    irm https://roc-lang.org/install_roc.ps1 | pwsh
+    irm https://roc-lang.org/install_roc.ps1 | iex
     ```
 
     > If your PowerShell says scripts are blocked, run PowerShell **as Administrator** just for the install, or start it like this:

@@ -1,4 +1,4 @@
-# Linux/macOS
+# Linux / macOS
 
 ## How to install Roc
 
