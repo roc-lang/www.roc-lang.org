@@ -62,12 +62,12 @@ jobs:
 
       - name: Test install script (answer no to PATH)
         run: |
-          cd website/content/installnew/install_scripts
+          cd website\content
           bash install_roc.sh <<< "n"
 
       - name: Verify installation (no PATH)
         run: |
-          cd website/content/installnew/install_scripts
+          cd website\content
           DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
           if [ ! -d "$DIR_NAME" ]; then
             echo "Error: Installation directory $DIR_NAME not found"
@@ -76,18 +76,18 @@ jobs:
 
       - name: Test roc binary (no PATH)
         run: |
-          cd website/content/installnew/install_scripts
+          cd website\content
           DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
           "$DIR_NAME/roc" version
 
       - name: Clean up for second test
         run: |
-          cd website/content/installnew/install_scripts
+          cd website\content
           rm -rf roc_nightly-*
 
       - name: Test install script (answer yes to PATH)
         run: |
-          cd website/content/installnew/install_scripts
+          cd website\content
           bash install_roc.sh <<< "y"
 
       - name: Verify PATH was updated
