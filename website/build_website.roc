@@ -350,7 +350,6 @@ write_builtins_redirects! = |{}|
         /builtins/Inspect   /builtins/${redirect_version}/Inspect 301
         /builtins/Inspect/  /builtins/${redirect_version}/Inspect/ 301
         /builtins/Inspect/* /builtins/${redirect_version}/Inspect/:splat
-        /* /404.html 404
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? CreateRedirectsFileFailed
 
