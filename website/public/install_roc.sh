@@ -112,10 +112,13 @@ else
 fi
 
 # ---- Ask to add Roc to PATH ----
-# In non-interactive environments (CI, piped input), default to "no"
 ANSWER="n"
 if [ -t 0 ] && [ -e /dev/tty ]; then
+    # Interactive terminal: prompt the user
     read -r -p "Would you like me to add Roc to your PATH automatically? [y/N] " ANSWER </dev/tty
+elif [ ! -t 0 ]; then
+    # Non-interactive with piped input (e.g., CI with <<< "y"): read from stdin
+    read -r ANSWER || ANSWER="n"
 fi
 if [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ]; then
     # note: using printf here avoids a literal "\n" being written
