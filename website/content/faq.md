@@ -387,7 +387,7 @@ Dependent types are too risky of a bet for Roc to take. They have been implement
 
 Perhaps more success stories will emerge over time, but in the meantime it remains an open question whether dependent types are net beneficial in practice to application development. Further experimentation would be required to answer this question, and Roc is not the right language to do those experiments.
 
-## [Can one application have multiple platforms? Can platforms compose?](#multiple-platforms)
+## [Can one application have multiple platforms? Can platforms compose?](#multiple-platforms) {#multiple-platforms}
 
 The short answer to each of these questions is "No." To understand why, it's helpful to look at this from the platform author's perspective.
 
