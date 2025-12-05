@@ -1,7 +1,3 @@
-<div class="banner">
-<strong>Compiler Rebuild in Progress:</strong> The Roc compiler is currently being rewritten in Zig. We are minimally maintaining the old Rust compiler while focusing on the new one. If you'd like to help or try out the new compiler (bugs and all), <a href="https://roc.zulipchat.com">join us on Zulip chat</a>!
-</div>
-
 <div role="presentation" id="homepage-intro-outer">
 <div role="presentation" id="homepage-intro-box">
 <h1 id="homepage-h1">Roc</h1>
