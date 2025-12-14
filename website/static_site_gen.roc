@@ -164,12 +164,12 @@ view_navbar = |page_path_str|
         nav([aria_label("primary")], [
             a(home_link_attrs, [roc_logo, span([class("home-link-text")], [text("Roc")])]),
             div([id("top-bar-links")], [
-                a([href("/tutorial")], [text("tutorial")]),
-                a([href("/install")], [text("install")]),
-                a([href("/examples")], [text("examples")]),
-                a([href("/community")], [text("community")]),
-                a([href("/docs")], [text("docs")]),
-                a([href("/donate")], [text("donate")]),
+                a([href("/tutorial")], [text("Tutorial")]),
+                a([href("/install")], [text("Install")]),
+                a([href("/examples")], [text("Examples")]),
+                a([href("/community")], [text("Community")]),
+                a([href("/docs")], [text("Docs")]),
+                a([href("/donate")], [text("Donate")]),
             ]),
         ]),
     ])
