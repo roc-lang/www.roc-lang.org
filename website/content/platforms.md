@@ -113,4 +113,15 @@ This I/O design has [security benefits](#security), [ecosystem benefits](#ecosys
 
 Applications only interact with the _Roc API_ portion of a platform, but there is also a _host_ portion (written in a different language) that works behind the scenes. The host determines how the program starts, how memory is allocated and deallocated, and how I/O primitives are implemented.
 
-Anyone can implement their own platform. There isn't yet an official guide about how to do this, so the best way to get help if you'd like to create a platform is to [say hi in the `#beginners` channel](https://roc.zulipchat.com/#narrow/stream/231634-beginners) on [Roc Zulip!](https://roc.zulipchat.com)
+Anyone can implement their own platform. There isn't yet an official guide about how to do this, but we have some useful examples:
+- For Roc version alpha4:
+  - [basic-cli platform 0.20.0](https://github.com/roc-lang/basic-cli/tree/0.20.0)
+  - [basic-webserver platform 0.13.1](https://github.com/roc-lang/basic-webserver/tree/0.13.1)
+  - [Go lang platform](https://github.com/roc-lang/examples/tree/738b08558c656a11b69a1465b539456ae64605ec/examples/GoPlatform)
+  - [.NET platform](https://github.com/roc-lang/examples/tree/738b08558c656a11b69a1465b539456ae64605ec/examples/DotNetPlatform)
+- For Roc nightlies using the new (zig) compiler:
+  - [Small zig platform](https://github.com/lukewilliamboswell/roc-platform-template-zig)
+  - [Small rust platform](https://github.com/lukewilliamboswell/roc-platform-template-rust)
+  - [Newest basic-cli (work in progress)](https://github.com/roc-lang/basic-cli/pull/413)
+
+We'd love to answer any additional platform questions you have, [say hi in the `#beginners` channel](https://roc.zulipchat.com/#narrow/stream/231634-beginners) on our [group chat](https://roc.zulipchat.com)
