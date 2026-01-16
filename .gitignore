@@ -13,3 +13,5 @@ website/dist
 website/build
 website/content/examples
 website/.cache/
+
+.DS_Store
