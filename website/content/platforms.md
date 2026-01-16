@@ -119,7 +119,7 @@ Anyone can implement their own platform. There isn't yet an official guide about
   - [basic-webserver platform 0.13.1](https://github.com/roc-lang/basic-webserver/tree/0.13.1)
   - [Go lang platform](https://github.com/roc-lang/examples/tree/738b08558c656a11b69a1465b539456ae64605ec/examples/GoPlatform)
   - [.NET platform](https://github.com/roc-lang/examples/tree/738b08558c656a11b69a1465b539456ae64605ec/examples/DotNetPlatform)
-- For Roc nightlies using the new (zig) compiler:
+- For [Roc nightlies](https://github.com/roc-lang/nightlies/releases) using the new (zig) compiler:
   - [Small zig platform](https://github.com/lukewilliamboswell/roc-platform-template-zig)
   - [Small rust platform](https://github.com/lukewilliamboswell/roc-platform-template-rust)
   - [Newest basic-cli (work in progress)](https://github.com/roc-lang/basic-cli/pull/413)
