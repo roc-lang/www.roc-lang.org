@@ -21,8 +21,8 @@
     </section>
     <section>
         <h2 id="installation"><a href="#installation">Installation</a></h2>
-        <p>Roc doesn’t have a numbered release or an installer yet, but you can follow the install instructions for your OS<a href="/install/getting_started.html#installation"> here </a>. If you get stuck, friendly people will be happy to help if you open a topic in<a href="https://roc.zulipchat.com/#narrow/stream/231634-beginners"> #beginners </a>on<a href="https://roc.zulipchat.com/"> Roc Zulip Chat </a>and ask for assistance!</p>
-        <p>WARNING: this tutorial is for the stable Rust compiler. Some of the syntax is deprecated and will not work with the new Zig compiler. If you would like to experiment with the unstable Zig compiler, you can try <a href="https://gist.github.com/rtfeldman/f46bcbfe5132d62c4095dfa687bb9aa4">this guide</a>.</p>
+        <p>Roc doesn’t have a numbered release or an installer yet, but you can follow the install instructions for your OS<a href="/install/getting_started.html#installation"> here </a>. If you get stuck, friendly people will be happy to help if you open a topic in<a href="https://roc.zulipchat.com/#narrow/stream/231634-beginners"> #beginners </a>on our<a href="https://roc.zulipchat.com/"> group chat </a>and ask for assistance!</p>
+        <p>NOTE: this tutorial is for Roc <a href="https://github.com/roc-lang/roc/releases/tag/alpha4-rolling">alpha4</a> (stable Rust compiler). Some of the syntax is deprecated and will not work with the new Zig compiler. If you would like to experiment with the unstable Zig compiler, you can try <a href="https://gist.github.com/rtfeldman/f46bcbfe5132d62c4095dfa687bb9aa4">this guide</a>.</p>
     </section>
 
 ## [AI Docs](#ai-docs) {#ai-docs}
