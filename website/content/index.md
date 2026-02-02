@@ -91,9 +91,8 @@ Here are some examples of how it can be used today.
         <h3 class="home-examples-title">Embedding</h3>
         <pre><samp class="code-snippet">fn <span class="kw">=</span> require(<span class="string">"foo.roc"</span>)<span class="kw">;</span>
 log(<span class="string">`Roc says </span><span class="kw">${</span>fn()<span class="kw">}</span><span class="string">`</span>)<span class="kw">;</span></samp></pre>
-        <p>You can call Roc functions from other languages. There are several <a href="https://github.com/roc-lang/roc/tree/main/examples">basic examples</a> of how to call Roc functions from Python, Node.js, Swift, WebAssembly, and JVM languages.</p>
+        <p>You can call Roc functions from other languages. There are some <a href="https://www.roc-lang.org/examples/">basic examples</a> of how to call Roc functions from Go or .NET.</p>
         <p>Any language that supports C interop can call Roc functions, using similar techniques to the ones found in these examples.</p>
-        <p>Most of those are minimal proofs of concept, but <a href="https://github.com/vendrinc/roc-esbuild">roc-esbuild</a> is a work in progress that's used at <a href="https://www.vendr.com/careers">Vendr</a> to call Roc functions from Node.js.</p>
     </div>
 </div>
 
