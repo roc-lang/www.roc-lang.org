@@ -46,7 +46,7 @@ never done anything with Rust and also never worked on a compiler, but we've
 been able to find beginner-friendly projects to get people up to speed gradually.)
 
 If you're interested in getting involved, check out
-[CONTRIBUTING.md](https://github.com/roc-lang/roc/blob/main/CONTRIBUTING.md)!
+[CONTRIBUTING.md](https://github.com/roc-lang/roc/blob/main/CONTRIBUTING/README.md)!
 
 If you're interested in substantial implementation- or research-heavy projects
 related to Roc, check out [Roc Project Ideas][project-ideas]!
