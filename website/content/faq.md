@@ -457,7 +457,7 @@ There were a few reasons for this rewrite.
 3. Given that Rust's main selling points are inapplicable (its package ecosystem being another), Zig's much faster compile times are a welcome benefit.
 4. Zig has more tools for working in a memory-unsafe environment, such as reporting memory leaks in tests. These have been helpful in finding bugs that are out of scope for safe Rust.
 
-The split of Rust for the compiler and Zig for the standard library has worked well so far, and there are no plans to change it.
+We're now also working on rewriting the compiler in Zig! Rust served us well, but we now think the Zig tradeoffs will suit us better for similar reasons to above. [A longer explanation can be found here](https://gist.github.com/rtfeldman/77fb430ee57b42f5f2ca973a3992532f)
 
 ## [Why can't functions be compared for equality using the `==` operator?](#function-equality) {#function-equality}
 
