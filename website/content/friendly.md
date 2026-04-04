@@ -8,10 +8,10 @@ Roc's syntax isn't trivial, but there also isn't much of it to learn. It's desig
 
 - `user.email` always accesses the `email` field of a record named `user`. <span class="nowrap">(Roc has</span> no inheritance, subclassing, or proxying.)
 - `Email.isValid` always refers to something named `isValid` exported by a module named `Email`. (Module names are always capitalized, and variables/constants never are.) Modules are always defined statically and can't be modified at runtime; there's no [monkey patching](https://en.wikipedia.org/wiki/Monkey_patch) to consider either.
-- `x = doSomething(y, z)` always declares a new constant `x` (Roc has [no mutable variables, reassignment, or shadowing](/functional)) to be whatever the `doSomething` function returns when passed the arguments `y` and `z`.
-- `"Name: $(Str.trim(name))"` uses *string interpolation* syntax: a dollar sign inside a string literal, followed by an expression in parentheses.
+- `x = doSomething(y, z)` always declares a new constant `x` to be whatever the `doSomething` function returns when passed the arguments `y` and `z`.
+- `"Name: ${name.trim()}"` uses *string interpolation* syntax: a dollar sign inside a string literal, followed by an expression in parentheses.
 
-Roc also ships with a source code formatter that helps you maintain a consistent style with little effort. The `roc format` command neatly formats your source code according to a common style, and it's designed with the time-saving feature of having no configuration options. This feature saves teams all the time they would otherwise spend debating which stylistic tweaks to settle on!
+Roc also ships with a source code formatter that helps you maintain a consistent style with little effort. The `roc fmt` command neatly formats your source code according to a common style, and it's designed with the time-saving feature of having no configuration options. This feature saves teams all the time they would otherwise spend debating which stylistic tweaks to settle on!
 
 ## [Helpful compiler](#helpful-compiler) {#helpful-compiler}
 
@@ -19,28 +19,25 @@ Roc's compiler is designed to help you out. It does complete type inference acro
 
 If there's a problem at compile time, the compiler is designed to report it in a helpful way. Here's an example:
 
-<pre><samp class="code-snippet"><span class="literal">── TYPE MISMATCH ─────── /home/my-roc-project/main.roc ─</span>
+<pre><samp class="code-snippet"><span class="literal">── TYPE MISMATCH ─────────────────────────────────</span>
 
-Something is off with the <span class="literal">then</span> branch of this <span class="literal">if</span>:
+This expression is used in an unexpected way:
+   ┌─ /.../main.roc:4:9
+   │
+<span class="literal">4 │</span> <span class="error">        if some_decimal > 0</span>
+<span class="literal">5 │</span> <span class="error">            some_decimal + 1</span>
+<span class="literal">6 │</span> <span class="error">        else</span>
+<span class="literal">7 │</span> <span class="error">            0</span>
 
-<span class="literal">4│</span>      someInt : I64
-<span class="literal">5│</span>      someInt =
-<span class="literal">6│</span>          if someDecimal > 0 then
-<span class="literal">7│</span>              someDecimal + 1
-                <span class="error">^^^^^^^^^^^^^^^</span>
-
-This branch is a fraction of type:
-
-    <span class="literal">Dec</span>
-
-But the type annotation on `someInt` says it should be:
+It has the type:
 
     <span class="literal">I64</span>
 
-<span class="literal">Tip:</span> You can convert between integers and fractions
-using functions like `Num.toFrac` and `Num.round`.</samp></pre>
+But you are trying to use it as:
 
-If you like, you can run a program that has compile-time errors like this. (If the program reaches the error at runtime, it will crash.)
+    <span class="literal">Dec</span></samp></pre>
+
+If you like, you can run a program that has compile-time errors like this by using the flag `--allow-errors`. If the program reaches the error at runtime, it will crash.
 
 This lets you do things like trying out code that's only partially finished, or running tests for one part of your code base while other parts have compile errors. (Note that this feature is only partially completed, and often errors out; it has a ways to go before it works for all compile errors!)
 
@@ -57,6 +54,8 @@ Another technique is to validate the serialized data against a schema specified 
 In addition to this, Roc also supports serialization _inference_. It has some characteristics of both other approaches:
 - Like the first technique, it does not require specifying a schema up front.
 - Like the second technique, it reports any errors immediately during decoding rather than letting the problems propagate through the program.
+
+TODO: update the text below for the new Roc compiler once [roc-json](https://github.com/lukewilliamboswell/roc-json) is updated.
 
 This technique works by using Roc's type inference to infer the expected shape of serialized data based on how it's used in your program. Here's an example, using [`Decode.fromBytes`](https://www.roc-lang.org/builtins/Decode#fromBytes) to decode some JSON:
 
@@ -80,6 +79,7 @@ The `roc test` command runs a Roc program's tests. Each test is declared with th
 ## One plus one should equal two.
 expect 1 + 1 == 2
 ```
+TODO continue reviewing for new compiler from here on
 
 If the test fails, `roc test` will show you the source code of the `expect`, along with the values of any named variables inside it, so you don't have to separately check what they were.
 
