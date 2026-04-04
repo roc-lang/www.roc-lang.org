@@ -3,16 +3,16 @@ app [main!] {
 }
 
 import pf.SSG
-import pf.Types
+#import pf.Types
 import pf.Html exposing [header, nav, div, link, text, a, span, html, head, body, meta, script, footer]
 import pf.Html.Attributes exposing [id, aria_label, aria_hidden, title, href, class, rel, content, lang, charset, name, color]
-import "content/tutorial.md" as tutorial_markdown : Str
+#import "content/tutorial.md" as tutorial_markdown : Str
 
-import InteractiveRocExample
+#import InteractiveRocExample
 
 main! = |{ input_dir, output_dir }|
 
-    try(SSG.write_file!({ output_dir, relpath: Types.to_rel_path("llms.txt"), content: tutorial_markdown }))
+    #try(SSG.write_file!({ output_dir, relpath: Types.to_rel_path("llms.txt"), content: tutorial_markdown }))
 
     # get the path and url of markdown files in content directory
     files = try(SSG.files!(input_dir))
@@ -43,10 +43,10 @@ page_data =
     |> Dict.insert("/foundation.html", { title: "Foundation | Roc", description: "Learn about the Roc Programming Language Foundation." })
     |> Dict.insert("/plans.html", { title: "Planned Changes | Roc", description: "Planned changes to the Roc programming language." })
     |> Dict.insert("/platforms.html", { title: "Platforms and Apps | Roc", description: "Learn about the platforms and applications architecture in the Roc programming language." })
-    |> Dict.insert("/tutorial.html", { title: "Tutorial | Roc", description: "Learn the Roc programming language." })
+    #|> Dict.insert("/tutorial.html", { title: "Tutorial | Roc", description: "Learn the Roc programming language." })
     |> Dict.insert("/different-names.html", { title: "Different Names | Roc", description: "Names of things in Roc that differ from other languages." })
     |> Dict.insert("/repl/index.html", { title: "REPL | Roc", description: "Try the Roc programming language in an online REPL." })
-    |> Dict.insert("/examples/index.html", { title: "Examples | Roc", description: "All kinds of examples implemented in the Roc programming language." })
+    #|> Dict.insert("/examples/index.html", { title: "Examples | Roc", description: "All kinds of examples implemented in the Roc programming language." })
     |> Dict.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
     |> Dict.insert("/install/other.html", { title: "Getting started on other systems | Roc", description: "Roc installation guide for other systems" })
     |> Dict.insert("/install/linux_x86_64.html", { title: "Getting started on Linux x86_64 | Roc", description: "Roc installation guide for Linux x86_64" })
@@ -94,11 +94,11 @@ transform = |page_path_str, html_content|
 view : Str, Str -> Html.Node
 view = |page_path_str, html_content|
     main_body =
-        if page_path_str == "/index.html" then
-            when Str.split_first(html_content, "<!-- THIS COMMENT WILL BE REPLACED BY THE LARGER EXAMPLE -->") is
-                Ok({ before, after }) -> [text(before), InteractiveRocExample.view, text(after)]
-                Err(NotFound) -> crash("Could not find the comment where the larger example on the homepage should have been inserted. Was it removed or edited?")
-        else
+        #if page_path_str == "/index.html" then
+        #    when Str.split_first(html_content, "<!-- THIS COMMENT WILL BE REPLACED BY THE LARGER EXAMPLE -->") is
+        #        Ok({ before, after }) -> [text(before), InteractiveRocExample.view, text(after)]
+        #        Err(NotFound) -> crash("Could not find the comment where the larger example on the homepage should have been inserted. Was it removed or edited?")
+        #else
             [text(html_content)]
 
     body_attrs =
@@ -164,9 +164,9 @@ view_navbar = |page_path_str|
         nav([aria_label("primary")], [
             a(home_link_attrs, [roc_logo, span([class("home-link-text")], [text("Roc")])]),
             div([id("top-bar-links")], [
-                a([href("/tutorial")], [text("Tutorial")]),
+                a([href("https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md")], [text("Tutorial")]),
                 a([href("/install")], [text("Install")]),
-                a([href("/examples")], [text("Examples")]),
+                a([href("https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc")], [text("Examples")]),
                 a([href("/community")], [text("Community")]),
                 a([href("/docs")], [text("Docs")]),
                 a([href("/donate")], [text("Donate")]),

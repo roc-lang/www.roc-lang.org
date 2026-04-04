@@ -5,6 +5,7 @@
 </svg>
 
 <p id="homepage-tagline">A fast, friendly, functional language.</p>
+<p>⚠️ We are updating this website for the new compiler,<br>it will look like a work in progress until we are done.<br>You can still visit the <a href="https://2025.roc-lang.org">website for the old compiler</a>.</p>
 <pre id="first-code-sample"><samp class="code-snippet">credits <span class="kw">=</span> songs<span class="punctuation section">.</span>map<span class="punctuation section">(</span><span class="kw">|</span>song<span class="kw">|</span>
     <span class="string">"Performed by </span><span class="kw">${</span>song<span class="punctuation section">.</span>artist<span class="kw">}</span><span class="string">"</span><br><span class="punctuation section">)</span></samp></pre>
 </div>
@@ -35,85 +36,16 @@
     </div>
 </section>
 
-<section id="try-roc">
-<h2><a href="#try-roc">Try Roc</a></h2>
-
-<div id="homepage-repl-container" role="presentation">
-    <div id="repl-description" role="presentation">
-        <p>You can try Roc using this read-eval-print loop (<a href="https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop">REPL</a>), which is running in your browser in <a href="https://webassembly.org">WebAssembly</a>.</p>
-        <p><code>Shift-Enter</code> adds a newline.</p>
-        <p>Try entering <code>0.1 + 0.2</code>
-        <svg id="repl-arrow" role="presentation" width="100" height="50" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="70,20 30,20 30,15 0,25 30,35 30,30 70,30"/>
-        </svg>
-        </p>
-    </div>
-    <div id="repl" role="presentation">
-        <code class="history">
-          <div id="repl-intro-text">Enter an expression to evaluate, or a definition (like <span class="color-blue">x = 1</span>) to use later.</div>
-          <div id="history-text" aria-live="polite"></div>
-        </code>
-        <div id="repl-prompt" role="presentation">»</div>
-        <textarea aria-label="Input Roc code here, then press Enter to submit it to the REPL" rows="5" id="source-input" placeholder="Enter some Roc code here." spellcheck="false"></textarea>
-    </div>
-</div>
-<script type="module" src="/site.js"></script>
-</section>
-
 ## [Examples](#examples) {#examples}
 
-Roc is a young language. It doesn't even have a numbered release yet, just alpha builds!
+In its current state, the new compiler is only suited for things like programming puzzles.
+In any case, the [all syntax example](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc) offers a great overview of the language.
 
-However, it can already be used for several things if you're up for being an early adopter—<br>
-with all the bugs and missing features which come with that territory.
+If you're willing to build from source, you can try out the [migrate-zig-compiler-edits branch](https://github.com/roc-lang/basic-cli/tree/migrate-zig-compiler-edits) of the basic-cli platform. It supports reading from stdin and running commands like you would do in a bash script.
 
-Here are some examples of how it can be used today.
+To get started with the language, try the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
 
-<div role="presentation" class="home-examples-container">
-    <div role="presentation" class="home-examples-column">
-        <h3 class="home-examples-title">Command-Line Interfaces</h3>
-    <pre><samp class="code-snippet">main! <span class="kw">=</span> <span class="kw">|</span>args<span class="kw">|</span>
-    Stdout<span class="punctuation section">.</span>line<span class="punctuation section">!</span><span class="punctuation section">(</span><span class="literal">"Hello!"</span><span class="punctuation section">)</span></samp></pre>
-        <p>You can use Roc to create scripts and command-line interfaces (CLIs). The compiler produces binary executables, so Roc programs can run on devices that don't have Roc itself installed.</p>
-        <p>As an example, the HTML for this website is generated using a <a href="https://github.com/roc-lang/www.roc-lang.org/blob/main/website/static_site_gen.roc">simple Roc script</a>.</p>
-        <p>If you’re looking for a starting point for building a command-line program in Roc, <a href="https://github.com/roc-lang/basic-cli">basic-cli</a> is a popular <a href="/platforms">platform</a> to check out.</p>
-    </div>
-    <div role="presentation" class="home-examples-column">
-        <h3 class="home-examples-title">Web Servers</h3>
-<pre><samp class="code-snippet">handle_req! <span class="kw">=</span> <span class="kw">|</span>request<span class="kw">|</span>
-    Ok<span class="punctuation section">(</span><span class="literal">{</span> body: <span class="comment">…</span> <span class="literal">}</span><span class="punctuation section">)</span></samp></pre>
-        <p>You can also build web servers in Roc. <a href="https://github.com/roc-lang/basic-webserver">basic-webserver</a> is a <a href="/platforms">platform</a> with
-        a simple interface: you write a function which takes a <code>Request</code>, does some I/O, and returns a <code>Response</code>.</p>
-        <p>Behind the scenes, it uses Rust's high-performance <a href="https://docs.rs/hyper/latest/hyper/">hyper</a> and <a href="https://tokio.rs/">tokio</a> libraries to execute your Roc function on incoming requests.</p>
-        <p>For database access, <a href="https://github.com/agu-z/roc-pg">roc-pg</a> lets you access a <a href="https://www.postgresql.org/">PostgreSQL</a> database&mdash;with your Roc types checked against the types in your database's schema.</p>
-    </div>
-    <div role="presentation" class="home-examples-column">
-        <h3 class="home-examples-title">Embedding</h3>
-        <pre><samp class="code-snippet">fn <span class="kw">=</span> require(<span class="string">"foo.roc"</span>)<span class="kw">;</span>
-log(<span class="string">`Roc says </span><span class="kw">${</span>fn()<span class="kw">}</span><span class="string">`</span>)<span class="kw">;</span></samp></pre>
-        <p>You can call Roc functions from other languages. There are some <a href="https://www.roc-lang.org/examples/">basic examples</a> of how to call Roc functions from Go or .NET.</p>
-        <p>Any language that supports C interop can call Roc functions, using similar techniques to the ones found in these examples.</p>
-    </div>
-</div>
-
-### [Other Examples](#other-examples) {#other-examples}
-
-You can find more use cases and examples on the [examples page](/examples)!
-
-</section>
-
-## [Code Sample with Explanations](#code-sample) {#code-sample}
-
-Here's a code sample that shows a few different aspects of Roc:
-
-- File I/O and HTTP requests
-- Pattern matching for error handling
-- JSON deserialization via type inference
-- Common syntax sugar: the `?` infix and postfix operators and string interpolation
-
-The [tutorial](/tutorial) introduces these gradually and in more depth, but this gives a brief overview.
-
-<!-- THIS COMMENT WILL BE REPLACED BY THE LARGER EXAMPLE -->
+<a class="btn-small" href="/tutorial">Tutorial</a>
 
 ## [Sponsors](#sponsors) {#sponsors}
 
