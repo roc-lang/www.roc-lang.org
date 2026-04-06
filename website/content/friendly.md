@@ -79,12 +79,15 @@ The `roc test` command runs a Roc program's tests. Each test is declared with th
 ## One plus one should equal two.
 expect 1 + 1 == 2
 ```
-TODO continue reviewing for new compiler from here on
 
+If the test fails, `roc test` will show you the line number of the `expect` that failed. <a href="https://github.com/roc-lang/roc/issues/9320">You can help improve this to make it friendlier</a>!
+<!-- TODO uncomment once https://github.com/roc-lang/roc/issues/9320 is implemented
 If the test fails, `roc test` will show you the source code of the `expect`, along with the values of any named variables inside it, so you don't have to separately check what they were.
 
 If you write a documentation comment right before it (like `## One plus one should equal two` here), it will appear in the test output, so you can use that to add some descriptive context to the test if you want to.
+-->
 
+<!-- TODO uncomment once https://github.com/roc-lang/roc/issues/9323 is implemented
 ## [Inline expectations](#inline-expect) {#inline-expect}
 
 You can also use `expect` in the middle of functions. This lets you verify assumptions that can't reasonably be encoded in types, but which can be checked at runtime. Similarly to [assertions](https://en.wikipedia.org/wiki/Assertion_(software_development)) in other languages, these will run not only during normal program execution, but also during your tests—and they will fail the test if any of them fails.
@@ -92,6 +95,7 @@ You can also use `expect` in the middle of functions. This lets you verify assum
 Unlike assertions (and unlike the `crash` keyword), failed `expect`s do not halt the program; instead, the failure will be reported and the program will continue. This means all `expect`s can be safely removed during `--optimize` builds without affecting program behavior—and so `--optimize` does remove them. This means you can add inline `expect`s without having to weigh each one's helpfulness against the performance cost of its runtime check, because they won't have any runtime cost after `--optimize` removes them.
 
 In the future, there are plans to add built-in support for [benchmarking](https://en.wikipedia.org/wiki/Benchmark_(computing)), [generative tests](https://en.wikipedia.org/wiki/Software_testing#Property_testing), [snapshot tests](https://en.wikipedia.org/wiki/Software_testing#Output_comparison_testing), simulated I/O (so you don't have to actually run the real I/O operations, but also don't have to change your code to accommodate the tests), and "reproduction replays"—tests generated from a recording of what actually happened during a particular run of your program, which deterministically simulate all the I/O that happened.
+-->
 
 ## Functional
 

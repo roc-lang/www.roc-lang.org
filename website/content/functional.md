@@ -4,7 +4,7 @@ Roc is designed to have a small number of simple language primitives. This goal 
 
 ## [Opportunistic mutation](#opportunistic-mutation) {#opportunistic-mutation}
 
-All Roc values are semantically immutable, but may be opportunistically mutated behind the scenes when it would improve performance (without affecting the program's behavior). For example:
+Roc values are semantically immutable, but may be opportunistically mutated behind the scenes when it would improve performance (without affecting the program's behavior). For example:
 
 ```roc
 colors
@@ -21,43 +21,31 @@ If `colors` is _not_ unique, however, then the first call to `Set.insert` will n
 
 Roc has ways of detecting uniqueness at compile time, so this optimization will often have no runtime cost, but in some cases it instead uses automatic reference counting to tell when something that was previously shared has become unique over the course of the running program.
 
-## [Everything is immutable (semantically)](#everything-is-immutable) {#everything-is-immutable}
+## [Immutable by default](#immutable-by-default) {#immutable-by-default}
 
-Since mutation is only ever done when it wouldn't change the behavior of the program, all Roc values are semantically immutable—even though they can still benefit from the performance of in-place mutation.
+By default, Roc values are semantically immutable—even though they can still benefit from the performance of in-place mutation behind the scenes.
 
 In many languages, this is reversed; everything is mutable by default, and it's up to the programmer to "defensively" clone to avoid undesirable modification. Roc's approach means that cloning happens automatically, which can be less error-prone than defensive cloning (which might be forgotten), but <span class="nowrap">which—to be fair—can</span> also increase unintentional cloning. It's a different default with different tradeoffs.
 
-A reliability benefit of semantic immutability everywhere is that it rules out [data races](https://en.wikipedia.org/wiki/Race_condition#Data_race). These concurrency bugs can be difficult to reproduce and time-consuming to debug, and they are only possible through direct mutation. Roc's semantic immutability rules out this category of bugs.
+A reliability benefit of semantic immutability is that it rules out [data races](https://en.wikipedia.org/wiki/Race_condition#Data_race). These concurrency bugs can be difficult to reproduce and time-consuming to debug, and they are only possible through direct mutation.
 
-A performance benefit of having no direct mutation is that it lets Roc rule out [reference cycles](https://en.wikipedia.org/wiki/Reference_counting#Dealing_with_reference_cycles). Languages which support direct mutation can have reference cycles, and detecting these cycles automatically at runtime has a cost. (Failing to detect them can result in memory leaks in languages that use reference counting.) Roc's automatic reference counting neither pays for runtime cycle collection nor memory leaks from cycles, because the language's lack of direct mutation primitives lets it rule out reference cycles at language design time.
+Direct mutation primitives have benefits too. Some algorithms are more concise or otherwise easier to read when written with direct mutation, and direct mutation can make the performance characteristics of some operations clearer. To address this, Roc provides opt-in mutable variables (described in the next section), while keeping immutability as the default.
 
-An ergonomics benefit of having no direct mutation primitives is that functions in Roc tend to be chainable by default. For example, consider the `Set.insert` function. In many languages, this function would be written to accept a `Set` to mutate, and then return nothing. In contrast, in Roc it will necessarily be written to return a (potentially) new `Set`, even if in-place mutation will end up happening anyway if it's unique.
+As such, Roc's design means that data races and reference cycles can be ruled out for the vast majority of code, and that functions will tend to be more amenable for chaining, while mutable variables provide an escape hatch for algorithms where direct mutation leads to clearer code.
 
-This makes Roc functions naturally amenable to pipelining, as we saw in the earlier example:
-
-```roc
-colors
-|> Set.insert "Purple"
-|> Set.insert "Orange"
-|> Set.insert "Blue"
-```
-
-To be fair, direct mutation primitives have benefits too. Some algorithms are more concise or otherwise easier to read when written with direct mutation, and direct mutation can make the performance characteristics of some operations clearer.
-
-As such, Roc's opportunistic mutation design means that data races and reference cycles can be ruled out, and that functions will tend to be more amenable for chaining, but also that some algorithms will be harder to express, and that performance optimization will likely tend to involve more profiling. These tradeoffs fit well with the language's overall design goals.
-
-## [No reassignment or shadowing](#no-reassignment) {#no-reassignment}
+## [No reassignment or shadowing by default](#no-reassignment) {#no-reassignment}
 
 In some languages, the following is allowed.
 
 <pre><samp class="code-snippet"><span class="literal">x <span class="kw">=</span> <span class="literal">1</span>
 x <span class="kw">=</span> <span class="literal">2</span></samp></pre>
 
-In Roc, this will give a compile-time error. Once a name has been assigned to a value, nothing in the same scope can assign it again. (This includes [shadowing](https://en.wikipedia.org/wiki/Variable_shadowing), which is disallowed.)
+In Roc, you can only execute that code when using the `--allow-errors` flag.
+That flag is intended to give you the freedom to quickly debug something or try something out even though some parts of the code contain errors.
 
-This can make Roc code easier to read, because the answer to the question "might this have a different value later on in the scope?" is always "no."
+For cases where reassignment is the most natural way to express something, Roc provides mutable variables. These are declared with `var` and marked with a `$` prefix. For example, `var $count = 0` declares a mutable variable that can later be reassigned with `$count = $count + 1`. The `$` prefix makes it immediately clear at every use site that a value might change, preserving the readability benefits of immutability by default while providing a convenient way to express algorithms that are more natural with mutation.
 
-That said, this can also make Roc code take longer to write, due to needing to come up with unique names to avoid shadowing—although pipelining (as shown in the previous section) reduces how often intermediate values need names.
+TODO continue review from here
 
 ### [Avoiding regressions](#avoiding-regressions) {#avoiding-regressions}
 
@@ -106,11 +94,23 @@ In contrast, suppose Roc allowed reassignment. Then it's possible something in t
 
 If we didn't read the whole function and notice that `greeting` was sometimes (but not always) reassigned from `"Hello"` to `"Hi"`, we might not have known that changing it to `message = welcome "Hello" "friend"` would cause a regression due to having the greeting always be `"Hello"`.
 
-Even if Roc disallowed reassignment but allowed shadowing, a similar regression could happen if the `welcome` function were shadowed between when it was defined here and when `message` later called it in the same scope. Because Roc allows neither shadowing nor reassignment, these regressions can't happen, and rearranging code can be done with more confidence.
+Even if Roc disallowed reassignment but allowed shadowing, a similar regression could happen if the `welcome` function were shadowed between when it was defined here and when `message` later called it in the same scope. Because Roc allows neither shadowing nor reassignment for regular bindings, these regressions can't happen, and rearranging code can be done with more confidence. (Mutable variables, with their `$` prefix, make it obvious which names can change.)
 
-In fairness, reassignment has benefits too. For example, using it with [early-exit control flow operations](https://en.wikipedia.org/wiki/Control_flow#Early_exit_from_loops) such as a `break` keyword can be a nice way to represent certain types of logic without incurring extra runtime overhead.
+Mutable variables work naturally with Roc's `for` loop syntax. For example, here's a function that sums a list of numbers:
 
-Roc does not have early-exits or loop syntax; looping is done either with convenience functions like [`List.walkUntil`](https://www.roc-lang.org/builtins/List#walkUntil) or with recursion (Roc implements [tail-call optimization](https://en.wikipedia.org/wiki/Tail_call), including [modulo cons](https://en.wikipedia.org/wiki/Tail_call#Tail_recursion_modulo_cons)), but early-exit operators can potentially make some code easier to follow (and potentially even slightly more efficient) when used in scenarios where breaking out of nested loops with a single instruction is desirable.
+```roc
+sum = |num_list| {
+    var $total = 0
+
+    for num in num_list {
+        $total = $total + num
+    }
+
+    $total
+}
+```
+
+Looping can also be done with convenience functions like `List.walk` or with recursion (Roc implements [tail-call optimization](https://en.wikipedia.org/wiki/Tail_call), including [modulo cons](https://en.wikipedia.org/wiki/Tail_call#Tail_recursion_modulo_cons)).
 
 ## [Managed effects over side effects](#managed-effects) {#managed-effects}
 
