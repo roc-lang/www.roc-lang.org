@@ -2,15 +2,16 @@
 
 Roc is designed to have a small number of simple language primitives. This goal leads Roc to be a single-paradigm [functional](https://en.wikipedia.org/wiki/Functional_programming) language, while its [performance goals](/fast) lead to some design choices that are uncommon in functional languages.
 
+<!-- TODO uncomment once opportunistic mutation is implemented
 ## [Opportunistic mutation](#opportunistic-mutation) {#opportunistic-mutation}
 
 Roc values are semantically immutable, but may be opportunistically mutated behind the scenes when it would improve performance (without affecting the program's behavior). For example:
 
 ```roc
 colors
-|> Set.insert "Purple"
-|> Set.insert "Orange"
-|> Set.insert "Blue"
+    .insert("Purple")
+    .insert("Orange")
+    .insert("Blue")
 ```
 
 The [`Set.insert`](https://www.roc-lang.org/builtins/Set#insert) function takes a `Set` and returns a `Set` with the given value inserted. It might seem like these three `Set.insert` calls would result in the creation of three brand-new sets, but Roc's *opportunistic mutation* optimizations mean this will be much more efficient.
@@ -20,6 +21,7 @@ Opportunistic mutation works by detecting when a semantically immutable value ca
 If `colors` is _not_ unique, however, then the first call to `Set.insert` will not mutate it. Instead, it will clone `colors`, insert `"Purple"` into the clone, and then return that. At that point, since the clone will be unique (nothing else is referencing it, since it was just created), the subsequent `Set.insert` calls will all mutate in-place.
 
 Roc has ways of detecting uniqueness at compile time, so this optimization will often have no runtime cost, but in some cases it instead uses automatic reference counting to tell when something that was previously shared has become unique over the course of the running program.
+-->
 
 ## [Immutable by default](#immutable-by-default) {#immutable-by-default}
 
@@ -45,54 +47,52 @@ That flag is intended to give you the freedom to quickly debug something or try 
 
 For cases where reassignment is the most natural way to express something, Roc provides mutable variables. These are declared with `var` and marked with a `$` prefix. For example, `var $count = 0` declares a mutable variable that can later be reassigned with `$count = $count + 1`. The `$` prefix makes it immediately clear at every use site that a value might change, preserving the readability benefits of immutability by default while providing a convenient way to express algorithms that are more natural with mutation.
 
-TODO continue review from here
-
 ### [Avoiding regressions](#avoiding-regressions) {#avoiding-regressions}
 
 A benefit of this design is that it makes Roc code easier to rearrange without causing regressions. Consider this code:
 
-<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">\</span>arg <span class="kw">-&gt;</span>
+<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">|</span>arg<span class="kw">|</span>
     greeting <span class="kw">=</span> <span class="string">"Hello"</span>
-    welcome <span class="kw">=</span> <span class="kw">\</span>name <span class="kw">-&gt;</span> <span class="string">"</span><span class="kw">$(</span>greeting<span class="kw">)</span><span class="string">, </span><span class="kw">$(</span>name<span class="kw">)</span><span class="string">!"</span>
+    welcome <span class="kw">=</span> <span class="kw">|</span>name<span class="kw">|</span> <span class="string">"</span><span class="kw">${</span>greeting<span class="kw">}</span><span class="string">, </span><span class="kw">${</span>name<span class="kw">}</span><span class="string">!"</span>
 
     <span class="comment"># …</span>
 
-    message <span class="kw">=</span> welcome <span class="string">"friend"</span>
+    message <span class="kw">=</span> welcome<span class="kw">(</span><span class="string">"friend"</span><span class="kw">)</span>
 
     <span class="comment"># …</span></samp></pre>
 
 Suppose I decide to extract the `welcome` function to the top level, so I can reuse it elsewhere:
 
-<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">\</span>arg <span class="kw">-&gt;</span>
+<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">|</span>arg<span class="kw">|</span>
     <span class="comment"># …</span>
 
-    message <span class="kw">=</span> welcome <span class="string">"Hello"</span> <span class="string">"friend"</span>
+    message <span class="kw">=</span> welcome<span class="kw">(</span><span class="string">"Hello"</span><span class="punctuation section">,</span> <span class="string">"friend"</span><span class="kw">)</span>
 
     <span class="comment"># …</span>
 
-welcome <span class="kw">=</span> <span class="kw">\</span>prefix<span class="punctuation section">,</span> name <span class="kw">-&gt;</span> <span class="string">"</span><span class="kw">$(</span>prefix<span class="kw">)</span><span class="string">, </span><span class="kw">$(</span>name<span class="kw">)</span><span class="string">!"</span></samp></pre>
+welcome <span class="kw">=</span> <span class="kw">|</span>prefix<span class="punctuation section">,</span> name<span class="kw">|</span> <span class="string">"</span><span class="kw">${</span>prefix<span class="kw">}</span><span class="string">, </span><span class="kw">${</span>name<span class="kw">}</span><span class="string">!"</span></samp></pre>
 
 Even without knowing the rest of `func`, we can be confident this change will not alter the code's behavior.
 
 In contrast, suppose Roc allowed reassignment. Then it's possible something in the `# …` parts of the code could have modified `greeting` before it was used in the `message =` declaration. For example:
 
-<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">\</span>arg <span class="kw">-&gt;</span>
+<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">|</span>arg<span class="kw">|</span>
     greeting <span class="kw">=</span> <span class="string">"Hello"</span>
-    welcome <span class="kw">=</span> <span class="kw">\</span>name <span class="kw">-&gt;</span> <span class="string">"</span><span class="kw">$(</span>greeting<span class="kw">)</span><span class="string">, </span><span class="kw">$(</span>name<span class="kw">)</span><span class="string">!"</span>
+    welcome <span class="kw">=</span> <span class="kw">|</span>name<span class="kw">|</span> <span class="string">"</span><span class="kw">${</span>greeting<span class="kw">}</span><span class="string">, </span><span class="kw">${</span>name<span class="kw">}</span><span class="string">!"</span>
 
     <span class="comment"># …</span>
 
-    <span class="kw">if</span> someCondition <span class="kw">then</span>
+    <span class="kw">if</span> someCondition
         greeting <span class="kw">=</span> <span class="string">"Hi"</span>
         <span class="comment"># …</span>
     <span class="kw">else</span>
         <span class="comment"># …</span>
 
     <span class="comment"># …</span>
-    message <span class="kw">=</span> welcome <span class="string">"friend"</span>
+    message <span class="kw">=</span> welcome<span class="kw">(</span><span class="string">"friend"</span><span class="kw">)</span>
     <span class="comment"># …</span></samp></pre>
 
-If we didn't read the whole function and notice that `greeting` was sometimes (but not always) reassigned from `"Hello"` to `"Hi"`, we might not have known that changing it to `message = welcome "Hello" "friend"` would cause a regression due to having the greeting always be `"Hello"`.
+If we didn't read the whole function and notice that `greeting` was sometimes (but not always) reassigned from `"Hello"` to `"Hi"`, we might not have known that changing it to `message = welcome("Hello", "friend")` would cause a regression due to having the greeting always be `"Hello"`.
 
 Even if Roc disallowed reassignment but allowed shadowing, a similar regression could happen if the `welcome` function were shadowed between when it was defined here and when `message` later called it in the same scope. Because Roc allows neither shadowing nor reassignment for regular bindings, these regressions can't happen, and rearranging code can be done with more confidence. (Mutable variables, with their `$` prefix, make it obvious which names can change.)
 
@@ -110,7 +110,7 @@ sum = |num_list| {
 }
 ```
 
-Looping can also be done with convenience functions like `List.walk` or with recursion (Roc implements [tail-call optimization](https://en.wikipedia.org/wiki/Tail_call), including [modulo cons](https://en.wikipedia.org/wiki/Tail_call#Tail_recursion_modulo_cons)).
+Looping can also be done with convenience functions like `List.walk` or with recursion (Roc implements [tail-call optimization](https://en.wikipedia.org/wiki/Tail_call)).
 
 ## [Managed effects over side effects](#managed-effects) {#managed-effects}
 
@@ -128,9 +128,11 @@ Having only (potentially asynchronous) *managed effects* and no (synchronous) *s
 
 Pure functions have some valuable properties, such as [referential transparency](https://en.wikipedia.org/wiki/Referential_transparency) and being trivial to [memoize](https://en.wikipedia.org/wiki/Memoization). They also have testing benefits; for example, all Roc tests which either use simulated effects (or which do not involve Tasks at all) can never flake. They either consistently pass or consistently fail. Because of this, their results can be cached, so `roc test` can skip re-running them unless their source code (including dependencies) changed. (This caching has not yet been implemented, but is planned.)
 
-Roc does support [tracing](https://en.wikipedia.org/wiki/Tracing_(software)) via the `dbg` keyword, an essential [debugging](https://en.wikipedia.org/wiki/Debugging) tool which is unusual among side effects in that—similarly to opportunistic mutation—using it should not affect the behavior of the program. As such, it typically does not impact the guarantees of pure functions in practice.
+Roc does support [tracing](https://en.wikipedia.org/wiki/Tracing_(software)) via the `dbg` keyword, an essential [debugging](https://en.wikipedia.org/wiki/Debugging) tool which is unusual among side effects in that using it should not affect the behavior of the program. As such, it typically does not impact the guarantees of pure functions in practice.
 
 Pure functions are notably amenable to compiler optimizations, and Roc already takes advantage of them to implement [function-level dead code elimination](https://elm-lang.org/news/small-assets-without-the-headache). Here are some other examples of optimizations that will benefit from this in the future; these are planned, but not yet implemented:
+
+TODO continue review from here
 
 - [Loop fusion](https://en.wikipedia.org/wiki/Loop_fission_and_fusion), which can do things like combining consecutive `List.map` calls (potentially intermingled with other operations that traverse the list) into one pass over the list.
 - [Compile-time evaluation](https://en.wikipedia.org/wiki/Compile-time_function_execution), which basically takes [constant folding](https://en.wikipedia.org/wiki/Constant_folding) to its natural limit: anything that can be evaluated at compile time is evaluated then. This saves work at runtime, and is easy to opt out of: if you want evaluation to happen at runtime, you can instead wrap the logic in a function and call it as needed.
