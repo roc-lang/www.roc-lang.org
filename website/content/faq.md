@@ -33,8 +33,8 @@ Fun fact: "roc" translates to 鹏 in Chinese, [which means](https://www.mdbg.net
 ## [Why does Roc not handle strings like most languages?](#strings-in-roc) {#strings-in-roc}
 
 We want to help you make reliable software, so we aim to make sure that you're aware of all the pitfalls when handing strings.
-For (professional) software that needs to be reliable, check out the explainer [here](https://www.roc-lang.org/builtins/Str) and the [unicode package](https://github.com/roc-lang/unicode).
-For personal scripts or things like advent of code, the [roc-ascii package](https://github.com/Hasnep/roc-ascii) can cover your needs.
+For (professional) software that needs to be reliable, check out the explainer [here](https://www.roc-lang.org/builtins/Str) and the [unicode package](https://github.com/roc-lang/unicode) (still on Roc alpha 4).
+For personal scripts or things like advent of code, the [roc-ascii package](https://github.com/Hasnep/roc-ascii) (still on Roc alpha 4) can cover your needs.
 
 
 ## [Why is there no way to specify "import everything this module exposes" in `imports`?](#import-everything) {#import-everything}
@@ -79,21 +79,19 @@ and `Optional` (like in Java).
 
 By design, Roc does not have one of these. There are several reasons for this.
 
-First, if a function returns a potential error, Roc has the convention to use `Result` with an error type that
-has a single tag describing what went wrong. (For example, `List.first : List a -> Result a [ListWasEmpty]`
-instead of `List.first : List a -> Maybe a`.) This is not only more self-descriptive, it also composes better with
-other operations that can fail; there's no need to have functions like `Result.toMaybe` or `Maybe.toResult`,
-because in Roc, the convention is that operations that can fail always use `Result`.
+First, if a function returns a potential error, Roc has the convention to use `Try` with an error type that
+has a single tag describing what went wrong. (For example, `List.first : List(item) -> Try(item, [ListWasEmpty, ..])`
+instead of `List.first : List(item) -> Maybe(item)`.) This is not only more self-descriptive, it also composes better with
+other operations that can fail; there's no need to have functions like `Try.toMaybe` or `Maybe.toTry`,
+because in Roc, the convention is that operations that can fail always use `Try`.
 
-Second, optional record fields can be handled using Roc's Default Value Record Field language feature, so using a type like `Maybe` there would be less ergonomic.
-
-To describe something that's neither an optional field nor an operation that can fail, an explicit tag union can be
+To describe something that's not an operation that can fail, an explicit tag union can be
 more descriptive than something like `Maybe`. For example, if a record type has an `artist` field, but the artist
 information may not be available, compare these three alternative ways to represent that:
 
-- `artist : Maybe Artist`
-- `artist : [Loading, Loaded Artist]`
-- `artist : [Unspecified, Specified Artist]`
+- `artist : Maybe(Artist)`
+- `artist : [Loading, Loaded(Artist)]`
+- `artist : [Unspecified, Specified(Artist)]`
 
 All three versions tell us that we might not have access to an `Artist`. However, the `Maybe` version doesn't
 tell us why that might be. The `Loading`/`Loaded` version tells us we don't have one _yet_, because we're
@@ -101,16 +99,16 @@ still loading it, whereas the `Unspecified`/`Specified` version tells us we don'
 to have one later if we wait, because it wasn't specified.
 
 Naming aside, using explicit tag unions also makes it easier to transition to richer data models. For example,
-after using `[Loading, Loaded Artist]` for awhile, we might realize that there's another possible state: loading
-failed due to an error. If we modify this to be `[Loading, Loaded Artist, Errored LoadingErr]`, all
+after using `[Loading, Loaded(Artist)]` for awhile, we might realize that there's another possible state: loading
+failed due to an error. If we modify this to be `[Loading, Loaded(Artist), Errored(LoadingErr)]`, all
 of our code for the `Loading` and `Loaded` states will still work.
 
-In contrast, if we'd had `Maybe Artist` and were using helper functions like `Maybe.isNone` (a common argument
+In contrast, if we'd had `Maybe(Artist)` and were using helper functions like `Maybe.is_none` (a common argument
 for using `Maybe` even when it's less self-descriptive), we'd have to rewrite all the code which used those
 helper functions. As such, a subtle downside of these helper functions is that they discourage any change to
 the data model that would break their call sites, even if that change would improve the data model overall.
 
-On a historical note, `Maybe` may have been thought of as a substitute for null references—as opposed to something that emerged organically based on specific motivating use cases after `Result` already existed. That said, in languages that do not have an equivalent of Roc's tag unions, it's much less ergonomic to write something like `Result a [ListWasEmpty]`, so that design would not fit those languages as well as it fits Roc.
+On a historical note, `Maybe` may have been thought of as a substitute for null references—as opposed to something that emerged organically based on specific motivating use cases after `Result` (=`Try`) already existed. That said, in languages that do not have an equivalent of Roc's tag unions, it's much less ergonomic to write something like `Try(a, [ListWasEmpty])`, so that design would not fit those languages as well as it fits Roc.
 
 ## [Why doesn't Roc have a builtin "arbitrary-sized" number type like BigNum or BigDecimal?](#arbitrary-numbers) {#arbitrary-numbers}
 

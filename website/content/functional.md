@@ -1,6 +1,6 @@
 # Functional
 
-Roc is designed to have a small number of simple language primitives. This goal leads Roc to be a single-paradigm [functional](https://en.wikipedia.org/wiki/Functional_programming) language, while its [performance goals](/fast) lead to some design choices that are uncommon in functional languages.
+Roc is designed to have a small number of simple language primitives. This goal leads Roc to be a [functional](https://en.wikipedia.org/wiki/Functional_programming) language, while its [performance goals](/fast) lead to some design choices that are uncommon in functional languages.
 
 <!-- TODO uncomment once opportunistic mutation is implemented
 ## [Opportunistic mutation](#opportunistic-mutation) {#opportunistic-mutation}
@@ -25,9 +25,7 @@ Roc has ways of detecting uniqueness at compile time, so this optimization will 
 
 ## [Immutable by default](#immutable-by-default) {#immutable-by-default}
 
-By default, Roc values are semantically immutable—even though they can still benefit from the performance of in-place mutation behind the scenes.
-
-In many languages, this is reversed; everything is mutable by default, and it's up to the programmer to "defensively" clone to avoid undesirable modification. Roc's approach means that cloning happens automatically, which can be less error-prone than defensive cloning (which might be forgotten), but <span class="nowrap">which—to be fair—can</span> also increase unintentional cloning. It's a different default with different tradeoffs.
+By default, Roc values are semantically immutable. In many languages, everything is mutable by default, and it's up to the programmer to "defensively" clone to avoid undesirable modification. Roc's approach means that cloning happens automatically, which can be less error-prone than defensive cloning (which might be forgotten), but <span class="nowrap">which—to be fair—can</span> also increase unintentional cloning. It's a different default with different tradeoffs.
 
 A reliability benefit of semantic immutability is that it rules out [data races](https://en.wikipedia.org/wiki/Race_condition#Data_race). These concurrency bugs can be difficult to reproduce and time-consuming to debug, and they are only possible through direct mutation.
 
@@ -132,10 +130,7 @@ Roc does support [tracing](https://en.wikipedia.org/wiki/Tracing_(software)) via
 
 Pure functions are notably amenable to compiler optimizations, and Roc already takes advantage of them to implement [function-level dead code elimination](https://elm-lang.org/news/small-assets-without-the-headache). Here are some other examples of optimizations that will benefit from this in the future; these are planned, but not yet implemented:
 
-TODO continue review from here
-
 - [Loop fusion](https://en.wikipedia.org/wiki/Loop_fission_and_fusion), which can do things like combining consecutive `List.map` calls (potentially intermingled with other operations that traverse the list) into one pass over the list.
-- [Compile-time evaluation](https://en.wikipedia.org/wiki/Compile-time_function_execution), which basically takes [constant folding](https://en.wikipedia.org/wiki/Constant_folding) to its natural limit: anything that can be evaluated at compile time is evaluated then. This saves work at runtime, and is easy to opt out of: if you want evaluation to happen at runtime, you can instead wrap the logic in a function and call it as needed.
 - [Hoisting](https://en.wikipedia.org/wiki/Loop-invariant_code_motion), which moves certain operations outside loops to prevent them from being re-evaluated unnecessarily on each step of the loop. It's always safe to hoist calls to pure functions, and in some cases they can be hoisted all the way to the top level, at which point they become eligible for compile-time evaluation.
 
 There are other optimizations (some of which have yet to be considered) that pure functions enable; this is just a sample!
