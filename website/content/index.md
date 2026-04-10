@@ -5,7 +5,7 @@
 </svg>
 
 <p id="homepage-tagline">A fast, friendly, functional language.</p>
-<p>⚠️ We are updating this website for the new compiler,<br>it will look like a work in progress until we are done.<br>You can still visit the <a href="https://2025.roc-lang.org">website for the old compiler</a>.</p>
+<p>⚠️ We are updating this website for the new compiler,<br>it may look like a work in progress until we are done.<br>You can still visit the <a href="https://2025.roc-lang.org">website for the old compiler</a>.</p>
 <pre id="first-code-sample"><samp class="code-snippet">credits <span class="kw">=</span> songs<span class="punctuation section">.</span>map<span class="punctuation section">(</span><span class="kw">|</span>song<span class="kw">|</span>
     <span class="string">"Performed by </span><span class="kw">${</span>song<span class="punctuation section">.</span>artist<span class="kw">}</span><span class="string">"</span><br><span class="punctuation section">)</span></samp></pre>
 </div>
@@ -45,7 +45,7 @@ If you're willing to build from source, you can try out the [migrate-zig-compile
 
 To get started with the language, try the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
 
-<a class="btn-small" href="/tutorial">Tutorial</a>
+<a class="btn-small" href="https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md">Tutorial</a>
 
 ## [Sponsors](#sponsors) {#sponsors}
 

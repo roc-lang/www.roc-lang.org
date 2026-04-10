@@ -137,4 +137,4 @@ There are other optimizations (some of which have yet to be considered) that pur
 
 ## Get started
 
-If this design sounds interesting to you, you can give Roc a try by heading over to the [tutorial](/tutorial)!
+If this design sounds interesting to you, you can give Roc a try by heading over to the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
