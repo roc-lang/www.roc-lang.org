@@ -6,15 +6,15 @@
 set -eu
 
 # ---- Configuration ----
-VERSION_DATE="2025-10-31"
-BUILD_ID="8553832"
-BASE_URL="https://github.com/roc-lang/nightlies/releases/download/nightly-2025-October-31-${BUILD_ID}"
+VERSION_DATE="2026-04-10"
+BUILD_ID="aecf9fd"
+BASE_URL="https://github.com/roc-lang/nightlies/releases/download/nightly-2026-April-10-${BUILD_ID}"
 
 # Known SHA256 checksums for file verification
-SHA_LINUX_ARM64="287421c391b3ff9d7dc01712fab4d07976298bd2d2acd403464ee5e18f0dcc99"
-SHA_LINUX_X86_64="4433a0b715405c91ad4d09d6b5f5f5c2ea60debd09207ac6f29f2ada6bf5380b"
-SHA_MACOS_ARM64="7a9eea34defcae01e1f212e17e45ae05354bf32c97d01e40ee50aab2d6d02bc6"
-SHA_MACOS_X86_64="72cbb990835fe58a1f7b64f28fc7a96c5b93d5fa9244f5fa32d7adf6ec141d5d"
+SHA_LINUX_ARM64="91eac9745364f05531f433848de9a1d50b580ddc91809092ef8b796538220e3a"
+SHA_LINUX_X86_64="c577f52f1fce14472ddd4b9f5b88e88d40bf56d1ff56efaec34f11562330a01a"
+SHA_MACOS_ARM64="15628396bd133a689ed553042408c11bb58a88d1f03e5094e3959ae86c727d5e"
+SHA_MACOS_X86_64="6cd389762f9e228513260d8f88a6a126f2369bad8ed6974e43a2740e86638ad8"
 
 # ---- Detect your operating system and CPU type ----
 OS="$(uname -s)"

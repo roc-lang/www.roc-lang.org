@@ -1,17 +1,17 @@
 # Roc Nightly Installer for Windows
 # Downloads, verifies, extracts, and (optionally) adds Roc to the user PATH.
-# Based on your 2025-10-31 nightly.
+# Based on your 2026-04-10 nightly.
 
 $ErrorActionPreference = "Stop"
 
 # ---- Configuration ----
-$VersionDate = "2025-10-31"
-$BuildId     = "8553832"
-$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2025-October-31-$BuildId"
+$VersionDate = "2026-04-10"
+$BuildId     = "aecf9fd"
+$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-April-10-$BuildId"
 
 # Known SHA256 checksums for Windows
-$Sha_Windows_x86_64 = "1d37d0262ec272cca1c7a32acb23b7c02115cc94a11e721bf50ddb352943f332"
-$Sha_Windows_arm64  = "6c148e8e362c9a594446145481f872d5777a02d6c47d3320f92377be5b9a60d6"
+$Sha_Windows_x86_64 = "9fbd22a252ba57b26c7cb5cdf9f0bc916a18a4d5cd4760b85aeab358e7c07727"
+$Sha_Windows_arm64  = "77ce1d5b3b8e8f2445bf058d80a2b45075a5aa384efbefb56000382bc49145c9"
 
 # ---- Detect architecture ----
 $arch = $env:PROCESSOR_ARCHITECTURE

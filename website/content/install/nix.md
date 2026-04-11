@@ -1,5 +1,7 @@
 # Nix
 
+TODO update all this for new compiler:
+
 ## Try out
 
 To quickly try out roc without installing, use `nix run`:
@@ -51,6 +53,8 @@ nix flake init --template github:roc-lang/roc#simple --refresh
 
 ## Next Steps
 
-- [editor setup](https://www.roc-lang.org/install#editor-extensions)
-- [tutorial](https://www.roc-lang.org/tutorial)
-- [examples](https://www.roc-lang.org/examples)
+<!-- TODO - [editor setup](https://www.roc-lang.org/install#editor-extensions)  -->
+- [Tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)
+- [Examples](https://www.roc-lang.org/examples) (still on Roc alpha 4)
+- [Frequently Asked Questions](https://www.roc-lang.org/faq)
+- [Roc Exercism Track](https://exercism.org/tracks/roc) (still on Roc alpha 4)
