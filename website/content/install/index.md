@@ -19,6 +19,7 @@ Here are some Getting Started guides for different operating systems:
 
 - [Linux x86-64](/install/linux_x86_64)
 - [Linux arm64](/install/linux_arm64)
+- [Arch Linux AUR package: `roc-alpha4-rolling-bin`](https://aur.archlinux.org/packages/roc-alpha4-rolling-bin) (community maintained, x86_64 and aarch64)
 - [Nix Linux/MacOS](/install/nix)
 - [MacOS Apple Silicon](/install/macos_apple_silicon)
 - [MacOS x86-64](/install/macos_x86_64)
