@@ -16,6 +16,7 @@ import cli.Utc
 
 latest_stable_tag = "alpha4-rolling"
 cache_marker_path = ".cache/site.millis"
+new_compiler_dir = "roc-new-compiler-nightly"
 
 main! : List Arg => Result {} _
 main! = |raw_args|
@@ -49,6 +50,7 @@ full_clean_build! = |{}|
     _ = Dir.delete_all!("content/examples")
     _ = Dir.delete_all!("examples-main")
     _ = Dir.delete_all!("roc")
+    _ = Dir.delete_all!(new_compiler_dir)
 
     Cmd.exec!("cp", ["-r", "public", "build"])?
 
@@ -99,13 +101,15 @@ full_clean_build! = |{}|
     Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/builtins/alpha4", "--strip-components=1"])?
     File.delete!(alpha4_docs_tarfile) ? DeleteAlpha4DocsTarFailed
 
-    # git clone main branch for latest docs
+    # git clone main branch for latest compiler source (used below for Builtin.roc)
     Cmd.exec!("git", ["clone", "--branch", "main", "--depth", "1", "https://github.com/roc-lang/roc.git"])?
 
-    # generate docs for builtins (main branch)
+    # generate docs for builtins (main branch) using the new (zig) compiler
+    ensure_new_compiler_downloaded!({})?
     Dir.create!("build/builtins/main") ? CreateMainDirFailed
-    Cmd.exec!("roc", ["docs", "roc/crates/compiler/builtins/roc/main.roc","--output", "build/builtins/main", "--root-dir", "builtins/main"])?
+    Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main"])?
     Dir.delete_all!("roc") ? DeleteRocRepoDirFailed
+    Dir.delete_all!(new_compiler_dir) ? DeleteNewCompilerDirFailed
 
     patch_builtins_html!({})?
     write_builtins_redirects!({})?
@@ -247,13 +251,69 @@ ensure_builtins_present! = |{}|
 
     if !main_ok then
         Cmd.exec!("git", ["clone", "--branch", "main", "--depth", "1", "https://github.com/roc-lang/roc.git"])?
+        ensure_new_compiler_downloaded!({})?
         Dir.create!("build/builtins/main") ? CreateMainDirFailed
-        Cmd.exec!("roc", ["docs", "roc/crates/compiler/builtins/roc/main.roc","--output", "build/builtins/main", "--root-dir", "builtins/main"])?
+        Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main"])?
         Dir.delete_all!("roc")?
     else
         {}
 
     Ok({})
+
+# ------------------------------
+# New (zig) compiler download
+# ------------------------------
+
+# Download the latest nightly build of the new (zig) roc compiler into
+# `new_compiler_dir` so we can use it to generate builtins docs. If it is
+# already present, skip downloading.
+ensure_new_compiler_downloaded! : {} => Result {} _
+ensure_new_compiler_downloaded! = |{}|
+    binary_path = "${new_compiler_dir}/roc"
+    already = File.is_file!(binary_path) |> Result.with_default(Bool.false)
+    if already then
+        Ok({})
+    else
+        platform = detect_platform!({})?
+
+        # Find the latest nightly asset URL for our platform via the GitHub API.
+        jq_filter = ".assets[] | select(.name | contains(\"${platform}\")) | select(.name | endswith(\".tar.gz\")) | .browser_download_url"
+        bash_cmd = "curl -fsSL 'https://api.github.com/repos/roc-lang/nightlies/releases/latest' | jq -r '${jq_filter}'"
+
+        url_out =
+            Cmd.new("bash")
+            |> Cmd.args(["-c", bash_cmd])
+            |> Cmd.exec_output!()?
+
+        download_url = Str.trim(url_out.stdout_utf8)
+        assert(!Str.is_empty(download_url), NoNightlyAssetFound(platform))?
+
+        tarfile = "roc-nightly-new-compiler.tar.gz"
+        _ = File.delete!(tarfile)
+        _ = Dir.delete_all!(new_compiler_dir)
+
+        Cmd.exec!("curl", ["-fsSL", "-o", tarfile, download_url])?
+        Dir.create!(new_compiler_dir) ? CreateNewCompilerDirFailed
+        Cmd.exec!("tar", ["-xzf", tarfile, "-C", new_compiler_dir, "--strip-components=1"])?
+        File.delete!(tarfile) ? DeleteNewCompilerTarFailed
+
+        Ok({})
+
+detect_platform! : {} => Result Str _
+detect_platform! = |{}|
+    os_out = Cmd.new("uname") |> Cmd.arg("-s") |> Cmd.exec_output!()?
+    arch_out = Cmd.new("uname") |> Cmd.arg("-m") |> Cmd.exec_output!()?
+
+    os = Str.trim(os_out.stdout_utf8)
+    arch = Str.trim(arch_out.stdout_utf8)
+    platform_key = "${os}-${arch}"
+
+    when platform_key is
+        "Darwin-arm64" -> Ok("macos_apple_silicon")
+        "Darwin-x86_64" -> Ok("macos_x86_64")
+        "Linux-x86_64" -> Ok("linux_x86_64")
+        "Linux-aarch64" -> Ok("linux_arm64")
+        _ -> Err(UnsupportedPlatform(platform_key))
 
 # ------------------------------
 # Content patching & redirects
