@@ -9,7 +9,7 @@ set -euo pipefail
 # Usage: ./check-links.sh [max_depth]
 
 #BASE_URL="https://roc.cc02oj5kr.workers.dev/"
-BASE_URL="https://www.roc-lang.org"
+BASE_URL="https://new-compiler-website-2026-roc.cc02oj5kr.workers.dev"
 MAX_DEPTH=${1:-3}  # Default depth of 3 levels
 TEMP_DIR=$(mktemp -d)
 VISITED_FILE="$TEMP_DIR/visited_urls"
