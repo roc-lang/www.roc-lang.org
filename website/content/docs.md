@@ -1,6 +1,6 @@
 # Documentation
 
-- [builtins](/builtins) - docs for modules built into the language—`Str`, `List`, etc.
+- [builtins](/builtins/main) - docs for modules built into the language—`Str`, `List`, etc.
 
 ## [Guides](#guides) {#guides}
 
