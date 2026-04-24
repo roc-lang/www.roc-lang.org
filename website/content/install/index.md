@@ -6,9 +6,9 @@
 
 <!-- TODO detect current OS with browser and show that one first  -->
 <!-- TODO docker release  -->
-- [Linux or macOS](/installnew/unix)
-- [Windows](/installnew/windows)
-- [Other](/installnew/other)
+- [Linux or macOS](/install/unix)
+- [Windows](/install/windows)
+- [Other](/install/other)
 
 <!-- TODO mention editor plugins once they are up to date  -->
 

@@ -276,6 +276,9 @@ ensure_new_compiler_downloaded! = |{}|
     else
         platform = detect_platform!({})?
 
+        # Verify jq is available (needed to parse the GitHub API response).
+        _ = (Cmd.new("jq") |> Cmd.arg("--version") |> Cmd.exec_output!()) ? JqNotAvailable
+
         # Find the latest nightly asset URL for our platform via the GitHub API.
         jq_filter = ".assets[] | select(.name | contains(\"${platform}\")) | select(.name | endswith(\".tar.gz\")) | .browser_download_url"
         bash_cmd = "curl -fsSL 'https://api.github.com/repos/roc-lang/nightlies/releases/latest' | jq -r '${jq_filter}'"
@@ -286,7 +289,7 @@ ensure_new_compiler_downloaded! = |{}|
             |> Cmd.exec_output!()?
 
         download_url = Str.trim(url_out.stdout_utf8)
-        assert(!Str.is_empty(download_url), NoNightlyAssetFound(platform))?
+        assert(!Str.is_empty(download_url), NoNightlyAssetFound(platform, url_out))?
 
         tarfile = "roc-nightly-new-compiler.tar.gz"
         _ = File.delete!(tarfile)
