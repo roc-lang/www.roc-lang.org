@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const WEBSITE_URL = 'https://new-compiler-website-2026-roc.cc02oj5kr.workers.dev';
+const WEBSITE_URL = 'https://alpha4.roc-lang.org';
 const MAX_PAGES = 500; // Limit to avoid too many pages
 const MAX_DEPTH = 5; // How deep to crawl
 const EXCLUDE_PATTERNS = [
