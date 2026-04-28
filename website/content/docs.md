@@ -4,11 +4,11 @@
 
 ## [Guides](#guides) {#guides}
 
-- [Frequently Asked Questions](https://www.roc-lang.org/faq.html)
+- [Frequently Asked Questions](/faq)
 - [Tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)
 
 ## [Language Reference](#language-reference) {#language-reference}
 
 - [Platforms & Applications](/platforms)
+- [New Language Reference (WIP)](https://github.com/roc-lang/roc/tree/main/docs/langref)
 
-In the future, a full language reference will be on this page too.
