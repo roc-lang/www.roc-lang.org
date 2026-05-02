@@ -154,12 +154,30 @@ check_url() {
     
     # Make request with curl
     local response
-    if response=$(curl -s -L -w "\n%{http_code}|%{url_effective}" --max-time 30 --user-agent "roc-lang.org link checker" "$url" 2>&1); then
-        local status_and_url=$(echo "$response" | tail -n 1)
-        local status_code=$(echo "$status_and_url" | cut -d'|' -f1)
-        local effective_url=$(echo "$status_and_url" | cut -d'|' -f2)
-        local content=$(echo "$response" | head -n -1)
-        
+    local status_code=""
+    local effective_url=""
+    local content=""
+    local curl_ok=false
+    local max_attempts=3
+    local attempt=1
+    while [[ $attempt -le $max_attempts ]]; do
+        curl_ok=false
+        if response=$(curl -s -L -w "\n%{http_code}|%{url_effective}" --max-time 30 --user-agent "roc-lang.org link checker" "$url" 2>&1); then
+            curl_ok=true
+            local status_and_url=$(echo "$response" | tail -n 1)
+            status_code=$(echo "$status_and_url" | cut -d'|' -f1)
+            effective_url=$(echo "$status_and_url" | cut -d'|' -f2)
+            content=$(echo "$response" | head -n -1)
+            if [[ "$status_code" == "502" && $attempt -lt $max_attempts ]]; then
+                echo -e "${YELLOW}⚠${NC} $url (502) - waiting 3s and retrying (attempt $attempt/$max_attempts)..."
+                sleep 3
+                attempt=$((attempt + 1))
+                continue
+            fi
+        fi
+        break
+    done
+    if [[ "$curl_ok" == "true" ]]; then
         if [[ "$status_code" -ge 200 && "$status_code" -lt 400 ]]; then
             if [[ "$is_external" == "true" ]]; then
                 echo -e "${GREEN}✓${NC} $url ($status_code) ${BLUE}[external]${NC}"
