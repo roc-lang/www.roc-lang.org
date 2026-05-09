@@ -4,6 +4,8 @@ See README.md for build instructions.
 
 ## general roc instructions
 
+Note that the instructions below are for Roc alpha 4 not the new zig compiler version of Roc, Roc alpha 4 has limited use in this repo, like in build_website.roc.
+
 After you've made changes use `roc check edited_file.roc` to confirm it is free of errors.
 Once `roc check` succeeds, you can run code with `roc file.roc`.
 To run all top level expects, use `roc test file.roc`.

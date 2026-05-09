@@ -11,14 +11,14 @@
 1. In a new terminal, download and run hello world:
 
     ```sh
-    curl --proto '=https' --tlsv1.2 -OL https://raw.githubusercontent.com/roc-lang/examples/refs/heads/main/examples/HelloWorld/main.roc
-    roc main.roc
+    curl --proto '=https' --tlsv1.2 -OL https://raw.githubusercontent.com/roc-lang/roc/refs/heads/main/test/echo/hello.roc
+    roc hello.roc
     ```
 
 ## Next Steps
 
 <!-- TODO - [editor setup](https://www.roc-lang.org/install#editor-extensions)  -->
-- [Tutorial](https://www.roc-lang.org/tutorial)
-- [Examples](https://www.roc-lang.org/examples)
+- [Tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)
+- [Examples](https://www.roc-lang.org/examples) (still on Roc alpha 4)
 - [Frequently Asked Questions](https://www.roc-lang.org/faq)
-- [Roc Exercism Track](https://exercism.org/tracks/roc)
+- [Roc Exercism Track](https://exercism.org/tracks/roc) (still on Roc alpha 4)

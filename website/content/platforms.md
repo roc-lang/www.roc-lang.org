@@ -7,15 +7,17 @@ Something that sets Roc apart from other programming languages is its <span clas
 Here is a Roc application that prints `"Hello, World!"` to the command line:
 
 ```roc
-app [main!] { cli: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
+app [main!] { pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.6/2BfGn4M9uWJNhDVeMghGeXNVDFijMfPsmmVeo6M4QjKX.tar.zst" }
 
-import cli.Stdout
+import pf.Stdout
 
-main! = |_args|
+main! = |_args| {
     Stdout.line!("Hello, World!")
+    Ok({})
+}
 ```
 
-Every Roc application, including this one, is built on a _platform_. This application happens to be built on a platform called [basic-cli](https://github.com/roc-lang/basic-cli), which is a platform for building command-line interfaces.
+Every Roc application, including this one, is built on a _platform_. This application happens to be built on a platform called [roc-platform-template-zig](https://github.com/lukewilliamboswell/roc-platform-template-zig), which is a template or starter platform written in zig and Roc.
 
 ## [Domain-specific functionality](#domain-specific) {#domain-specific}
 
@@ -26,12 +28,12 @@ Also like many game engines and Web frameworks, Roc platforms have a high-level 
 Here are some example Roc platforms, and functionality they might provide:
 
 -   A Roc game engine platform might provide functionality for rendering and sound.
--   A Roc Web server platform (like [basic-webserver](https://github.com/roc-lang/basic-webserver)) probably would not provide functionality for rendering and sound, but it might provide functionality for responding to incoming HTTP requests—which a game engine platform likely would not.
+-   A Roc Web server platform probably would not provide functionality for rendering and sound, but it might provide functionality for responding to incoming HTTP requests—which a game engine platform likely would not.
 -   A Roc native [GUI](https://en.wikipedia.org/wiki/Graphical_user_interface) platform might provide functionality for defining native operating system UI elements, whereas a game engine platform might focus more on rendering with [shaders](https://en.wikipedia.org/wiki/Shader), and a Web server platform would not have GUI functionality at all.
 
 These are broad domains, but platforms can be much more specific than this. For example, anyone could make a platform for writing [Vim](<https://en.wikipedia.org/wiki/Vim_(text_editor)>) plugins, or [Postgres](https://en.wikipedia.org/wiki/PostgreSQL) extensions, or robots ([which has already happened](https://roc.zulipchat.com/#narrow/stream/304902-show-and-tell/topic/Roc.20on.20a.20microcontroller/near/286678630)), or even [implementing servo logic for a clock that physically turns panels to simulate an LCD](https://roc.zulipchat.com/#narrow/stream/304641-ideas/topic/Roc.20Clock/near/327939600). You really can get as specific as you like!
 
-Platforms can also be designed to have a single, specific application run on them. For example, you can make a platform that is essentially "your entire existing code base in another language," and then use Roc as an embedded language within that code base. For example, [Vendr](https://www.vendr.com/careers) is using this strategy to call Roc functions from their [Node.js](https://nodejs.org/en) backend using [roc-esbuild](https://github.com/vendrinc/roc-esbuild), as a way to incrementally transition code from Node to Roc.
+Platforms can also be designed to have a single, specific application run on them. For example, you can make a platform that is essentially "your entire existing code base in another language," and then use Roc as an embedded language within that code base. For example, [Vendr](https://www.vendr.com/careers) used this strategy to call Roc functions from their [Node.js](https://nodejs.org/en) backend using [roc-esbuild](https://github.com/vendrinc/roc-esbuild), as a way to incrementally transition code from Node to Roc.
 
 ## [Platform scope](#scope) {#scope}
 
@@ -40,7 +42,7 @@ Roc platforms have a broader scope of responsibility than game engines or Web fr
 -   Tailoring memory management to that domain (more on this later)
 -   Providing all I/O primitives
 
-In most languages, I/O primitives come with the standard library. In Roc, the [standard library](https://www.roc-lang.org/builtins/) contains only data structures; an application gets all of its I/O primitives from its platform. For example, in the "Hello, World" application above, the `Stdout.line` function comes from the `basic-cli` platform itself, not from Roc's standard library.
+In most languages, I/O primitives come with the standard library. In Roc, the [standard library](https://www.roc-lang.org/builtins/) contains only data structures; an application gets all of its I/O primitives from its platform. For example, in the "Hello, World" application above, the `Stdout.line` function comes from the `roc-platform-template-zig` platform itself, not from Roc's standard library.
 
 This design has a few benefits.
 
@@ -50,7 +52,7 @@ Some I/O operations make sense in some use cases but not others.
 
 For example, suppose I'm building an application on a platform for command-line interfaces, and I use a third-party package which sometimes blocks the program while it waits for [standard input](<https://en.wikipedia.org/wiki/Standard_streams#Standard_input_(stdin)>). This might be fine for my command-line application, but it would probably be a very bad fit if I'm using a webserver. Similarly, a package which does some occasional file I/O for caching might work fine on either of those platforms, but might break in surprising ways when used in a platform that's designed to run in a browser on WebAssembly—since browsers don't offer arbitrary file I/O access!
 
-Because Roc's I/O primitives come from platforms, these mismatches can be prevented at build time. The browser-based platform would not expose file I/O primitives, the webserver wouldn't expose a way to block on reading from standard input, and so on. (Note that there's a design in the works for allowing packages which perform I/O to work across multiple platforms—but only platforms which support the I/O primitives it requires—but this design has not yet been implemented.)
+Because Roc's I/O primitives come from platforms, these mismatches can be prevented at build time. The browser-based platform would not expose file I/O primitives, the webserver wouldn't expose a way to block on reading from standard input, and so on.
 
 ### [Security benefits](#security) {#security}
 
@@ -76,8 +78,8 @@ To understand how platforms can tailor automatic memory management to their part
 
 Each platform consists of two parts:
 
--   **The Roc API** is the part that application authors see. For example, `Stdout.line` is part of basic-cli's Roc API.
--   **The Host** is the under-the-hood implementation written in a language other than Roc. For example, basic-cli's host is written in Rust. It has a Rust function which implements the behavior of the `Stdout.line` operation, and all the other I/O operations it supports.
+-   **The Roc API** is the part that application authors see. For example, `Stdout.line` is part of the Roc API of roc-platform-template-zig.
+-   **The Host** is the under-the-hood implementation written in a language other than Roc. For example, the host for roc-platform-template-zig is written in Zig. It has a Zig function which implements the behavior of the `Stdout.line` operation, and all the other I/O operations it supports.
 
 This design means that application authors don't necessarily need to know (or care) about the non-Roc language being used to implement the platform's host. That can be a behind-the-scenes implementation detail that only the platform's author(s) are concerned with. Application authors only interact with the public-facing Roc API.
 
@@ -109,19 +111,19 @@ This process works for small platforms and large applications (for example, a ve
 
 Every Roc application has exactly one platform. That platform provides all the I/O primitives that the application can use; Roc's standard library provides no I/O operations, and the only way for a Roc application to execute functions in other languages is if the platform offers a way to do that.
 
-This I/O design has [security benefits](#security), [ecosystem benefits](#ecosystem), and [performance benefits](#performance). The [domain-specific memory management](#memory) platforms can implement can offer additional benefits as well.
+This I/O design has [security benefits](#security), [ecosystem benefits](#ecosystem), and [performance benefits](#performance). The [domain-specific memory management](#memory) that platforms can implement can offer additional benefits as well.
 
 Applications only interact with the _Roc API_ portion of a platform, but there is also a _host_ portion (written in a different language) that works behind the scenes. The host determines how the program starts, how memory is allocated and deallocated, and how I/O primitives are implemented.
 
 Anyone can implement their own platform. There isn't yet an official guide about how to do this, but we have some useful examples:
+- For [Roc nightlies](https://github.com/roc-lang/nightlies/releases) using the new (zig) compiler:
+  - [Small zig platform](https://github.com/lukewilliamboswell/roc-platform-template-zig)
+  - [Small rust platform](https://github.com/lukewilliamboswell/roc-platform-template-rust)
+  - [Newest basic-cli (work in progress)](https://github.com/roc-lang/basic-cli/pull/423)
 - For Roc version alpha4:
   - [basic-cli platform 0.20.0](https://github.com/roc-lang/basic-cli/tree/0.20.0)
   - [basic-webserver platform 0.13.1](https://github.com/roc-lang/basic-webserver/tree/0.13.1)
   - [Go lang platform](https://github.com/roc-lang/examples/tree/738b08558c656a11b69a1465b539456ae64605ec/examples/GoPlatform)
   - [.NET platform](https://github.com/roc-lang/examples/tree/738b08558c656a11b69a1465b539456ae64605ec/examples/DotNetPlatform)
-- For [Roc nightlies](https://github.com/roc-lang/nightlies/releases) using the new (zig) compiler:
-  - [Small zig platform](https://github.com/lukewilliamboswell/roc-platform-template-zig)
-  - [Small rust platform](https://github.com/lukewilliamboswell/roc-platform-template-rust)
-  - [Newest basic-cli (work in progress)](https://github.com/roc-lang/basic-cli/pull/413)
 
 We'd love to answer any additional platform questions you have, [say hi in the `#beginners` channel](https://roc.zulipchat.com/#narrow/stream/231634-beginners) on our [group chat](https://roc.zulipchat.com)

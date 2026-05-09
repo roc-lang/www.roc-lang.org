@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ROC_NIGHTLY_VERSION: 2025-10-31-8553832
+  ROC_NIGHTLY_VERSION: 2026-04-10-aecf9fd
 
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
