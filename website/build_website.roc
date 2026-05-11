@@ -413,6 +413,8 @@ write_builtins_redirects! = |{}|
         /builtins/Inspect   /builtins/${redirect_version}/Inspect 301
         /builtins/Inspect/  /builtins/${redirect_version}/Inspect/ 301
         /builtins/Inspect/* /builtins/${redirect_version}/Inspect/:splat
+        /tutorial           https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md 301
+        /examples           https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc 301
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? CreateRedirectsFileFailed
 
