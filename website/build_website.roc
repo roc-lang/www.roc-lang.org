@@ -8,6 +8,7 @@ import cli.File
 import cli.Env
 import cli.Path exposing [Path]
 import cli.Utc
+import cli.Sleep
 
 # run with: `cd website && roc ./build_website.roc`
 # Usage:
@@ -279,17 +280,7 @@ ensure_new_compiler_downloaded! = |{}|
         # Verify jq is available (needed to parse the GitHub API response).
         _ = (Cmd.new("jq") |> Cmd.arg("--version") |> Cmd.exec_output!()) ? JqNotAvailable
 
-        # Find the latest nightly asset URL for our platform via the GitHub API.
-        jq_filter = ".assets[] | select(.name | contains(\"${platform}\")) | select(.name | endswith(\".tar.gz\")) | .browser_download_url"
-        bash_cmd = "curl -fsSL 'https://api.github.com/repos/roc-lang/nightlies/releases/latest' | jq -r '${jq_filter}'"
-
-        url_out =
-            Cmd.new("bash")
-            |> Cmd.args(["-c", bash_cmd])
-            |> Cmd.exec_output!()?
-
-        download_url = Str.trim(url_out.stdout_utf8)
-        assert(!Str.is_empty(download_url), NoNightlyAssetFound(platform, url_out))?
+        download_url = fetch_nightly_url!(platform, 3)?
 
         tarfile = "roc-nightly-new-compiler.tar.gz"
         _ = File.delete!(tarfile)
@@ -301,6 +292,29 @@ ensure_new_compiler_downloaded! = |{}|
         File.delete!(tarfile) ? DeleteNewCompilerTarFailed
 
         Ok({})
+
+# Find the latest nightly asset URL for our platform via the GitHub API.
+# The API occasionally responds with 403 (rate limiting / transient errors),
+# so retry with a 3 second pause when the URL comes back empty.
+fetch_nightly_url! : Str, U8 => Result Str _
+fetch_nightly_url! = |platform, retries_left|
+    jq_filter = ".assets[] | select(.name | contains(\"${platform}\")) | select(.name | endswith(\".tar.gz\")) | .browser_download_url"
+    bash_cmd = "curl -fsSL 'https://api.github.com/repos/roc-lang/nightlies/releases/latest' | jq -r '${jq_filter}'"
+
+    url_out =
+        Cmd.new("bash")
+        |> Cmd.args(["-c", bash_cmd])
+        |> Cmd.exec_output!()?
+
+    download_url = Str.trim(url_out.stdout_utf8)
+    if !Str.is_empty(download_url) then
+        Ok(download_url)
+    else if retries_left == 0 then
+        Err(NoNightlyAssetFound(platform, url_out))
+    else
+        Stdout.line!("Failed to fetch nightly asset URL, retrying in 3 seconds...") ?? {}
+        Sleep.millis!(3000)
+        fetch_nightly_url!(platform, retries_left - 1)
 
 detect_platform! : {} => Result Str _
 detect_platform! = |{}|

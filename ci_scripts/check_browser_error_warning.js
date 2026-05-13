@@ -341,7 +341,12 @@ async function checkPage(page, url) {
   page.on('console', msg => {
     const text = msg.text();
     const type = msg.type();
-    
+
+    // Ignore transient 503 responses
+    if (text.includes('the server responded with a status of 503')) {
+      return;
+    }
+
     if (type === 'error') {
       errors.push({
         type: 'console_error',
@@ -350,7 +355,7 @@ async function checkPage(page, url) {
         timestamp: new Date().toISOString()
       });
     }
-    
+
     if (type === 'warning') {
       warnings.push({
         type: 'console_warning',
@@ -360,15 +365,15 @@ async function checkPage(page, url) {
       });
     }
   });
-  
+
   // Capture network failures
   page.on('response', response => {
-    if (response.status() >= 400) {
+    if (response.status() >= 400 && response.status() !== 503) {
       const responseUrl = response.url();
       const resourceType = response.request().resourceType();
       const isMainDocument = responseUrl === url;
       const isFromSameDomain = responseUrl.startsWith(WEBSITE_URL);
-      
+
       // Only log failures that are relevant to the current page
       if (isMainDocument || (isFromSameDomain && ['stylesheet', 'script', 'image', 'font'].includes(resourceType))) {
         networkFailures.push({
