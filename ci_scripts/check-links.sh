@@ -185,8 +185,10 @@ check_url() {
                 echo -e "${GREEN}✓${NC} $url ($status_code)"
             fi
             
-            # Only extract links for internal URLs and if we haven't reached max depth
-            if [[ "$is_external" == "false" && "$depth" -lt "$MAX_DEPTH" ]]; then
+            # Only extract links for internal URLs and if we haven't reached max depth.
+            # Skip link extraction if the URL redirected off-site (e.g. /examples -> github.com),
+            # otherwise relative links on the external page get rewritten to our domain.
+            if [[ "$is_external" == "false" && "$depth" -lt "$MAX_DEPTH" ]] && is_internal_url "$effective_url"; then
                 # Check if it's HTML content by looking for HTML tags
                 if [[ "$content" =~ \<html\> ]] || [[ "$content" =~ \<HTML\> ]] || [[ "$content" =~ \<!DOCTYPE\ html\> ]]; then
                     echo "Extracting links from HTML content..."
