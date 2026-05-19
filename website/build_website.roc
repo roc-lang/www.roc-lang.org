@@ -288,16 +288,16 @@ ensure_new_compiler_downloaded! = |{}|
         jq_filter = ".assets[] | select(.name | contains(\"${platform}\")) | select(.name | endswith(\".tar.gz\")) | .browser_download_url"
         bash_cmd =
             """
-            TMPDIR=$(mktemp -d)
+            TMPDIR=\$(mktemp -d)
             RESPONSE_FILE="$TMPDIR/resp"
             HEADERS_FILE="$TMPDIR/headers"
 
             if [ -n "$GITHUB_TOKEN" ]; then
-              echo "[diag] GITHUB_TOKEN present: yes (length $(printf %s "$GITHUB_TOKEN" | wc -c))" >&2
-              HTTP_STATUS=$(curl -sS -o "$RESPONSE_FILE" -D "$HEADERS_FILE" -w "%{http_code}" -H "Authorization: Bearer $GITHUB_TOKEN" 'https://api.github.com/repos/roc-lang/nightlies/releases/latest')
+              echo "[diag] GITHUB_TOKEN present: yes (length \$(printf %s "$GITHUB_TOKEN" | wc -c))" >&2
+              HTTP_STATUS=\$(curl -sS -o "$RESPONSE_FILE" -D "$HEADERS_FILE" -w "%{http_code}" -H "Authorization: Bearer $GITHUB_TOKEN" 'https://api.github.com/repos/roc-lang/nightlies/releases/latest')
             else
               echo "[diag] GITHUB_TOKEN present: no" >&2
-              HTTP_STATUS=$(curl -sS -o "$RESPONSE_FILE" -D "$HEADERS_FILE" -w "%{http_code}" 'https://api.github.com/repos/roc-lang/nightlies/releases/latest')
+              HTTP_STATUS=\$(curl -sS -o "$RESPONSE_FILE" -D "$HEADERS_FILE" -w "%{http_code}" 'https://api.github.com/repos/roc-lang/nightlies/releases/latest')
             fi
 
             echo "[diag] API HTTP status: $HTTP_STATUS" >&2
