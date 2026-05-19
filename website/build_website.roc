@@ -284,14 +284,32 @@ ensure_new_compiler_downloaded! = |{}|
         # unauthenticated rate limit is usually exhausted. When GITHUB_TOKEN
         # is set in the env, send it as a bearer token to get the 5000/hr
         # authenticated limit. Bash inherits the env var from this process.
+        # NOTE: contains one-time diagnostic prints to debug 403s on Cloudflare.
         jq_filter = ".assets[] | select(.name | contains(\"${platform}\")) | select(.name | endswith(\".tar.gz\")) | .browser_download_url"
         bash_cmd =
             """
+            TMPDIR=$(mktemp -d)
+            RESPONSE_FILE="$TMPDIR/resp"
+            HEADERS_FILE="$TMPDIR/headers"
+
             if [ -n "$GITHUB_TOKEN" ]; then
-              curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" 'https://api.github.com/repos/roc-lang/nightlies/releases/latest' | jq -r '${jq_filter}'
+              echo "[diag] GITHUB_TOKEN present: yes (length $(printf %s "$GITHUB_TOKEN" | wc -c))" >&2
+              HTTP_STATUS=$(curl -sS -o "$RESPONSE_FILE" -D "$HEADERS_FILE" -w "%{http_code}" -H "Authorization: Bearer $GITHUB_TOKEN" 'https://api.github.com/repos/roc-lang/nightlies/releases/latest')
             else
-              curl -fsSL 'https://api.github.com/repos/roc-lang/nightlies/releases/latest' | jq -r '${jq_filter}'
+              echo "[diag] GITHUB_TOKEN present: no" >&2
+              HTTP_STATUS=$(curl -sS -o "$RESPONSE_FILE" -D "$HEADERS_FILE" -w "%{http_code}" 'https://api.github.com/repos/roc-lang/nightlies/releases/latest')
             fi
+
+            echo "[diag] API HTTP status: $HTTP_STATUS" >&2
+            if [ "$HTTP_STATUS" != "200" ]; then
+              echo "[diag] response headers:" >&2
+              cat "$HEADERS_FILE" >&2
+              echo "[diag] response body:" >&2
+              cat "$RESPONSE_FILE" >&2
+            fi
+
+            cat "$RESPONSE_FILE" | jq -r '${jq_filter}'
+            rm -rf "$TMPDIR"
             """
 
         url_out =
