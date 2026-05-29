@@ -6,15 +6,53 @@
 set -eu
 
 # ---- Configuration ----
-VERSION_DATE="2026-04-10"
-BUILD_ID="aecf9fd"
-BASE_URL="https://github.com/roc-lang/nightlies/releases/download/nightly-2026-April-10-${BUILD_ID}"
+VERSION_DATE="2026-05-29"
+BUILD_ID="597be17"
+BASE_URL="https://github.com/roc-lang/nightlies/releases/download/nightly-2026-May-29-${BUILD_ID}"
 
 # Known SHA256 checksums for file verification
-SHA_LINUX_ARM64="91eac9745364f05531f433848de9a1d50b580ddc91809092ef8b796538220e3a"
-SHA_LINUX_X86_64="c577f52f1fce14472ddd4b9f5b88e88d40bf56d1ff56efaec34f11562330a01a"
-SHA_MACOS_ARM64="15628396bd133a689ed553042408c11bb58a88d1f03e5094e3959ae86c727d5e"
-SHA_MACOS_X86_64="6cd389762f9e228513260d8f88a6a126f2369bad8ed6974e43a2740e86638ad8"
+SHA_LINUX_ARM64="e79b092fc05e19a5b93f66099cfcebdd4f2445fbc27b54f59135b518e0ab555b"
+SHA_LINUX_X86_64="4becd2bc9a5a5975aac14d15db64a940117c5076b075bb7313fd38d9abb61706"
+SHA_MACOS_ARM64="40579391f55fa53626a947df105524a3fb386aa2a74bafe54615e6b0f6e62b16"
+SHA_MACOS_X86_64="f886e4259e19a64f6c08c255babf07706cf40dcafcb8f8f17680e3f624e2d50a"
+
+# ---- Warn if this installer is stale ----
+# The release above is hardcoded into this script. If it is more than two weeks
+# old, a newer Roc release is probably available and the user should grab the
+# latest installer instead of installing an outdated build.
+# Set ROC_CONTINUE_IF_STALE=y to skip this check (e.g. in CI).
+RELEASE_EPOCH=""
+if RELEASE_EPOCH=$(date -d "$VERSION_DATE" +%s 2>/dev/null); then
+    : # GNU date (Linux)
+elif RELEASE_EPOCH=$(date -j -f "%Y-%m-%d" "$VERSION_DATE" +%s 2>/dev/null); then
+    : # BSD date (macOS)
+else
+    RELEASE_EPOCH=""
+fi
+
+if [ -n "$RELEASE_EPOCH" ]; then
+    AGE_DAYS=$(( ( $(date +%s) - RELEASE_EPOCH ) / 86400 ))
+    if [ "$AGE_DAYS" -gt 14 ]; then
+        echo "⚠️  This installer is hardcoded to the Roc release from ${VERSION_DATE}, which is ${AGE_DAYS} days old." >&2
+        echo "   A newer release is probably available." >&2
+        echo "   We recommend downloading the latest installer:" >&2
+        echo "       https://roc-lang.org/install_roc.sh" >&2
+        echo >&2
+        STALE_ANSWER="${ROC_CONTINUE_IF_STALE:-}"
+        if [ -z "$STALE_ANSWER" ]; then
+            if { true </dev/tty; } 2>/dev/null; then
+                printf 'Continue with this older version anyway? [y/N] '
+                read -r STALE_ANSWER </dev/tty || STALE_ANSWER="n"
+            else
+                STALE_ANSWER="n"
+            fi
+        fi
+        case "$STALE_ANSWER" in
+            y|Y) echo ;;
+            *) echo "Aborting. Please download the latest installer from https://roc-lang.org/install_roc.sh" >&2; exit 1 ;;
+        esac
+    fi
+fi
 
 # ---- Detect your operating system and CPU type ----
 OS="$(uname -s)"
@@ -23,6 +61,11 @@ ARCH="$(uname -m)"
 case "$OS" in
     Linux*)  PLATFORM="linux" ;;
     Darwin*) PLATFORM="macos" ;;
+    MINGW*|MSYS*|CYGWIN*|Windows*)
+        echo "It looks like you're on Windows. This script doesn't support Windows." >&2
+        echo "Please follow the Windows install steps at https://roc-lang.org/install/windows" >&2
+        exit 1
+        ;;
     *) echo "Sorry, your operating system ($OS) is not supported yet." >&2; exit 1 ;;
 esac
 
@@ -112,13 +155,18 @@ else
 fi
 
 # ---- Ask to add Roc to PATH ----
-ANSWER="n"
-if [ -t 0 ] && [ -e /dev/tty ]; then
-    # Interactive terminal: prompt the user
-    read -r -p "Would you like me to add Roc to your PATH automatically? [y/N] " ANSWER </dev/tty
-elif [ ! -t 0 ]; then
-    # Non-interactive with piped input (e.g., CI with <<< "y"): read from stdin
-    read -r ANSWER || ANSWER="n"
+# Allow a non-interactive override (e.g. CI): ROC_ADD_TO_PATH=y or n.
+ANSWER="${ROC_ADD_TO_PATH:-}"
+if [ -z "$ANSWER" ]; then
+    if { true </dev/tty; } 2>/dev/null; then
+        # A terminal is available even when this script is piped (curl | sh),
+        # so prompt by reading from the terminal. Never read from stdin: under
+        # `curl | sh` stdin is the script itself, and consuming it corrupts parsing.
+        printf 'Would you like me to add Roc to your PATH automatically? [y/N] '
+        read -r ANSWER </dev/tty || ANSWER="n"
+    else
+        ANSWER="n"
+    fi
 fi
 if [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ]; then
     # note: using printf here avoids a literal "\n" being written
