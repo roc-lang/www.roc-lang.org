@@ -5,13 +5,35 @@
 $ErrorActionPreference = "Stop"
 
 # ---- Configuration ----
-$VersionDate = "2026-04-10"
-$BuildId     = "aecf9fd"
-$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-April-10-$BuildId"
+$VersionDate = "2026-05-29"
+$BuildId     = "597be17"
+$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-May-29-$BuildId"
 
 # Known SHA256 checksums for Windows
 $Sha_Windows_x86_64 = "9cca1303c602dbc927788aa72ed7e8ad2f438420fba35e3c9a1498a18aca6e2c"
 $Sha_Windows_arm64  = "ceb332faed0f9e32c1470aff1ee3fd4f546790d87b93abcf3e1e25bcba18c8eb"
+
+# ---- Warn if this installer is stale ----
+# The release above is hardcoded into this script. If it is more than two weeks
+# old, a newer Roc release is probably available and the user should grab the
+# latest installer instead of installing an outdated build.
+# Set ROC_CONTINUE_IF_STALE=y to skip this check (e.g. in CI).
+$releaseDate = [DateTime]::ParseExact($VersionDate, "yyyy-MM-dd", [System.Globalization.CultureInfo]::InvariantCulture)
+$ageDays = [int]((Get-Date) - $releaseDate).TotalDays
+if ($ageDays -gt 14) {
+    Write-Host "⚠️  This installer is hardcoded to the Roc release from $VersionDate, which is $ageDays days old."
+    Write-Host "   A newer release is probably available."
+    Write-Host "   We recommend downloading the latest installer:"
+    Write-Host "       https://roc-lang.org/install_roc.ps1"
+    Write-Host ""
+    $staleAnswer = $env:ROC_CONTINUE_IF_STALE
+    if ([string]::IsNullOrEmpty($staleAnswer)) {
+        $staleAnswer = Read-Host "Continue with this older version anyway? [y/N]"
+    }
+    if ($staleAnswer -notmatch '^(y|Y)$') {
+        throw "Aborting. Please download the latest installer from https://roc-lang.org/install_roc.ps1"
+    }
+}
 
 # ---- Detect architecture ----
 $arch = $env:PROCESSOR_ARCHITECTURE
