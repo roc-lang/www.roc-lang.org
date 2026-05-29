@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ROC_NIGHTLY_VERSION: 2026-04-10-aecf9fd
+  ROC_NIGHTLY_VERSION: 2026-05-29-597be17
 
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
@@ -55,6 +55,12 @@ jobs:
           - os: macos-15-intel
             platform: macos
             arch: x86_64
+          - os: macos-26
+            platform: macos
+            arch: apple_silicon
+          - os: macos-26-intel
+            platform: macos
+            arch: x86_64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -63,7 +69,7 @@ jobs:
       - name: Test install script (answer no to PATH)
         run: |
           cd website/public
-          bash install_roc.sh <<< "n"
+          ROC_ADD_TO_PATH=n bash install_roc.sh
 
       - name: Verify installation (no PATH)
         run: |
@@ -88,7 +94,7 @@ jobs:
       - name: Test install script (answer yes to PATH)
         run: |
           cd website/public
-          bash install_roc.sh <<< "y"
+          ROC_ADD_TO_PATH=y bash install_roc.sh
 
       - name: Verify PATH was updated
         run: |

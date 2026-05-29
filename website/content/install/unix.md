@@ -19,6 +19,6 @@
 
 <!-- TODO - [editor setup](https://www.roc-lang.org/install#editor-extensions)  -->
 - [Tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)
-- [Examples](https://www.roc-lang.org/examples) (still on Roc alpha 4)
+- [Examples](https://www.roc-lang.org/examples)
 - [Frequently Asked Questions](https://www.roc-lang.org/faq)
 - [Roc Exercism Track](https://exercism.org/tracks/roc) (still on Roc alpha 4)

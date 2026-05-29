@@ -10,8 +10,8 @@ $BuildId     = "aecf9fd"
 $BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-April-10-$BuildId"
 
 # Known SHA256 checksums for Windows
-$Sha_Windows_x86_64 = "9fbd22a252ba57b26c7cb5cdf9f0bc916a18a4d5cd4760b85aeab358e7c07727"
-$Sha_Windows_arm64  = "77ce1d5b3b8e8f2445bf058d80a2b45075a5aa384efbefb56000382bc49145c9"
+$Sha_Windows_x86_64 = "9cca1303c602dbc927788aa72ed7e8ad2f438420fba35e3c9a1498a18aca6e2c"
+$Sha_Windows_arm64  = "ceb332faed0f9e32c1470aff1ee3fd4f546790d87b93abcf3e1e25bcba18c8eb"
 
 # ---- Detect architecture ----
 $arch = $env:PROCESSOR_ARCHITECTURE
