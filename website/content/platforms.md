@@ -7,7 +7,7 @@ Something that sets Roc apart from other programming languages is its <span clas
 Here is a Roc application that prints `"Hello, World!"` to the command line:
 
 ```roc
-app [main!] { pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.6/2BfGn4M9uWJNhDVeMghGeXNVDFijMfPsmmVeo6M4QjKX.tar.zst" }
+app [main!] { pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.7/DuRUyJh31Gt41YArMcVcvybLa2bCWboccWQ7Zq1KZPZ6.tar.zst" }
 
 import pf.Stdout
 
