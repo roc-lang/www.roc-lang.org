@@ -14,4 +14,6 @@ website/build
 website/content/examples
 website/.cache/
 
+__pycache__/
+
 .DS_Store
