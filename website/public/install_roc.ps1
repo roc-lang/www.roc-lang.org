@@ -5,13 +5,13 @@
 $ErrorActionPreference = "Stop"
 
 # ---- Configuration ----
-$VersionDate = "2026-05-31"
-$BuildId     = "0c7e7d4"
-$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-May-31-0c7e7d4"
+$VersionDate = "2026-06-01"
+$BuildId     = "b250321"
+$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-June-01-b250321"
 
 # Known SHA256 checksums for Windows
-$Sha_Windows_x86_64 = "081d65c5453fc1aad7cd7e77ffeba098cb0c8b729bb6ae8560c3b67d4cfed2c5"
-$Sha_Windows_arm64  = "faf4d05d349794ade2766e230765883cba26d0ac31dc90a577bf0f49576bd168"
+$Sha_Windows_x86_64 = "e7cea173cfe17fee7c91d743c7918c2599f8f2b75eeb296287d3e54c78d6a1f9"
+$Sha_Windows_arm64  = "0e80fee64f9480b2256541e9900389789db6492617dbfb79ee3f7b434a636c92"
 
 # ---- Warn if this installer is stale ----
 # The release above is hardcoded into this script. If it is more than two weeks
