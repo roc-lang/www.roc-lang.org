@@ -10,6 +10,9 @@ $BuildId     = "b250321"
 $BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-June-01-b250321"
 
 # Known SHA256 checksums for Windows
+# The arm64 build is temporarily unavailable, so $Sha_Windows_arm64 is currently
+# unused (the arm64 branch below exits early). Both are refreshed automatically by
+# ci_scripts/update_roc_release.py once the arm64 build is restored.
 $Sha_Windows_x86_64 = "e7cea173cfe17fee7c91d743c7918c2599f8f2b75eeb296287d3e54c78d6a1f9"
 $Sha_Windows_arm64  = "0e80fee64f9480b2256541e9900389789db6492617dbfb79ee3f7b434a636c92"
 
@@ -50,8 +53,9 @@ if ($ArchName -eq "x86_64") {
     $File = "roc_nightly-windows_x86_64-$VersionDate-$BuildId.zip"
     $ExpectedSha = $Sha_Windows_x86_64
 } elseif ($ArchName -eq "arm64") {
-    $File = "roc_nightly-windows_arm64-$VersionDate-$BuildId.zip"
-    $ExpectedSha = $Sha_Windows_arm64
+    Write-Host "The Windows arm64 build of Roc is temporarily unavailable."
+    Write-Host "Please check back later at https://roc-lang.org"
+    exit 1
 } else {
     throw "No Windows artifact for architecture $ArchName"
 }

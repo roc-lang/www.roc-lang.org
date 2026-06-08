@@ -34,6 +34,13 @@ ASSET_KEYS = (
     "windows_x86_64",
 )
 
+# Assets the nightly build does not currently produce. We tolerate their absence
+# instead of failing the update, and the installers tell users that these targets
+# are temporarily unavailable. Remove a key here once its build is restored.
+TEMPORARILY_UNAVAILABLE = (
+    "windows_arm64",
+)
+
 
 def fetch_latest_release():
     req = urllib.request.Request(
@@ -87,7 +94,9 @@ def parse_release(release):
             version_date = m.group("date")
             build_id = m.group("build")
 
-    missing = [k for k in ASSET_KEYS if k not in shas]
+    missing = [
+        k for k in ASSET_KEYS if k not in shas and k not in TEMPORARILY_UNAVAILABLE
+    ]
     if missing:
         sys.exit(f"Release {tag} is missing assets for: {', '.join(missing)}")
 
@@ -158,9 +167,12 @@ def update_ps1(info):
     text = replace_assignment(
         text, r'\$Sha_Windows_x86_64 = "[^"]*"', f'$Sha_Windows_x86_64 = "{info["shas"]["windows_x86_64"]}"', PS1_PATH
     )
-    text = replace_assignment(
-        text, r'\$Sha_Windows_arm64  = "[^"]*"', f'$Sha_Windows_arm64  = "{info["shas"]["windows_arm64"]}"', PS1_PATH
-    )
+    # The arm64 build may be temporarily unavailable; only refresh its checksum
+    # when the release actually ships that asset.
+    if "windows_arm64" in info["shas"]:
+        text = replace_assignment(
+            text, r'\$Sha_Windows_arm64  = "[^"]*"', f'$Sha_Windows_arm64  = "{info["shas"]["windows_arm64"]}"', PS1_PATH
+        )
 
     with open(PS1_PATH, "w") as f:
         f.write(text)
@@ -172,6 +184,9 @@ def main():
     print(f"Latest nightly: {info['tag']}")
     print(f"  version date: {info['version_date']}")
     print(f"  build id:     {info['build_id']}")
+    unavailable = [k for k in TEMPORARILY_UNAVAILABLE if k not in info["shas"]]
+    if unavailable:
+        print(f"  temporarily unavailable (skipped): {', '.join(unavailable)}")
     update_sh(info)
     update_ps1(info)
     print("Updated install_roc.sh and install_roc.ps1")
