@@ -6,6 +6,10 @@ version date, build id, base URL and SHA256 checksums in:
   - website/public/install_roc.sh
   - website/public/install_roc.ps1
 
+It also updates the ROC_NIGHTLY_VERSION pin that the install-script tests rely on
+in:
+  - .github/workflows/CI.yml
+
 The script edits only the specific variable assignments, so unrelated changes to
 the installers are preserved. It exits 0 whether or not anything changed; the CI
 workflow inspects `git status` to decide if a commit is needed.
@@ -22,6 +26,7 @@ RELEASES_API = "https://api.github.com/repos/roc-lang/nightlies/releases/latest"
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SH_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.sh")
 PS1_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.ps1")
+CI_PATH = os.path.join(REPO_ROOT, ".github", "workflows", "CI.yml")
 
 # Maps the "<platform>_<arch>" found in an asset name to its checksum.
 # These keys are the strings that appear in the nightly asset filenames.
@@ -178,6 +183,27 @@ def update_ps1(info):
         f.write(text)
 
 
+def update_ci(info):
+    """Update the ROC_NIGHTLY_VERSION pin the install-script tests verify against.
+
+    The pin is the "<date>-<build_id>" suffix that appears in the nightly asset
+    names and the directory the installers create.
+    """
+    with open(CI_PATH, "r") as f:
+        text = f.read()
+
+    version = f'{info["version_date"]}-{info["build_id"]}'
+    text = replace_assignment(
+        text,
+        r'ROC_NIGHTLY_VERSION: \S+',
+        f'ROC_NIGHTLY_VERSION: {version}',
+        CI_PATH,
+    )
+
+    with open(CI_PATH, "w") as f:
+        f.write(text)
+
+
 def main():
     release = fetch_latest_release()
     info = parse_release(release)
@@ -189,7 +215,8 @@ def main():
         print(f"  temporarily unavailable (skipped): {', '.join(unavailable)}")
     update_sh(info)
     update_ps1(info)
-    print("Updated install_roc.sh and install_roc.ps1")
+    update_ci(info)
+    print("Updated install_roc.sh, install_roc.ps1 and CI.yml")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ROC_NIGHTLY_VERSION: 2026-05-29-597be17
+  ROC_NIGHTLY_VERSION: 2026-06-10-1ded9f8
 
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
@@ -126,9 +126,9 @@ jobs:
           - os: windows-2025
             arch: x86_64
             proc_arch: AMD64
-          - os: windows-11-arm
-            arch: arm64
-            proc_arch: ARM64
+          #- os: windows-11-arm
+          #  arch: arm64
+          #  proc_arch: ARM64
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30

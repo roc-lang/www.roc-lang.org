@@ -27,7 +27,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if git diff --quiet -- website/public/install_roc.sh website/public/install_roc.ps1; then
+        if git diff --quiet -- website/public/install_roc.sh website/public/install_roc.ps1 .github/workflows/CI.yml; then
           echo "Install scripts already point at the latest nightly. Nothing to do."
           exit 0
         fi
@@ -38,7 +38,7 @@ jobs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
         git switch -C "$BRANCH"
-        git add website/public/install_roc.sh website/public/install_roc.ps1
+        git add website/public/install_roc.sh website/public/install_roc.ps1 .github/workflows/CI.yml
         git commit -m "Update Roc release in install scripts"
         git push --force origin "$BRANCH"
 
@@ -47,6 +47,6 @@ jobs:
         if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
           gh pr create \
             --title "Update Roc release in install scripts" \
-            --body "Automated update of the pinned Roc nightly in \`install_roc.sh\` and \`install_roc.ps1\` to the latest release from \`roc-lang/nightlies\`." \
+            --body "Automated update of the pinned Roc nightly in \`install_roc.sh\`, \`install_roc.ps1\` and the \`ROC_NIGHTLY_VERSION\` pin in \`CI.yml\` to the latest release from \`roc-lang/nightlies\`." \
             --head "$BRANCH"
         fi
