@@ -1,2 +1,9 @@
 [default.extend-words]
 EIN = "EIN"
+
+[files]
+extend-exclude = [
+    "website/public/install_roc.ps1",
+    "website/public/install_roc.sh",
+    ".github/workflows/CI.yml",
+]
