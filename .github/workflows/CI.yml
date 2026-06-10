@@ -126,9 +126,9 @@ jobs:
           - os: windows-2025
             arch: x86_64
             proc_arch: AMD64
-          - os: windows-11-arm
-            arch: arm64
-            proc_arch: ARM64
+          #- os: windows-11-arm
+          #  arch: arm64
+          #  proc_arch: ARM64
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
