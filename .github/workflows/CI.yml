@@ -8,9 +8,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  ROC_NIGHTLY_VERSION: 2026-06-10-1ded9f8
-
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
 
@@ -65,6 +62,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
+      - name: Extract ROC_NIGHTLY_VERSION from install script
+        run: |
+          VERSION_DATE=$(grep '^VERSION_DATE=' website/public/install_roc.sh | cut -d'"' -f2)
+          BUILD_ID=$(grep '^BUILD_ID=' website/public/install_roc.sh | cut -d'"' -f2)
+          echo "ROC_NIGHTLY_VERSION=${VERSION_DATE}-${BUILD_ID}" >> "$GITHUB_ENV"
 
       - name: Test install script (answer no to PATH)
         run: |
@@ -135,6 +138,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Extract ROC_NIGHTLY_VERSION from install script
+        shell: pwsh
+        run: |
+          $content = Get-Content website/public/install_roc.sh -Raw
+          $versionDate = [regex]::Match($content, 'VERSION_DATE="([^"]+)"').Groups[1].Value
+          $buildId = [regex]::Match($content, 'BUILD_ID="([^"]+)"').Groups[1].Value
+          echo "ROC_NIGHTLY_VERSION=${versionDate}-${buildId}" >> $env:GITHUB_ENV
 
       - name: Test install script (answer no to PATH)
         shell: pwsh
