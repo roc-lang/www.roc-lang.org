@@ -161,7 +161,7 @@ function setupExample(div) {
   div.appendChild(outputArea);
 }
 
-// run the setup, whe the DOM is finished loading
+// run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".roc-interactive").forEach(setupExample);
 });
