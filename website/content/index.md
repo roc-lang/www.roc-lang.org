@@ -39,7 +39,26 @@
 ## [Examples](#examples) {#examples}
 
 In its current state, the new compiler is only suited for things like programming puzzles.
-In any case, the [all syntax example](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc) offers a great overview of the language.
+In any case, the [all syntax example](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc) offers a great overview of the language. You can try the real compiler running in your browser below:
+
+<div class="roc-interactive front-page">
+remaining = |tasks|
+    tasks
+        .keep_if(|task| !task.done)
+        .map(|task| "☐ ${task.title}")
+        ->Str.join_with("\n")
+<!-- -->
+main! = |_| {
+    tasks = [
+        { title: "Learn Roc",       done: True },
+        { title: "Buy groceries",   done: True },
+        { title: "Write blog post", done: False },
+        { title: "Call mom",        done: False },
+    ]
+    echo!(remaining(tasks))
+    Ok({})
+}
+</div>
 
 To get started with the language, try the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
 
