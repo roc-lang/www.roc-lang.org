@@ -42,20 +42,19 @@ In its current state, the new compiler is only suited for things like programmin
 In any case, the [all syntax example](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc) offers a great overview of the language. You can try the real compiler running in your browser below:
 
 <div class="roc-interactive front-page">
-remaining = |tasks|
+print_remaining! = |tasks|
     tasks
         .keep_if(|task| !task.done)
-        .map(|task| "☐ ${task.title}")
-        ->Str.join_with("\n")
-<!-- -->
+        .for_each!(|task| echo!("☐ ${task.name} \n"))
+<!--  -->
 main! = |_| {
     tasks = [
-        { title: "Learn Roc",       done: True },
-        { title: "Buy groceries",   done: True },
-        { title: "Write blog post", done: False },
-        { title: "Call mom",        done: False },
+        { name: "Learn Roc",       done: True },
+        { name: "Buy groceries",   done: True },
+        { name: "Write blog post", done: False },
+        { name: "Call mom",        done: False },
     ]
-    echo!(remaining(tasks))
+    print_remaining!(tasks)
     Ok({})
 }
 </div>
