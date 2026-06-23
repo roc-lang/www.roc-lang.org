@@ -101,11 +101,13 @@ full_clean_build! = |{}|
     Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/builtins/alpha4", "--strip-components=1"])?
     File.delete!(alpha4_docs_tarfile) ? DeleteAlpha4DocsTarFailed
 
-    # git clone main branch for latest compiler source (used below for Builtin.roc)
-    Cmd.exec!("git", ["clone", "--branch", "main", "--depth", "1", "https://github.com/roc-lang/roc.git"])?
-
-    # generate docs for builtins (main branch) using the new (zig) compiler
+    # Download the new (zig) compiler, then fetch the roc source at the exact
+    # commit that compiler was built from, so Builtin.roc matches the compiler
+    # (rather than tracking main's tip, which can drift ahead of the nightly).
     ensure_new_compiler_downloaded!({})?
+    download_roc_source_at_compiler_commit!({})?
+
+    # generate docs for builtins using the new (zig) compiler
     Dir.create!("build/builtins/main") ? CreateMainDirFailed
     Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main"])?
     Dir.delete_all!("roc") ? DeleteRocRepoDirFailed
@@ -250,8 +252,8 @@ ensure_builtins_present! = |{}|
         {}
 
     if !main_ok then
-        Cmd.exec!("git", ["clone", "--branch", "main", "--depth", "1", "https://github.com/roc-lang/roc.git"])?
         ensure_new_compiler_downloaded!({})?
+        download_roc_source_at_compiler_commit!({})?
         Dir.create!("build/builtins/main") ? CreateMainDirFailed
         Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main"])?
         Dir.delete_all!("roc")?
@@ -330,6 +332,44 @@ ensure_new_compiler_downloaded! = |{}|
         File.delete!(tarfile) ? DeleteNewCompilerTarFailed
 
         Ok({})
+
+# Download the roc source at the exact commit the downloaded compiler was built
+# from (its `roc version` reports a short SHA), so the Builtin.roc we generate
+# docs from stays in sync with the compiler binary instead of tracking main.
+download_roc_source_at_compiler_commit! : {} => Result {} _
+download_roc_source_at_compiler_commit! = |{}|
+    commit = compiler_commit_sha!({})?
+
+    src_tarfile = "roc-src.tar.gz"
+    _ = File.delete!(src_tarfile)
+    _ = Dir.delete_all!("roc")
+
+    # GitHub's archive endpoint resolves the short SHA server-side.
+    Cmd.exec!("curl", ["-fsSL", "-o", src_tarfile, "https://github.com/roc-lang/roc/archive/${commit}.tar.gz"])?
+    Dir.create!("roc") ? CreateRocSrcDirFailed
+    Cmd.exec!("tar", ["-xzf", src_tarfile, "-C", "roc", "--strip-components=1"])?
+    File.delete!(src_tarfile) ? DeleteRocSrcTarFailed
+
+    Ok({})
+
+# Parse the short commit SHA out of the new compiler's `version` output, e.g.
+# "Roc compiler version release-fast-a59573d2" -> "a59573d2". The SHA is the
+# last hyphen-delimited segment of the last whitespace-separated word.
+compiler_commit_sha! : {} => Result Str _
+compiler_commit_sha! = |{}|
+    version_out =
+        Cmd.new("./${new_compiler_dir}/roc")
+        |> Cmd.arg("version")
+        |> Cmd.exec_output!()?
+
+    version_str = Str.trim(version_out.stdout_utf8)
+    assert(!Str.is_empty(version_str), VersionOutputWasEmpty)?
+
+    last_word = Str.split_on(version_str, " ") |> List.take_last(1) |> List.first()?
+    sha = Str.split_on(last_word, "-") |> List.take_last(1) |> List.first()?
+    assert(!Str.is_empty(sha), CommitShaWasEmpty(version_str))?
+
+    Ok(sha)
 
 detect_platform! : {} => Result Str _
 detect_platform! = |{}|
