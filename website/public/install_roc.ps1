@@ -86,12 +86,24 @@ if ($actualHash -ne $ExpectedSha.ToLower()) {
 # ---- Extract ----
 Write-Host "Step 3: Extracting files..."
 
-$installDirName = "roc_nightly-$Platform`_$ArchName-$VersionDate-$BuildId"
-$installDir     = Join-Path $PWD $installDirName
+$extractDirName = "roc_nightly-$Platform`_$ArchName-$VersionDate-$BuildId"
+$extractDir     = Join-Path $PWD $extractDirName
 
 Expand-Archive -Path $downloadPath -DestinationPath $PWD -Force
 
-Write-Host "Roc was extracted to: $installDir"
+Write-Host "Roc was extracted to: $extractDir"
+
+if ($env:ROC_INSTALL_DIR) {
+    $targetDir = New-Item -ItemType Directory -Path $env:ROC_INSTALL_DIR -Force
+    $rocExePath = Join-Path $extractDir "roc.exe"
+    Copy-Item -Path $rocExePath -Destination $env:ROC_INSTALL_DIR -Force    
+    Write-Host "Roc executable was copied to: $($env:ROC_INSTALL_DIR)"
+    $installDir = $targetDir.FullName
+}
+else {
+    $installDir = $extractDir
+}
+
 Write-Host ""
 
 Write-Host @"
