@@ -128,7 +128,7 @@ DIR_NAME="roc_nightly-${PLATFORM}_${ARCH_NAME}-${VERSION_DATE}-${BUILD_ID}"
 EXTRACT_DIR="$PWD/$DIR_NAME"
 echo "✅ Roc was extracted to: $EXTRACT_DIR"
 
-if [ -n "$ROC_INSTALL_DIR" ]; then
+if [ -n "${ROC_INSTALL_DIR:-}" ]; then
     mkdir -p "$ROC_INSTALL_DIR"
     cp "$EXTRACT_DIR/roc" "$ROC_INSTALL_DIR"
     echo "✅ Roc executable was copied to: $ROC_INSTALL_DIR"
