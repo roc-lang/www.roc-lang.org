@@ -347,6 +347,11 @@ async function checkPage(page, url) {
       return;
     }
 
+    // Ignore expected 401 responses on the examples page
+    if (url.endsWith('/examples') && text.includes('the server responded with a status of 401')) {
+      return;
+    }
+
     if (type === 'error') {
       errors.push({
         type: 'console_error',
