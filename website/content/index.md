@@ -41,8 +41,6 @@
 In its current state, the new compiler is only suited for things like programming puzzles.
 In any case, the [all syntax example](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc) offers a great overview of the language.
 
-If you're willing to build from source, you can try out the [migrate-zig-compiler-edits branch](https://github.com/roc-lang/basic-cli/tree/migrate-zig-compiler-edits) of the basic-cli platform. It supports reading from stdin and running commands like you would do in a bash script.
-
 To get started with the language, try the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
 
 <a class="btn-small" href="https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md">Tutorial</a>
