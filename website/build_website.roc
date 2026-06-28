@@ -52,7 +52,7 @@ full_clean_build! = |{}|
     _ = Dir.delete_all!("roc")
     _ = Dir.delete_all!(new_compiler_dir)
 
-    # Download latest echo.wasm from nightlies for the wasm compiler
+    # Download latest echo.wasm from nightlies for the interactive compiler
     _ = File.delete!("public/echo.wasm")
     ensure_echo_wasm_present!({})?
 
@@ -231,12 +231,14 @@ ensure_repl_present! = |{}|
 ensure_echo_wasm_present! : {} => Result {} _
 ensure_echo_wasm_present! = |{}|
     wasm_path = "public/echo.wasm"
+    wasm_zst_path = "public/echo.wasm.zst"
     already = File.is_file!(wasm_path) |> Result.with_default(Bool.false)
     if already then
         Ok({})
     else
         # GitHub's /releases/latest/download/ URL redirects to the latest asset
-        Cmd.exec!("curl", ["-fsSL", "-o", wasm_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm"])?
+        Cmd.exec!("curl", ["-fsSL", "-o", wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
+        Cmd.exec!("zstd", ["-d", "--force", wasm_zst_path, "-o", wasm_path])?
         Ok({})
 
 ensure_builtins_present! : {} => Result {} _
