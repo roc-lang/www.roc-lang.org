@@ -40,7 +40,7 @@ async function loadCompiler() {
   if (loadInProgress) return loadInProgress; // another click is loading it
 
   loadInProgress = (async () => {
-    const response = await fetch("echo.wasm");
+    const response = await fetch("echo.wasm", { priority: "low" });
     const { module, instance } = await WebAssembly.instantiateStreaming(
       response,
       buildImports(),
@@ -74,6 +74,12 @@ function escapeHtml(text) {
 }
 
 function setupExample(div) {
+  // The Run button is added statically in the markup (so it shows even before
+  // this script loads). Pull it out before reading the source so its label
+  // doesn't end up in the Roc code, then reuse it below.
+  const runButton = div.querySelector("button.roc-run");
+  runButton.remove();
+
   const source = div.textContent.trim();
   div.textContent = "";
 
@@ -94,9 +100,7 @@ function setupExample(div) {
     }
   });
 
-  const runButton = document.createElement("button");
   runButton.textContent = "Run \u25b6";
-  runButton.className = "roc-run";
 
   const outputArea = document.createElement("div");
   outputArea.className = "roc-output";
@@ -145,7 +149,10 @@ function setupExample(div) {
     let html = "";
     if (captured.compilerMessages) html += captured.compilerMessages;
     if (captured.programOutput) {
-      html += "<pre>" + escapeHtml(captured.programOutput) + "</pre>";
+      html +=
+        '<span class="roc-output-label">Output:\n</span><pre>' +
+        escapeHtml(captured.programOutput) +
+        "</pre>";
     }
     outputArea.innerHTML = html || "(no output)";
     outputArea.classList.remove("running");
@@ -164,4 +171,13 @@ function setupExample(div) {
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".roc-interactive").forEach(setupExample);
+
+  // Pre-download the compiler in the background at low priority so the first
+  // Run click is instant. Errors are ignored here — the click handler retries.
+  const preload = () => loadCompiler().catch(() => {});
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(preload);
+  } else {
+    preload();
+  }
 });

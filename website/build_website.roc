@@ -239,6 +239,9 @@ ensure_echo_wasm_present! = |{}|
         # GitHub's /releases/latest/download/ URL redirects to the latest asset
         Cmd.exec!("curl", ["-fsSL", "-o", wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
         Cmd.exec!("zstd", ["-d", "--force", wasm_zst_path, "-o", wasm_path])?
+        # Drop the compressed artifact so it isn't shipped; the browser fetches
+        # echo.wasm and Cloudflare compresses it on the wire via Content-Encoding.
+        File.delete!(wasm_zst_path)?
         Ok({})
 
 ensure_builtins_present! : {} => Result {} _

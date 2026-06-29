@@ -36,6 +36,9 @@ jobs:
           cd website
           roc check build_website.roc
 
+      - name: Test interactive Roc widgets
+        run: ci_scripts/test_interactive_roc.sh
+
   test-install-script-unix:
     strategy:
       matrix:
