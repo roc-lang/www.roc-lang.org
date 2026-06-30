@@ -109,7 +109,7 @@ full_clean_build! = |{}|
 
     # generate docs for builtins using the new (zig) compiler
     Dir.create!("build/builtins/main") ? CreateMainDirFailed
-    Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main"])?
+    Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main", "--with-lang-ref"])?
     Dir.delete_all!("roc") ? DeleteRocRepoDirFailed
     Dir.delete_all!(new_compiler_dir) ? DeleteNewCompilerDirFailed
 
