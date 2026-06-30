@@ -5,11 +5,13 @@ set -euo pipefail
 # actually compiles and runs with the current Roc compiler -- the same nightly
 # used to build the docs.
 #
-# Each widget stores its source as the div's text content. An HTML comment
-# (`<!-- -->`) separates the top-level definitions from `main!`; the browser
-# excludes comments from `textContent` before handing the source to the
-# compiler, so we strip those comment lines here to reconstruct the exact
-# program the visitor runs.
+# Each widget stores its source inside a `<pre class="roc-source">` element,
+# alongside a static `<button class="roc-run">`. In the browser, compiler.js
+# removes that button and then reads the div's `textContent` -- so the `<pre>`
+# tags and the `<!-- -->` comment that separates the top-level definitions from
+# `main!` never reach the compiler. We reconstruct the exact program the visitor
+# runs by stripping the `<pre>`/`</pre>` tags, dropping the comment lines, and
+# skipping the Run button line.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONTENT_DIR="$ROOT_DIR/website/content"
@@ -33,6 +35,9 @@ while IFS= read -r md_file; do
     in_block && /<\/div>/         { in_block = 0; next }
     in_block {
       if ($0 ~ /^[[:space:]]*<!--.*-->[[:space:]]*$/) next
+      if ($0 ~ /<button class="roc-run"/) next
+      gsub(/<pre class="roc-source">/, "")
+      gsub(/<\/pre>/, "")
       print > (out_dir "/" base "_" n ".roc")
     }
   ' "$md_file"
