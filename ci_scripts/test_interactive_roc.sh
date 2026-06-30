@@ -10,8 +10,9 @@ set -euo pipefail
 # removes that button and then reads the div's `textContent` -- so the `<pre>`
 # tags and the `<!-- -->` comment that separates the top-level definitions from
 # `main!` never reach the compiler. We reconstruct the exact program the visitor
-# runs by stripping the `<pre>`/`</pre>` tags, dropping the comment lines, and
-# skipping the Run button line.
+# runs by stripping the `<pre>`/`</pre>` tags, replacing the comment lines with
+# blank lines (the comment node contributes nothing to `textContent`, but the
+# surrounding newlines stay), and skipping the Run button line.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONTENT_DIR="$ROOT_DIR/website/content"
@@ -29,12 +30,12 @@ while IFS= read -r md_file; do
   base="$(basename "$md_file" .md)"
 
   # Split each `<div class="roc-interactive ...">` ... `</div>` block into its
-  # own `.roc` file, dropping the `<!-- -->` comment separators.
+  # own `.roc` file, turning the `<!-- -->` comment separators into blank lines.
   awk -v out_dir="$work_dir" -v base="$base" '
     /<div class="roc-interactive/ { in_block = 1; n++; next }
     in_block && /<\/div>/         { in_block = 0; next }
     in_block {
-      if ($0 ~ /^[[:space:]]*<!--.*-->[[:space:]]*$/) next
+      if ($0 ~ /^[[:space:]]*<!--.*-->[[:space:]]*$/) { print "" > (out_dir "/" base "_" n ".roc"); next }
       if ($0 ~ /<button class="roc-run"/) next
       gsub(/<pre class="roc-source">/, "")
       gsub(/<\/pre>/, "")
