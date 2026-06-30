@@ -33,6 +33,7 @@
 
     --font-size-normal: 18px;
     --body-max-width: 1024px;
+    --action-btn-width: 120px;
     --dark-code-bg: #202746;
 
     /* Tutorial */
@@ -111,6 +112,10 @@ hr {
 }
 
 .btn-small {
+    display: inline-block;
+    box-sizing: border-box;
+    width: var(--action-btn-width);
+    text-align: center;
     white-space: nowrap;
     background: #7c38f5;
     border: 4px solid #9b6bf2;
@@ -257,6 +262,13 @@ h2 {
 
 #homepage-main h2 {
     margin-top: 60px; /* On the homepage, these need to be spaced out more. */
+}
+
+/* The Sponsors heading follows the Tutorial button; tighten its top margin to
+   1.5rem so the gap below that button matches the gap below the Run button
+   (the .roc-interactive widget's 1.5em ≈ 24px bottom margin). */
+#homepage-main h2#sponsors {
+    margin-top: 1.5rem;
 }
 
 #homepage-main #nav-home-link {
@@ -1574,6 +1586,15 @@ code .dim {
     #repl-arrow {
         display: none;
     }
+
+    /* Right-align the Tutorial button so it falls under the thumb on mobile.
+       (The Run button's override lives next to its base rule below, since that
+       rule comes later in the source and would otherwise win.) */
+    .btn-small {
+        display: block;
+        margin-left: auto;
+        margin-right: 0;
+    }
 }
 
 #gh-logo {
@@ -1620,4 +1641,135 @@ code .dim {
 
 #rplf-h1 {
     color: var(--heading-color);
+}
+
+/* ---- interactive code widget ---- */
+
+.roc-interactive {
+    margin: 1.5em 0;
+}
+
+.roc-interactive.front-page {
+    display: block;
+    max-width: 720px;
+}
+
+.roc-interactive textarea.roc-source {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    padding: 0.75em;
+    font-family: monospace;
+    font-size: var(--font-size-normal);
+    tab-size: 4;
+    resize: vertical;
+    background: var(--dark-code-bg);
+    color: #e0d6f0;
+    border: 1px solid #ddd;
+}
+
+/* Shown only when JS is disabled — the script replaces it with the textarea above. */
+.roc-interactive pre.roc-source {
+    display: block;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.75em;
+    font-family: monospace;
+    font-size: var(--font-size-normal);
+    tab-size: 4;
+    background: var(--dark-code-bg);
+    color: #e0d6f0;
+    border: 1px solid #ddd;
+    overflow-x: auto;
+}
+
+.roc-interactive button.roc-run {
+    margin: 16px 0;
+    box-sizing: border-box;
+    width: var(--action-btn-width);
+    padding: 12px;
+    cursor: pointer;
+    font-size: var(--font-size-normal);
+    color: #fff !important;
+    background: #7c38f5;
+    border: 4px solid #9b6bf2;
+}
+
+.roc-interactive button.roc-run:hover {
+    background: #9b6bf2;
+    border-color: #7c38f5;
+}
+
+.roc-interactive button.roc-run:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.roc-interactive .roc-output {
+    color: #b794e0;
+    font-family: monospace;
+    font-size: var(--font-size-normal);
+    white-space: pre-wrap;
+    min-height: 1.2em;
+}
+
+.roc-interactive .roc-output:empty {
+    display: none;
+}
+
+.roc-interactive .roc-output-label {
+    color: var(--text-color);
+}
+
+.roc-interactive .roc-output pre {
+    padding: 0.75em;
+    background-color: #151517;
+    margin: 0;
+    font: inherit;
+    white-space: pre-wrap;
+}
+
+/* Right-align the Run button so it falls under the thumb on mobile. Defined
+   here (after the base .roc-run rule) so it wins on source order. */
+@media only screen and (max-width: 767px) {
+    .roc-interactive button.roc-run {
+        display: block;
+        margin-left: auto;
+        margin-right: 0;
+    }
+}
+
+/* ---- compiler diagnostics (emitted as HTML by js_stderr) ---- */
+
+.report {
+    border-left: 3px solid #555;
+    padding: 0.3em 0.6em;
+    margin: 0.3em 0;
+    font-size: 13px;
+}
+
+.report.error {
+    border-color: #e55;
+    background: #1f0f17;
+}
+.report.warning {
+    border-color: #c90;
+    background: #1f180f;
+}
+.report.info {
+    border-color: #48f;
+    background: #0f1722;
+}
+
+.report h1 {
+    font-size: 13px;
+    margin: 0 0 0.2em;
+}
+
+.report pre {
+    margin: 0.2em 0;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
 }
