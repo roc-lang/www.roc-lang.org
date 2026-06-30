@@ -107,9 +107,17 @@ full_clean_build! = |{}|
     ensure_new_compiler_downloaded!({})?
     download_roc_source_at_compiler_commit!({})?
 
-    # generate docs for builtins using the new (zig) compiler
+    # generate docs for builtins using the new (zig) compiler.
+    # `--with-lang-ref` reads the language reference articles from `docs/langref`
+    # relative to the current working directory (hardcoded in roc's src/cli/main.zig).
+    # The downloaded roc source has them at roc/docs/langref, so stage a copy where
+    # the compiler expects it, then clean it up afterwards.
     Dir.create!("build/builtins/main") ? CreateMainDirFailed
-    Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main"])?
+    _ = Dir.delete_all!("docs/langref")
+    Dir.create_all!("docs/langref") ? CreateLangRefStagingDirFailed
+    Cmd.exec!("cp", ["-R", "roc/docs/langref/.", "docs/langref"])?
+    Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main", "--with-lang-ref"])?
+    Dir.delete_all!("docs") ? DeleteLangRefStagingDirFailed
     Dir.delete_all!("roc") ? DeleteRocRepoDirFailed
     Dir.delete_all!(new_compiler_dir) ? DeleteNewCompilerDirFailed
 
@@ -255,7 +263,7 @@ ensure_builtins_present! = |{}|
         ensure_new_compiler_downloaded!({})?
         download_roc_source_at_compiler_commit!({})?
         Dir.create!("build/builtins/main") ? CreateMainDirFailed
-        Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main"])?
+        Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main", "--with-lang-ref"])?
         Dir.delete_all!("roc")?
     else
         {}
