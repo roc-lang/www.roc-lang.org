@@ -52,6 +52,10 @@ full_clean_build! = |{}|
     _ = Dir.delete_all!("roc")
     _ = Dir.delete_all!(new_compiler_dir)
 
+    # Download latest echo.wasm from nightlies for the interactive compiler
+    _ = File.delete!("public/echo.wasm")
+    ensure_echo_wasm_present!({})?
+
     Cmd.exec!("cp", ["-r", "public", "build"])?
 
     # Download latest examples
@@ -144,6 +148,7 @@ build_with_cache! = |{}|
     ensure_examples_present!({})?
     ensure_fonts_present!({})?
     ensure_repl_present!({})?
+    ensure_echo_wasm_present!({})?
     ensure_builtins_present!({})?
 
     # 3) Only rebuild site output if content/public changed since last time
@@ -229,6 +234,22 @@ ensure_repl_present! = |{}|
         Dir.create!("build/repl") ? CreateReplDirFailed
         Cmd.exec!("tar", ["-xzf", repl_tarfile, "-C", "build/repl"])?
         _ = File.delete!(repl_tarfile)
+        Ok({})
+
+ensure_echo_wasm_present! : {} => Result {} _
+ensure_echo_wasm_present! = |{}|
+    wasm_path = "public/echo.wasm"
+    wasm_zst_path = "public/echo.wasm.zst"
+    already = File.is_file!(wasm_path) |> Result.with_default(Bool.false)
+    if already then
+        Ok({})
+    else
+        # GitHub's /releases/latest/download/ URL redirects to the latest asset
+        Cmd.exec!("curl", ["-fsSL", "-o", wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
+        Cmd.exec!("zstd", ["-d", "--force", wasm_zst_path, "-o", wasm_path])?
+        # Drop the compressed artifact so it isn't shipped; the browser fetches
+        # echo.wasm and Cloudflare compresses it on the wire via Content-Encoding.
+        File.delete!(wasm_zst_path)?
         Ok({})
 
 ensure_builtins_present! : {} => Result {} _
