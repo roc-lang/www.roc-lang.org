@@ -87,6 +87,7 @@ function setupExample(div) {
   textarea.value = source;
   textarea.rows = Math.min(source.split("\n").length + 2, 18);
   textarea.spellcheck = false;
+  textarea.wrap = "off";
   textarea.className = "roc-source";
 
   // Keep Tab from leaving the textarea

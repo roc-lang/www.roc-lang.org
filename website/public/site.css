@@ -1667,6 +1667,9 @@ code .dim {
     background: var(--dark-code-bg);
     color: #e0d6f0;
     border: 1px solid #ddd;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
 }
 
 /* Shown only when JS is disabled — the script replaces it with the textarea above. */
