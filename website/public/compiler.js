@@ -73,6 +73,104 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;");
 }
 
+const ANSI_COLOR_CLASSES = [
+  "black",
+  "red",
+  "green",
+  "yellow",
+  "blue",
+  "magenta",
+  "cyan",
+  "white",
+];
+
+function renderAnsiTerminal(text) {
+  const state = { bold: false, dim: false, italic: false, underline: false, fg: null };
+
+  const classes = () => {
+    const result = [];
+    if (state.bold) result.push("ansi-bold");
+    if (state.dim) result.push("ansi-dim");
+    if (state.italic) result.push("ansi-italic");
+    if (state.underline) result.push("ansi-underline");
+    if (state.fg) result.push(`ansi-fg-${state.fg}`);
+    return result.join(" ");
+  };
+
+  const span = (chunk) => {
+    if (!chunk) return "";
+    const cls = classes();
+    const escaped = escapeHtml(chunk);
+    return cls ? `<span class="${cls}">${escaped}</span>` : escaped;
+  };
+
+  const applySgr = (body) => {
+    const params = body === "" ? [0] : body.split(";").map(Number);
+    for (const code of params) {
+      if (!Number.isInteger(code)) continue;
+
+      if (code === 0) {
+        state.bold = false;
+        state.dim = false;
+        state.italic = false;
+        state.underline = false;
+        state.fg = null;
+      } else if (code === 1) {
+        state.bold = true;
+      } else if (code === 2) {
+        state.dim = true;
+      } else if (code === 3) {
+        state.italic = true;
+      } else if (code === 4) {
+        state.underline = true;
+      } else if (code === 22) {
+        state.bold = false;
+        state.dim = false;
+      } else if (code === 23) {
+        state.italic = false;
+      } else if (code === 24) {
+        state.underline = false;
+      } else if (code === 39) {
+        state.fg = null;
+      } else if (code >= 30 && code <= 37) {
+        state.fg = ANSI_COLOR_CLASSES[code - 30];
+      } else if (code >= 90 && code <= 97) {
+        state.fg = `bright-${ANSI_COLOR_CLASSES[code - 90]}`;
+      }
+    }
+  };
+
+  let html = "";
+  let index = 0;
+  while (index < text.length) {
+    const esc = text.indexOf("\x1b[", index);
+    if (esc === -1) {
+      html += span(text.slice(index));
+      break;
+    }
+
+    html += span(text.slice(index, esc));
+    const end = text.indexOf("m", esc + 2);
+    if (end === -1) {
+      html += escapeHtml(text.slice(esc));
+      break;
+    }
+
+    const body = text.slice(esc + 2, end);
+    if (/^[0-9;]*$/.test(body)) {
+      applySgr(body);
+    } else {
+      html += escapeHtml(text.slice(esc, end + 1));
+    }
+    index = end + 1;
+  }
+  return html;
+}
+
+function renderTerminalBlock(text) {
+  return `<pre class="roc-terminal">${renderAnsiTerminal(text)}</pre>`;
+}
+
 const ROC_TOKEN_NAMES = `
   EndOfFile Float StringStart StringEnd MultilineStringStart StringPart MalformedStringPart
   SingleQuote MalformedSingleQuote Int MalformedNumberBadSuffix MalformedNumberUnicodeSuffix
@@ -1151,9 +1249,7 @@ function setupExample(div) {
       wasmInstance.exports.compileAndRun(ptr, encoded.length);
     } catch (err) {
       captured.compilerMessages +=
-        '<div class="report error"><h1>Compiler crashed</h1><pre>' +
-        escapeHtml(String(err)) +
-        "</pre></div>";
+        "\x1b[1;31mCompiler crashed\x1b[0m\n" + String(err) + "\n";
       trapped = true;
     }
 
@@ -1161,12 +1257,11 @@ function setupExample(div) {
 
     // ---- 3. display results ----
     let html = "";
-    if (captured.compilerMessages) html += captured.compilerMessages;
+    if (captured.compilerMessages) html += renderTerminalBlock(captured.compilerMessages);
     if (captured.programOutput) {
       html +=
-        '<span class="roc-output-label">Output:\n</span><pre>' +
-        escapeHtml(captured.programOutput) +
-        "</pre>";
+        '<span class="roc-output-label">Output:\n</span>' +
+        renderTerminalBlock(captured.programOutput);
     }
     outputArea.innerHTML = html || "(no output)";
     outputArea.classList.remove("running");

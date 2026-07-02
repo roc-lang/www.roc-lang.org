@@ -925,6 +925,8 @@ details {
 /* Comments `#` and Documentation comments `##` */
 samp .comment,
 code .comment,
+.roc-interactive .ansi-fg-black,
+.roc-interactive .ansi-fg-bright-black,
 .roc-source-highlight .comment {
     color: #ccc;
 }
@@ -942,6 +944,10 @@ samp .constant,
 code .constant,
 .roc-source-highlight .literal,
 .roc-source-highlight .string,
+.roc-interactive .ansi-fg-green,
+.roc-interactive .ansi-fg-bright-green,
+.roc-interactive .ansi-fg-cyan,
+.roc-interactive .ansi-fg-bright-cyan,
 samp .literal,
 code .literal {
     color: var(--dark-cyan);
@@ -958,6 +964,12 @@ samp .punctuation.terminator,
 code .punctuation.terminator,
 samp .kw,
 code .kw,
+.roc-interactive .ansi-fg-blue,
+.roc-interactive .ansi-fg-bright-blue,
+.roc-interactive .ansi-fg-magenta,
+.roc-interactive .ansi-fg-bright-magenta,
+.roc-interactive .ansi-fg-yellow,
+.roc-interactive .ansi-fg-bright-yellow,
 .roc-source-highlight .keyword {
     color: var(--primary-1);
 }
@@ -994,12 +1006,17 @@ samp .meta.block,
 code .meta.block,
 samp .lowerident,
 code .lowerident,
+.roc-interactive .ansi-fg-white,
+.roc-interactive .ansi-fg-bright-white,
+.roc-interactive .roc-output pre.roc-terminal,
 .roc-source-highlight .lowerident {
     color: white;
 }
 
 samp .error,
 code .error,
+.roc-interactive .ansi-fg-red,
+.roc-interactive .ansi-fg-bright-red,
 .roc-source-highlight .error {
     color: hsl(0, 96%, 67%);
 }
@@ -1016,7 +1033,8 @@ code .upperident,
 }
 
 samp .dim,
-code .dim {
+code .dim,
+.roc-interactive .ansi-dim {
     opacity: 0.55;
 }
 
@@ -1700,6 +1718,7 @@ code .dim {
 }
 
 .roc-interactive textarea.roc-source::selection {
+    background: color-mix(in srgb, var(--primary-2) 45%, transparent);
     color: transparent;
 }
 
@@ -1766,12 +1785,32 @@ code .dim {
     color: var(--text-color);
 }
 
-.roc-interactive .roc-output pre {
+.roc-interactive .roc-output pre,
+.roc-interactive .roc-output pre.roc-terminal {
     padding: 0.75em;
     background-color: #151517;
     margin: 0;
     font: inherit;
+    line-height: 1.35;
     white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+.roc-interactive .roc-output pre.roc-terminal {
+    line-height: 1;
+    white-space: pre;
+}
+
+.roc-interactive .ansi-bold {
+    font-weight: 700;
+}
+
+.roc-interactive .ansi-italic {
+    font-style: italic;
+}
+
+.roc-interactive .ansi-underline {
+    text-decoration: underline;
 }
 
 /* Right-align the Run button so it falls under the thumb on mobile. Defined
@@ -1784,7 +1823,7 @@ code .dim {
     }
 }
 
-/* ---- compiler diagnostics (emitted as HTML by js_stderr) ---- */
+/* ---- legacy compiler diagnostics ---- */
 
 .report {
     border-left: 3px solid #555;
