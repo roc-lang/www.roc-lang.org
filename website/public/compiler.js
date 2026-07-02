@@ -171,88 +171,76 @@ function renderTerminalBlock(text) {
   return `<pre class="roc-terminal">${renderAnsiTerminal(text)}</pre>`;
 }
 
-const ROC_TOKEN_NAMES = `
-  EndOfFile Float StringStart StringEnd MultilineStringStart StringPart MalformedStringPart
-  SingleQuote MalformedSingleQuote Int MalformedNumberBadSuffix MalformedNumberUnicodeSuffix
-  MalformedNumberNoDigits MalformedNumberNoExponentDigits MalformedInvalidUnicodeEscapeSequence
-  MalformedInvalidEscapeSequence UpperIdent LowerIdent MalformedUnicodeIdent Underscore
-  DotLowerIdent DotInt DotUpperIdent NoSpaceDotInt NoSpaceDotLowerIdent NoSpaceDotUpperIdent
-  MalformedDotUnicodeIdent MalformedNoSpaceDotUnicodeIdent NamedUnderscore
-  MalformedNamedUnderscoreUnicode OpaqueName MalformedOpaqueNameUnicode
-  MalformedOpaqueNameWithoutName OpenRound CloseRound OpenSquare CloseSquare OpenCurly
-  CloseCurly OpenStringInterpolation CloseStringInterpolation NoSpaceOpenRound OpPlus OpStar
-  OpPizza OpAssign OpBinaryMinus OpUnaryMinus OpNotEquals OpBang OpAnd OpAmpersand OpQuestion
-  OpDoubleQuestion OpOr OpBar OpDoubleSlash OpSlash OpPercent OpCaret OpGreaterThanOrEq
-  OpGreaterThan OpLessThanOrEq OpBackArrow OpLessThan OpDoubleDotLessThan OpDoubleDotEquals
-  OpEquals OpColonEqual OpDoubleColon NoSpaceOpQuestion Comma Dot DoubleDot TripleDot DotStar
-  OpColon OpArrow OpFatArrow OpBackslash KwApp KwAs KwCrash KwDbg KwElse KwExpect KwExposes
-  KwExposing KwFor KwGenerates KwHas KwHosted KwIf KwImplements KwImport KwImports KwIn
-  KwInterface KwMatch KwModule KwPackage KwPackages KwPlatform KwProvides KwRequires KwReturn
-  KwTargets KwVar KwWhere KwWhile KwWith KwBreak MalformedUnknownToken
-`.trim().split(/\s+/);
+const TOK_CLASS = [
+  null,
+  "upperident",
+  "lowerident",
+  "literal",
+  "string",
+  "keyword",
+  "punctuation",
+  "delimiter",
+  "op",
+  "error",
+];
+const C_MASK = 15;
+const C_UPPER = 1;
+const C_LOWER = 2;
+const C_LITERAL = 3;
+const C_STRING = 4;
+const C_KEYWORD = 5;
+const C_PUNCT = 6;
+const C_DELIM = 7;
+const C_OP = 8;
+const C_ERROR = 9;
+const F_EXPR_END = 16;
+const F_FIELD_PREFIX = 32;
+const F_FIELD_NAME = 64;
+const F_DOT_PREFIX = 128;
+const F_DOTDOT_PREFIX = 256;
+const F_COLON = 512;
 
-const ROC_TOKEN = Object.freeze(Object.fromEntries(ROC_TOKEN_NAMES.map((name) => [name, name])));
-
-function rocTokenSet(names) {
-  return new Set(names.trim().split(/\s+/).map((name) => ROC_TOKEN[name]));
-}
-
-function tokenClass(className, names) {
-  return names.trim().split(/\s+/).map((name) => [ROC_TOKEN[name], className]);
-}
+const T_NONE = 0;
+const T_ERROR = C_ERROR;
+const T_ERROR_END = C_ERROR | F_EXPR_END;
+const T_UPPER = C_UPPER | F_EXPR_END;
+const T_LOWER = C_LOWER | F_EXPR_END | F_FIELD_NAME;
+const T_LITERAL = C_LITERAL | F_EXPR_END;
+const T_STRING = C_STRING;
+const T_STRING_END = C_STRING | F_EXPR_END;
+const T_KEYWORD = C_KEYWORD;
+const T_KEYWORD_END = C_KEYWORD | F_EXPR_END;
+const T_PUNCT = C_PUNCT;
+const T_PUNCT_END = C_PUNCT | F_EXPR_END;
+const T_FIELD_PREFIX = C_PUNCT | F_FIELD_PREFIX;
+const T_DELIM = C_DELIM;
+const T_DELIM_END = C_DELIM | F_EXPR_END;
+const T_OP = C_OP;
+const T_OP_FIELD_PREFIX = C_OP | F_FIELD_PREFIX;
+const T_COLON = C_OP | F_COLON;
+const T_DOT_LOWER = C_LOWER | F_EXPR_END | F_DOT_PREFIX;
+const T_DOT_UPPER = C_UPPER | F_EXPR_END | F_DOT_PREFIX;
+const T_DOT_LITERAL = C_LITERAL | F_EXPR_END | F_DOT_PREFIX;
+const T_DOT_OP = C_OP | F_DOT_PREFIX;
+const T_DOT_ERROR = C_ERROR | F_EXPR_END | F_DOT_PREFIX;
+const T_DOTDOT_OP = C_OP | F_DOTDOT_PREFIX;
 
 const ROC_KEYWORDS = new Map([
-  ["and", ROC_TOKEN.OpAnd],
-  ["or", ROC_TOKEN.OpOr],
+  ["and", T_OP],
+  ["or", T_OP],
   ..."app as crash dbg else expect exposes exposing for generates has hosted if implements import imports in interface match module package packages platform provides requires return targets var where while with break"
     .split(/\s+/)
-    .map((word) => [word, ROC_TOKEN[`Kw${word[0].toUpperCase()}${word.slice(1)}`]]),
+    .map((word) => [word, T_KEYWORD]),
 ]);
 
 const ROC_NUMBER_SUFFIXES = new Set("dec f32 f64 i128 i16 i32 i64 i8 nat u128 u16 u32 u64 u8".split(" "));
 
-const ROC_MALFORMED_TOKENS = rocTokenSet(`
-  MalformedDotUnicodeIdent MalformedInvalidEscapeSequence MalformedInvalidUnicodeEscapeSequence
-  MalformedNamedUnderscoreUnicode MalformedNoSpaceDotUnicodeIdent MalformedNumberBadSuffix
-  MalformedNumberNoDigits MalformedNumberNoExponentDigits MalformedNumberUnicodeSuffix
-  MalformedOpaqueNameUnicode MalformedOpaqueNameWithoutName MalformedUnicodeIdent
-  MalformedUnknownToken MalformedSingleQuote MalformedStringPart
-`);
-
-const ROC_EXPR_END_TOKENS = rocTokenSet(`
-  LowerIdent UpperIdent MalformedUnicodeIdent NamedUnderscore MalformedNamedUnderscoreUnicode
-  OpaqueName MalformedOpaqueNameUnicode DotLowerIdent DotUpperIdent DotInt NoSpaceDotLowerIdent
-  NoSpaceDotUpperIdent NoSpaceDotInt MalformedDotUnicodeIdent MalformedNoSpaceDotUnicodeIdent
-  Int Float MalformedNumberBadSuffix MalformedNumberUnicodeSuffix MalformedNumberNoDigits
-  MalformedNumberNoExponentDigits CloseRound CloseSquare CloseCurly CloseStringInterpolation
-  StringEnd SingleQuote MalformedSingleQuote
-`);
-
-const ROC_RECORD_FIELD_PREFIXES = rocTokenSet("OpenCurly Comma OpAmpersand OpBackArrow");
-const ROC_RECORD_FIELD_NAMES = rocTokenSet("LowerIdent NamedUnderscore");
-const ROC_DOT_PREFIXED_TOKENS = rocTokenSet(`
-  DotLowerIdent DotUpperIdent DotInt NoSpaceDotLowerIdent NoSpaceDotUpperIdent NoSpaceDotInt
-  MalformedDotUnicodeIdent MalformedNoSpaceDotUnicodeIdent DotStar
-`);
-
-const ROC_TOKEN_CLASSES = new Map([
-  ...tokenClass("upperident", "UpperIdent DotUpperIdent NoSpaceDotUpperIdent OpaqueName"),
-  ...tokenClass("lowerident", "LowerIdent DotLowerIdent NoSpaceDotLowerIdent NamedUnderscore"),
-  ...tokenClass("literal", "Int Float DotInt NoSpaceDotInt"),
-  ...tokenClass("string", "StringStart StringEnd MultilineStringStart StringPart SingleQuote"),
-  ...tokenClass("keyword", "OpenStringInterpolation CloseStringInterpolation"),
-  ...tokenClass("punctuation", "NoSpaceOpenRound OpenRound CloseRound OpenCurly CloseCurly Comma Dot DoubleDot TripleDot"),
-  ...tokenClass("delimiter", "OpenSquare CloseSquare"),
-  ...tokenClass("op",
-    `OpPlus OpStar OpPizza OpAssign OpBinaryMinus OpUnaryMinus OpNotEquals OpBang OpAnd OpAmpersand
-    OpQuestion OpDoubleQuestion OpOr OpBar OpDoubleSlash OpSlash OpPercent OpCaret OpGreaterThanOrEq
-    OpGreaterThan OpLessThanOrEq OpBackArrow OpLessThan OpDoubleDotLessThan OpDoubleDotEquals
-    OpEquals OpColonEqual OpDoubleColon NoSpaceOpQuestion DotStar OpColon OpArrow OpFatArrow OpBackslash`,
-  ),
-]);
+function isRocTokenError(tok) {
+  return (tok & C_MASK) === C_ERROR;
+}
 
 function updateIfNotMalformed(tok, next) {
-  return ROC_MALFORMED_TOKENS.has(tok) ? tok : next;
+  return isRocTokenError(tok) ? tok : next;
 }
 
 function isAsciiLower(c) {
@@ -341,28 +329,28 @@ class RocCursor {
     const initialDigit = this.buf[this.pos];
     this.pos += 1;
 
-    let tok = ROC_TOKEN.Int;
+    let tok = T_LITERAL;
     if (initialDigit === 48) {
       while (true) {
         const c = this.peek() ?? 0;
         if (c === 120 || c === 88) {
           this.pos += 1;
           if (!this.chompIntegerBase16()) {
-            tok = ROC_TOKEN.MalformedNumberNoDigits;
+            tok = T_ERROR_END;
           }
           tok = this.chompNumberSuffix(tok);
           break;
         } else if (c === 111 || c === 79) {
           this.pos += 1;
           if (!this.chompIntegerBase8()) {
-            tok = ROC_TOKEN.MalformedNumberNoDigits;
+            tok = T_ERROR_END;
           }
           tok = this.chompNumberSuffix(tok);
           break;
         } else if (c === 98 || c === 66) {
           this.pos += 1;
           if (!this.chompIntegerBase2()) {
-            tok = ROC_TOKEN.MalformedNumberNoDigits;
+            tok = T_ERROR_END;
           }
           tok = this.chompNumberSuffix(tok);
           break;
@@ -423,17 +411,17 @@ class RocCursor {
 
     const start = this.pos;
     if (!this.chompIdentGeneral()) {
-      return updateIfNotMalformed(hypothesis, ROC_TOKEN.MalformedNumberUnicodeSuffix);
+      return updateIfNotMalformed(hypothesis, T_ERROR_END);
     }
     const suffix = utf8Decode(this.buf.subarray(start, this.pos));
     if (!ROC_NUMBER_SUFFIXES.has(suffix)) {
-      return updateIfNotMalformed(hypothesis, ROC_TOKEN.MalformedNumberBadSuffix);
+      return updateIfNotMalformed(hypothesis, T_ERROR_END);
     }
     return hypothesis;
   }
 
   chompNumberBase10() {
-    let tokenType = ROC_TOKEN.Int;
+    let tokenType = T_LITERAL;
     this.chompIntegerBase10();
     if (
       (this.peek() ?? 0) === 46 &&
@@ -443,15 +431,15 @@ class RocCursor {
     ) {
       this.pos += 1;
       this.chompIntegerBase10();
-      tokenType = ROC_TOKEN.Float;
+      tokenType = T_LITERAL;
     }
 
     const hasExponent = this.chompExponent();
     if (hasExponent === "EmptyExponent") {
-      return ROC_TOKEN.MalformedNumberNoExponentDigits;
+      return T_ERROR_END;
     }
     if (hasExponent) {
-      tokenType = ROC_TOKEN.Float;
+      tokenType = T_LITERAL;
     }
     return tokenType;
   }
@@ -523,10 +511,10 @@ class RocCursor {
   chompIdentLower() {
     const start = this.pos;
     if (!this.chompIdentGeneral()) {
-      return ROC_TOKEN.MalformedUnicodeIdent;
+      return T_ERROR_END;
     }
     const ident = utf8Decode(this.buf.subarray(start, this.pos));
-    return ROC_KEYWORDS.get(ident) ?? ROC_TOKEN.LowerIdent;
+    return ROC_KEYWORDS.get(ident) ?? T_LOWER;
   }
 
   chompIdentGeneral() {
@@ -634,7 +622,7 @@ class RocCursor {
 
       if (state === "Empty") {
         if (c === 39) {
-          return ROC_TOKEN.MalformedSingleQuote;
+          return T_ERROR_END;
         }
         if (c === 92) {
           state = "Enough";
@@ -648,19 +636,19 @@ class RocCursor {
         }
       } else if (state === "Enough") {
         if (c === 39) {
-          return ROC_TOKEN.SingleQuote;
+          return T_STRING_END;
         }
         state = "TooLong";
       } else if (state === "TooLong") {
         if (c === 39) {
-          return ROC_TOKEN.MalformedSingleQuote;
+          return T_ERROR_END;
         }
       } else if (state === "Invalid" && c === 39) {
-        return ROC_TOKEN.MalformedSingleQuote;
+        return T_ERROR_END;
       }
     }
 
-    return ROC_TOKEN.MalformedSingleQuote;
+    return T_ERROR_END;
   }
 
   chompUTF8CodepointWithValidation() {
@@ -732,124 +720,124 @@ class RocTokenizer {
       } else if (b === 33) {
         if (this.cursor.peekAt(1) === 61) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpNotEquals, start);
+          this.pushToken(T_OP, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpBang, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 38) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpAmpersand, start);
+        this.pushToken(T_OP_FIELD_PREFIX, start);
       } else if (b === 44) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.Comma, start);
+        this.pushToken(T_FIELD_PREFIX, start);
       } else if (b === 63) {
         if (this.cursor.peekAt(1) === 63) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpDoubleQuestion, start);
+          this.pushToken(T_OP, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(sp ? ROC_TOKEN.OpQuestion : ROC_TOKEN.NoSpaceOpQuestion, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 124) {
         if (this.cursor.peekAt(1) === 62) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpPizza, start);
+          this.pushToken(T_OP, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpBar, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 43) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpPlus, start);
+        this.pushToken(T_OP, start);
       } else if (b === 42) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpStar, start);
+        this.pushToken(T_OP, start);
       } else if (b === 47) {
         if (this.cursor.peekAt(1) === 47) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpDoubleSlash, start);
+          this.pushToken(T_OP, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpSlash, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 92) {
         if (this.cursor.peekAt(1) === 92) {
           this.tokenizeMultilineStringLiteral();
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpBackslash, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 37) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpPercent, start);
+        this.pushToken(T_OP, start);
       } else if (b === 94) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpCaret, start);
+        this.pushToken(T_OP, start);
       } else if (b === 62) {
         if (this.cursor.peekAt(1) === 61) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpGreaterThanOrEq, start);
+          this.pushToken(T_OP, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpGreaterThan, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 60) {
         if (this.cursor.peekAt(1) === 61) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpLessThanOrEq, start);
+          this.pushToken(T_OP, start);
         } else if (this.cursor.peekAt(1) === 45) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpBackArrow, start);
+          this.pushToken(T_OP_FIELD_PREFIX, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpLessThan, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 61) {
         if (this.cursor.peekAt(1) === 61) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpEquals, start);
+          this.pushToken(T_OP, start);
         } else if (this.cursor.peekAt(1) === 62) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpFatArrow, start);
+          this.pushToken(T_OP, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpAssign, start);
+          this.pushToken(T_OP, start);
         }
       } else if (b === 58) {
         if (this.cursor.peekAt(1) === 61) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpColonEqual, start);
+          this.pushToken(T_OP, start);
         } else if (this.cursor.peekAt(1) === 58) {
           this.cursor.pos += 2;
-          this.pushToken(ROC_TOKEN.OpDoubleColon, start);
+          this.pushToken(T_OP, start);
         } else {
           this.cursor.pos += 1;
-          this.pushToken(ROC_TOKEN.OpColon, start);
+          this.pushToken(T_COLON, start);
         }
       } else if (b === 40) {
         this.cursor.pos += 1;
-        this.pushToken(sp ? ROC_TOKEN.OpenRound : ROC_TOKEN.NoSpaceOpenRound, start);
+        this.pushToken(T_PUNCT, start);
       } else if (b === 91) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpenSquare, start);
+        this.pushToken(T_DELIM, start);
       } else if (b === 123) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpenCurly, start);
+        this.pushToken(T_FIELD_PREFIX, start);
       } else if (b === 41) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.CloseRound, start);
+        this.pushToken(T_PUNCT_END, start);
       } else if (b === 93) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.CloseSquare, start);
+        this.pushToken(T_DELIM_END, start);
       } else if (b === 125) {
         this.cursor.pos += 1;
         if (this.stringInterpolationStack.length > 0) {
           const last = this.stringInterpolationStack.pop();
-          this.pushToken(ROC_TOKEN.CloseStringInterpolation, start);
+          this.pushToken(T_KEYWORD_END, start);
           this.tokenizeStringLikeLiteralBody(last);
         } else {
-          this.pushToken(ROC_TOKEN.CloseCurly, start);
+          this.pushToken(T_PUNCT_END, start);
         }
       } else if (b === 95) {
         this.tokenizeUnderscore(start);
@@ -864,9 +852,9 @@ class RocTokenizer {
         const tag = this.cursor.chompIdentLower();
         this.pushToken(tag, start);
       } else if (isAsciiUpper(b)) {
-        let tag = ROC_TOKEN.UpperIdent;
+        let tag = T_UPPER;
         if (!this.cursor.chompIdentGeneral()) {
-          tag = ROC_TOKEN.MalformedUnicodeIdent;
+          tag = T_ERROR_END;
         }
         this.pushToken(tag, start);
       } else if (b === 39) {
@@ -876,14 +864,14 @@ class RocTokenizer {
         this.tokenizeStringLikeLiteral();
       } else if (b >= 0x80) {
         this.cursor.chompIdentGeneral();
-        this.pushToken(ROC_TOKEN.MalformedUnicodeIdent, start);
+        this.pushToken(T_ERROR_END, start);
       } else {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.MalformedUnknownToken, start);
+        this.pushToken(T_ERROR, start);
       }
     }
 
-    this.pushToken(ROC_TOKEN.EndOfFile, this.cursor.pos);
+    this.pushToken(T_NONE, this.cursor.pos);
     return {
       tokens: this.tokens,
       comments: this.cursor.commentRanges,
@@ -895,52 +883,52 @@ class RocTokenizer {
     const next = this.cursor.peekAt(1);
     if (next == null) {
       this.cursor.pos += 1;
-      this.pushToken(ROC_TOKEN.Dot, start);
+      this.pushToken(T_PUNCT, start);
     } else if (next === 46) {
       if (this.cursor.peekAt(2) === 46) {
         this.cursor.pos += 3;
-        this.pushToken(ROC_TOKEN.TripleDot, start);
+        this.pushToken(T_PUNCT, start);
       } else if (this.cursor.peekAt(2) === 60) {
         this.cursor.pos += 3;
-        this.pushToken(ROC_TOKEN.OpDoubleDotLessThan, start);
+        this.pushToken(T_DOTDOT_OP, start);
       } else if (this.cursor.peekAt(2) === 61) {
         this.cursor.pos += 3;
-        this.pushToken(ROC_TOKEN.OpDoubleDotEquals, start);
+        this.pushToken(T_DOTDOT_OP, start);
       } else {
         this.cursor.pos += 2;
-        this.pushToken(ROC_TOKEN.DoubleDot, start);
+        this.pushToken(T_PUNCT, start);
       }
     } else if (isAsciiDigit(next)) {
       this.cursor.pos += 1;
       this.cursor.chompInteger();
-      this.pushToken(sp ? ROC_TOKEN.DotInt : ROC_TOKEN.NoSpaceDotInt, start);
+      this.pushToken(T_DOT_LITERAL, start);
     } else if (isAsciiLower(next)) {
-      let tag = sp ? ROC_TOKEN.DotLowerIdent : ROC_TOKEN.NoSpaceDotLowerIdent;
+      let tag = T_DOT_LOWER;
       this.cursor.pos += 1;
       if (!this.cursor.chompIdentGeneral()) {
-        tag = ROC_TOKEN.MalformedDotUnicodeIdent;
+        tag = T_DOT_ERROR;
       }
       this.pushToken(tag, start);
     } else if (isAsciiUpper(next)) {
-      let tag = sp ? ROC_TOKEN.DotUpperIdent : ROC_TOKEN.NoSpaceDotUpperIdent;
+      let tag = T_DOT_UPPER;
       this.cursor.pos += 1;
       if (!this.cursor.chompIdentGeneral()) {
-        tag = ROC_TOKEN.MalformedDotUnicodeIdent;
+        tag = T_DOT_ERROR;
       }
       this.pushToken(tag, start);
     } else if (next >= 0x80 && next <= 0xff) {
       this.cursor.pos += 1;
       this.cursor.chompIdentGeneral();
-      this.pushToken(ROC_TOKEN.MalformedDotUnicodeIdent, start);
+      this.pushToken(T_DOT_ERROR, start);
     } else if (next === 123) {
       this.cursor.pos += 1;
-      this.pushToken(ROC_TOKEN.Dot, start);
+      this.pushToken(T_PUNCT, start);
     } else if (next === 42) {
       this.cursor.pos += 2;
-      this.pushToken(ROC_TOKEN.DotStar, start);
+      this.pushToken(T_DOT_OP, start);
     } else {
       this.cursor.pos += 1;
-      this.pushToken(ROC_TOKEN.Dot, start);
+      this.pushToken(T_PUNCT, start);
     }
   }
 
@@ -948,18 +936,18 @@ class RocTokenizer {
     const next = this.cursor.peekAt(1);
     if (next == null) {
       this.cursor.pos += 1;
-      this.pushToken(ROC_TOKEN.OpUnaryMinus, start);
+      this.pushToken(T_OP, start);
     } else if (next === 62) {
       this.cursor.pos += 2;
-      this.pushToken(ROC_TOKEN.OpArrow, start);
+      this.pushToken(T_OP, start);
     } else if (next === 32 || next === 9 || next === 10 || next === 13 || next === 35) {
       this.cursor.pos += 1;
-      this.pushToken(ROC_TOKEN.OpBinaryMinus, start);
+      this.pushToken(T_OP, start);
     } else if (isAsciiDigit(next)) {
       const prev = this.lastTokenTag();
-      if (!sp && prev != null && ROC_EXPR_END_TOKENS.has(prev)) {
+      if (!sp && prev != null && (prev & F_EXPR_END) !== 0) {
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.OpBinaryMinus, start);
+        this.pushToken(T_OP, start);
       } else {
         this.cursor.pos += 1;
         const tag = this.cursor.chompNumber();
@@ -967,27 +955,27 @@ class RocTokenizer {
       }
     } else {
       this.cursor.pos += 1;
-      this.pushToken(canFollowUnaryMinus(next) ? ROC_TOKEN.OpUnaryMinus : ROC_TOKEN.OpBinaryMinus, start);
+      this.pushToken(T_OP, start);
     }
   }
 
   tokenizeUnderscore(start) {
     const next = this.cursor.peekAt(1);
     if (next != null && (isAsciiLower(next) || isAsciiUpper(next) || isAsciiDigit(next))) {
-      let tag = ROC_TOKEN.NamedUnderscore;
+      let tag = T_LOWER;
       this.cursor.pos += 2;
       if (!this.cursor.chompIdentGeneral()) {
-        tag = ROC_TOKEN.MalformedNamedUnderscoreUnicode;
+        tag = T_ERROR_END;
       }
       this.pushToken(tag, start);
     } else {
       this.cursor.pos += 1;
-      this.pushToken(ROC_TOKEN.Underscore, start);
+      this.pushToken(T_NONE, start);
     }
   }
 
   tokenizeOpaqueName(start) {
-    let tok = ROC_TOKEN.OpaqueName;
+    let tok = T_UPPER;
     const next = this.cursor.peekAt(1);
     if (
       next != null &&
@@ -995,10 +983,10 @@ class RocTokenizer {
     ) {
       this.cursor.pos += 1;
       if (!this.cursor.chompIdentGeneral()) {
-        tok = ROC_TOKEN.MalformedOpaqueNameUnicode;
+        tok = T_ERROR_END;
       }
     } else {
-      tok = ROC_TOKEN.MalformedOpaqueNameWithoutName;
+      tok = T_ERROR;
       this.cursor.pos += 1;
     }
     this.pushToken(tok, start);
@@ -1007,22 +995,22 @@ class RocTokenizer {
   tokenizeDollar(start) {
     const next = this.cursor.peekAt(1);
     if (next != null && isAsciiLower(next)) {
-      let tag = ROC_TOKEN.LowerIdent;
+      let tag = T_LOWER;
       this.cursor.pos += 1;
       if (!this.cursor.chompIdentGeneral()) {
-        tag = ROC_TOKEN.MalformedUnicodeIdent;
+        tag = T_ERROR_END;
       }
       this.pushToken(tag, start);
     } else if (next != null && isAsciiUpper(next)) {
-      let tag = ROC_TOKEN.UpperIdent;
+      let tag = T_UPPER;
       this.cursor.pos += 1;
       if (!this.cursor.chompIdentGeneral()) {
-        tag = ROC_TOKEN.MalformedUnicodeIdent;
+        tag = T_ERROR_END;
       }
       this.pushToken(tag, start);
     } else {
       this.cursor.pos += 1;
-      this.pushToken(ROC_TOKEN.MalformedUnknownToken, start);
+      this.pushToken(T_ERROR, start);
     }
   }
 
@@ -1033,9 +1021,9 @@ class RocTokenizer {
     if (this.cursor.peek() === 34 && this.cursor.peekAt(1) === 34) {
       this.cursor.pos += 2;
       kind = "multi_line";
-      this.pushToken(ROC_TOKEN.MultilineStringStart, start);
+      this.pushToken(T_STRING, start);
     } else {
-      this.pushToken(ROC_TOKEN.StringStart, start);
+      this.pushToken(T_STRING, start);
     }
     this.tokenizeStringLikeLiteralBody(kind);
   }
@@ -1043,38 +1031,38 @@ class RocTokenizer {
   tokenizeMultilineStringLiteral() {
     const start = this.cursor.pos;
     this.cursor.pos += 2;
-    this.pushToken(ROC_TOKEN.MultilineStringStart, start);
+    this.pushToken(T_STRING, start);
     this.tokenizeStringLikeLiteralBody("multi_line");
   }
 
   tokenizeStringLikeLiteralBody(kind) {
     const start = this.cursor.pos;
-    let stringPartTag = ROC_TOKEN.StringPart;
+    let stringPartTag = T_STRING;
     while (this.cursor.pos < this.cursor.buf.length) {
       const c = this.cursor.buf[this.cursor.pos];
       if (c === 36 && this.cursor.peekAt(1) === 123) {
         this.pushToken(stringPartTag, start);
         const dollarStart = this.cursor.pos;
         this.cursor.pos += 2;
-        this.pushToken(ROC_TOKEN.OpenStringInterpolation, dollarStart);
+        this.pushToken(T_KEYWORD, dollarStart);
         this.stringInterpolationStack.push(kind);
         return;
       } else if (c === 10) {
         this.pushToken(stringPartTag, start);
         if (kind === "single_line") {
-          this.pushToken(ROC_TOKEN.StringEnd, this.cursor.pos);
+          this.pushToken(T_STRING_END, this.cursor.pos);
         }
         return;
       } else if (kind === "single_line" && c === 34) {
         this.pushToken(stringPartTag, start);
         const stringPartEnd = this.cursor.pos;
         this.cursor.pos += 1;
-        this.pushToken(ROC_TOKEN.StringEnd, stringPartEnd);
+        this.pushToken(T_STRING_END, stringPartEnd);
         return;
       } else {
         this.cursor.chompUTF8CodepointWithValidation();
         if (c === 92 && this.cursor.chompEscapeSequenceWithQuote(34) !== true) {
-          stringPartTag = ROC_TOKEN.MalformedStringPart;
+          stringPartTag = T_ERROR;
         }
       }
     }
@@ -1087,13 +1075,7 @@ function tokenizeRocSource(source) {
 }
 
 function classForRocToken(tag) {
-  if (ROC_MALFORMED_TOKENS.has(tag)) {
-    return "error";
-  }
-  if (tag.startsWith("Kw")) {
-    return "keyword";
-  }
-  return ROC_TOKEN_CLASSES.get(tag) ?? null;
+  return TOK_CLASS[tag & C_MASK];
 }
 
 function appendRocTokenHighlight(ranges, token) {
@@ -1102,13 +1084,10 @@ function appendRocTokenHighlight(ranges, token) {
     return;
   }
 
-  if (ROC_DOT_PREFIXED_TOKENS.has(token.tag) && token.start + 1 < token.end) {
+  if ((token.tag & F_DOT_PREFIX) !== 0 && token.start + 1 < token.end) {
     ranges.push({ start: token.start, end: token.start + 1, className: "punctuation" });
     ranges.push({ start: token.start + 1, end: token.end, className });
-  } else if (
-    (token.tag === ROC_TOKEN.OpDoubleDotLessThan || token.tag === ROC_TOKEN.OpDoubleDotEquals) &&
-    token.start + 2 < token.end
-  ) {
+  } else if ((token.tag & F_DOTDOT_PREFIX) !== 0 && token.start + 2 < token.end) {
     ranges.push({ start: token.start, end: token.start + 2, className: "punctuation" });
     ranges.push({ start: token.start + 2, end: token.end, className });
   } else {
@@ -1119,7 +1098,7 @@ function appendRocTokenHighlight(ranges, token) {
 function renderHighlightedRocSource(source) {
   const tokenized = tokenizeRocSource(source);
   const ranges = [...tokenized.comments];
-  const tokens = tokenized.tokens.filter((token) => token.tag !== ROC_TOKEN.EndOfFile && token.start !== token.end);
+  const tokens = tokenized.tokens.filter((token) => token.start !== token.end);
 
   for (let i = 0; i < tokens.length; i += 1) {
     const previous = tokens[i - 1];
@@ -1128,9 +1107,9 @@ function renderHighlightedRocSource(source) {
     if (
       previous != null &&
       next != null &&
-      ROC_RECORD_FIELD_PREFIXES.has(previous.tag) &&
-      ROC_RECORD_FIELD_NAMES.has(token.tag) &&
-      next.tag === ROC_TOKEN.OpColon &&
+      (previous.tag & F_FIELD_PREFIX) !== 0 &&
+      (token.tag & F_FIELD_NAME) !== 0 &&
+      (next.tag & F_COLON) !== 0 &&
       utf8Decode(tokenized.bytes.subarray(token.end, next.start)).trim() === ""
     ) {
       ranges.push({ start: token.start, end: next.end, className: "field" });
