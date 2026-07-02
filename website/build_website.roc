@@ -13,6 +13,7 @@ import cli.Utc
 # Usage:
 #   roc ./build_website.roc           # full, clean build (no cache)
 #   roc ./build_website.roc --cache   # incremental build using cache
+#   roc ./build_website.roc --minify  # minify build assets after building
 
 latest_stable_tag = "alpha4-rolling"
 cache_marker_path = ".cache/site.millis"
@@ -22,6 +23,7 @@ main! : List Arg => Result {} _
 main! = |raw_args|
     args = List.map(raw_args, Arg.display)
     use_cache = List.any(args, |a| a == "--cache")
+    use_minify = List.any(args, |a| a == "--minify")
 
     cwd_path = Env.cwd!({}) ? EncCwdFailed
     cwd_path_str = Path.display(cwd_path)
@@ -38,7 +40,30 @@ main! = |raw_args|
     else
         full_clean_build!({})?
 
+    if use_minify then
+        minify_build_assets!({})?
+    else
+        {}
+
     Stdout.line!("Website built in dir 'website/build'.")
+
+minify_build_assets! : {} => Result {} _
+minify_build_assets! = |{}|
+    minify_build_asset!("build/compiler.js")?
+    minify_build_asset!("build/site.js")?
+    minify_build_asset!("build/site.css")?
+
+    Ok({})
+
+minify_build_asset! : Str => Result {} _
+minify_build_asset! = |path|
+    tmp_path = "${path}.min"
+
+    _ = File.delete!(tmp_path)
+    Cmd.exec!("minify", ["-o", tmp_path, path])?
+    Cmd.exec!("mv", [tmp_path, path])?
+
+    Ok({})
 
 # ----------------
 # Full clean build
