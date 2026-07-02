@@ -1797,7 +1797,7 @@ code .dim,
 }
 
 .roc-interactive .roc-output pre.roc-terminal {
-    line-height: 1;
+    line-height: 1.175;
     white-space: pre;
 }
 
