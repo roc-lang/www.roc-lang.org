@@ -22,7 +22,11 @@ mv roc_nightly* roc_nightly
 # make roc command available
 export PATH=$PATH:$(pwd)/roc_nightly
 
+# Install the no-npm asset minifier used by the production build.
+go install github.com/tdewolff/minify/v2/cmd/minify@v2.24.13
+export PATH=$PATH:$(go env GOPATH)/bin
+
 cd website
 roc check build_website.roc
 roc build build_website.roc
-./build_website
+./build_website --minify
