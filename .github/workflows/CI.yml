@@ -46,6 +46,7 @@ jobs:
         run: ci_scripts/test_interactive_roc.sh
 
   test-install-script-unix:
+    needs: ci-checks
     strategy:
       matrix:
         include:
@@ -129,6 +130,7 @@ jobs:
           echo "✅ PATH successfully updated in $PROFILE"
 
   test-install-script-windows:
+    needs: ci-checks
     strategy:
       matrix:
         include:
