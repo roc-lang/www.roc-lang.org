@@ -1,141 +1,127 @@
 // main.js — Roc interactive examples (lazy-loads compiler on first Run click)
 "use strict";
 
-const utf8Decode = (bytes) => new TextDecoder().decode(bytes);
-const utf8Encode = (str) => new TextEncoder().encode(str);
+const decode = (bytes) => new TextDecoder().decode(bytes);
+const encode = (str) => new TextEncoder().encode(str);
 
 // All null until the user clicks "Run" for the first time.
 
-let wasmModule = null; // WebAssembly.Module
-let wasmInstance = null; // WebAssembly.Instance
-let wasmMemory = null; // WebAssembly.Memory
-let loadInProgress = null; // Promise | null — guards against concurrent loads
+let mod = null; // WebAssembly.Module
+let inst = null; // WebAssembly.Instance
+let mem = null; // WebAssembly.Memory
+let loading = null; // Promise | null — guards against concurrent loads
 
-// Every run creates a fresh { programOutput, compilerMessages } object
+// Every run creates a fresh { out, err } object
 // and stashes it here so the import callbacks can write into it.
-let runCapture = null;
+let capture = null;
 
 // Build a fresh imports object (needed for initial load & re-instantiation).
-function buildImports() {
+function imports() {
   return {
     env: {
       js_echo(ptr, len) {
-        if (runCapture) {
-          const slice = new Uint8Array(wasmMemory.buffer, ptr, len);
-          runCapture.programOutput += utf8Decode(slice);
+        if (capture) {
+          const slice = new Uint8Array(mem.buffer, ptr, len);
+          capture.out += decode(slice);
         }
       },
       js_stderr(ptr, len) {
-        if (runCapture) {
-          const slice = new Uint8Array(wasmMemory.buffer, ptr, len);
-          runCapture.compilerMessages += utf8Decode(slice);
+        if (capture) {
+          const slice = new Uint8Array(mem.buffer, ptr, len);
+          capture.err += decode(slice);
         }
       },
     },
   };
 }
 
-async function loadCompiler() {
-  if (wasmInstance) return; // already loaded
-  if (loadInProgress) return loadInProgress; // another click is loading it
+async function load() {
+  if (inst) return; // already loaded
+  if (loading) return loading; // another click is loading it
 
-  loadInProgress = (async () => {
+  loading = (async () => {
     const response = await fetch("echo.wasm", { priority: "low" });
     const { module, instance } = await WebAssembly.instantiateStreaming(
       response,
-      buildImports(),
+      imports(),
     );
-    wasmModule = module;
-    wasmInstance = instance;
-    wasmMemory = instance.exports.memory;
-    wasmInstance.exports.init();
+    mod = module;
+    inst = instance;
+    mem = instance.exports.memory;
+    inst.exports.init();
   })();
 
-  await loadInProgress;
-  loadInProgress = null;
+  await loading;
+  loading = null;
 }
 
-async function recoverCompiler() {
+async function recover() {
   try {
-    const instance = await WebAssembly.instantiate(wasmModule, buildImports());
-    wasmInstance = instance;
-    wasmMemory = instance.exports.memory;
-    wasmInstance.exports.init();
+    const instance = await WebAssembly.instantiate(mod, imports());
+    inst = instance;
+    mem = instance.exports.memory;
+    inst.exports.init();
   } catch (_) {
     // best-effort — if recovery fails the next run will show the error
   }
 }
 
-function escapeHtml(text) {
+function htmlEscape(text) {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
 
-const ANSI_COLOR_CLASSES = [
-  "black",
-  "red",
-  "green",
-  "yellow",
-  "blue",
-  "magenta",
-  "cyan",
-  "white",
-];
+const ANSI_COLOR_CLASSES = "c e n k k k n v".split(" ");
 
-function renderAnsiTerminal(text) {
-  const state = { bold: false, dim: false, italic: false, underline: false, fg: null };
+function ansi(text) {
+  let bold = false;
+  let dim = false;
+  let italic = false;
+  let underline = false;
+  let fg = "";
 
   const classes = () => {
     const result = [];
-    if (state.bold) result.push("ansi-bold");
-    if (state.dim) result.push("ansi-dim");
-    if (state.italic) result.push("ansi-italic");
-    if (state.underline) result.push("ansi-underline");
-    if (state.fg) result.push(`ansi-fg-${state.fg}`);
+    if (bold) result.push("b");
+    if (dim) result.push("m");
+    if (italic) result.push("i");
+    if (underline) result.push("x");
+    if (fg) result.push(fg);
     return result.join(" ");
   };
 
   const span = (chunk) => {
     if (!chunk) return "";
     const cls = classes();
-    const escaped = escapeHtml(chunk);
+    const escaped = htmlEscape(chunk);
     return cls ? `<span class="${cls}">${escaped}</span>` : escaped;
   };
 
   const applySgr = (body) => {
-    const params = body === "" ? [0] : body.split(";").map(Number);
-    for (const code of params) {
-      if (!Number.isInteger(code)) continue;
-
+    for (const code of (body || "0").split(";").map(Number)) {
       if (code === 0) {
-        state.bold = false;
-        state.dim = false;
-        state.italic = false;
-        state.underline = false;
-        state.fg = null;
+        bold = dim = italic = underline = false;
+        fg = "";
       } else if (code === 1) {
-        state.bold = true;
+        bold = true;
       } else if (code === 2) {
-        state.dim = true;
+        dim = true;
       } else if (code === 3) {
-        state.italic = true;
+        italic = true;
       } else if (code === 4) {
-        state.underline = true;
+        underline = true;
       } else if (code === 22) {
-        state.bold = false;
-        state.dim = false;
+        bold = dim = false;
       } else if (code === 23) {
-        state.italic = false;
+        italic = false;
       } else if (code === 24) {
-        state.underline = false;
+        underline = false;
       } else if (code === 39) {
-        state.fg = null;
-      } else if (code >= 30 && code <= 37) {
-        state.fg = ANSI_COLOR_CLASSES[code - 30];
-      } else if (code >= 90 && code <= 97) {
-        state.fg = `bright-${ANSI_COLOR_CLASSES[code - 90]}`;
+        fg = "";
+      } else if ((code >= 30 && code <= 37) || (code >= 90 && code <= 97)) {
+        fg = ANSI_COLOR_CLASSES[code % 10];
       }
     }
   };
@@ -152,7 +138,7 @@ function renderAnsiTerminal(text) {
     html += span(text.slice(index, esc));
     const end = text.indexOf("m", esc + 2);
     if (end === -1) {
-      html += escapeHtml(text.slice(esc));
+      html += htmlEscape(text.slice(esc));
       break;
     }
 
@@ -160,28 +146,28 @@ function renderAnsiTerminal(text) {
     if (/^[0-9;]*$/.test(body)) {
       applySgr(body);
     } else {
-      html += escapeHtml(text.slice(esc, end + 1));
+      html += htmlEscape(text.slice(esc, end + 1));
     }
     index = end + 1;
   }
   return html;
 }
 
-function renderTerminalBlock(text) {
-  return `<pre class="roc-terminal">${renderAnsiTerminal(text)}</pre>`;
+function terminal(text) {
+  return `<pre class="roc-terminal">${ansi(text)}</pre>`;
 }
 
 const TOK_CLASS = [
   null,
-  "upperident",
-  "lowerident",
-  "literal",
-  "string",
-  "keyword",
-  "punctuation",
-  "delimiter",
-  "op",
-  "error",
+  "u",
+  "v",
+  "n",
+  "s",
+  "k",
+  "p",
+  "d",
+  "o",
+  "e",
 ];
 const C_MASK = 15;
 const C_UPPER = 1;
@@ -225,77 +211,71 @@ const T_DOT_OP = C_OP | F_DOT_PREFIX;
 const T_DOT_ERROR = C_ERROR | F_EXPR_END | F_DOT_PREFIX;
 const T_DOTDOT_OP = C_OP | F_DOTDOT_PREFIX;
 
-const TWO_BYTE_TOKENS = new Map([
-  [0x213d, T_OP], // !=
-  [0x3f3f, T_OP], // ??
-  [0x7c3e, T_OP], // |>
-  [0x2f2f, T_OP], // //
-  [0x3e3d, T_OP], // >=
-  [0x3c3d, T_OP], // <=
-  [0x3c2d, T_OP_FIELD_PREFIX], // <-
-  [0x3d3d, T_OP], // ==
-  [0x3d3e, T_OP], // =>
-  [0x3a3d, T_OP], // :=
-  [0x3a3a, T_OP], // ::
-]);
+const TWO_BYTE_TOKENS = {
+  0x213d: T_OP, // !=
+  0x3f3f: T_OP, // ??
+  0x7c3e: T_OP, // |>
+  0x2f2f: T_OP, // //
+  0x3e3d: T_OP, // >=
+  0x3c3d: T_OP, // <=
+  0x3c2d: T_OP_FIELD_PREFIX, // <-
+  0x3d3d: T_OP, // ==
+  0x3d3e: T_OP, // =>
+  0x3a3d: T_OP, // :=
+  0x3a3a: T_OP, // ::
+};
 
-const ONE_BYTE_TOKENS = new Map([
-  [33, T_OP], // !
-  [38, T_OP_FIELD_PREFIX], // &
-  [44, T_FIELD_PREFIX], // ,
-  [63, T_OP], // ?
-  [124, T_OP], // |
-  [43, T_OP], // +
-  [42, T_OP], // *
-  [47, T_OP], // /
-  [37, T_OP], // %
-  [94, T_OP], // ^
-  [62, T_OP], // >
-  [60, T_OP], // <
-  [61, T_OP], // =
-  [58, T_COLON], // :
-  [40, T_PUNCT], // (
-  [91, T_DELIM], // [
-  [123, T_FIELD_PREFIX], // {
-  [41, T_PUNCT_END], // )
-  [93, T_DELIM_END], // ]
-]);
+const ONE_BYTE_TOKENS = {
+  33: T_OP, // !
+  38: T_OP_FIELD_PREFIX, // &
+  44: T_FIELD_PREFIX, // ,
+  63: T_OP, // ?
+  124: T_OP, // |
+  43: T_OP, // +
+  42: T_OP, // *
+  47: T_OP, // /
+  37: T_OP, // %
+  94: T_OP, // ^
+  62: T_OP, // >
+  60: T_OP, // <
+  61: T_OP, // =
+  58: T_COLON, // :
+  40: T_PUNCT, // (
+  91: T_DELIM, // [
+  123: T_FIELD_PREFIX, // {
+  41: T_PUNCT_END, // )
+  93: T_DELIM_END, // ]
+};
 
-const ROC_KEYWORDS = new Map([
-  ["and", T_OP],
-  ["or", T_OP],
-  ..."app as crash dbg else expect exposes exposing for generates has hosted if implements import imports in interface match module package packages platform provides requires return targets var where while with break"
-    .split(/\s+/)
-    .map((word) => [word, T_KEYWORD]),
-]);
+const ROC_KEYWORDS =
+  " app as crash dbg else expect exposes exposing for generates has hosted if implements import imports in interface match module package packages platform provides requires return targets var where while with break ";
+const ROC_NUMBER_SUFFIXES = " dec f32 f64 i128 i16 i32 i64 i8 nat u128 u16 u32 u64 u8 ";
 
-const ROC_NUMBER_SUFFIXES = new Set("dec f32 f64 i128 i16 i32 i64 i8 nat u128 u16 u32 u64 u8".split(" "));
-
-function isRocTokenError(tok) {
+function tokenError(tok) {
   return (tok & C_MASK) === C_ERROR;
 }
 
-function updateIfNotMalformed(tok, next) {
-  return isRocTokenError(tok) ? tok : next;
+function keepError(tok, next) {
+  return tokenError(tok) ? tok : next;
 }
 
-function isAsciiLower(c) {
+function lo(c) {
   return c >= 97 && c <= 122;
 }
 
-function isAsciiUpper(c) {
+function up(c) {
   return c >= 65 && c <= 90;
 }
 
-function isAsciiDigit(c) {
+function dig(c) {
   return c >= 48 && c <= 57;
 }
 
-function isHexDigit(c) {
-  return isAsciiDigit(c) || (c >= 97 && c <= 102) || (c >= 65 && c <= 70);
+function hex(c) {
+  return dig(c) || (c >= 97 && c <= 102) || (c >= 65 && c <= 70);
 }
 
-function utf8SequenceLength(c) {
+function u8len(c) {
   if (c < 0x80) return 1;
   if (c >= 0xc2 && c <= 0xdf) return 2;
   if (c >= 0xe0 && c <= 0xef) return 3;
@@ -303,121 +283,121 @@ function utf8SequenceLength(c) {
   return null;
 }
 
-function isValidUnicodeCodepoint(codepoint) {
+function validCp(codepoint) {
   return codepoint <= 0x10ffff && !(codepoint >= 0xd800 && codepoint <= 0xdfff);
 }
 
 class RocCursor {
   constructor(text) {
-    this.buf = utf8Encode(text);
-    this.pos = 0;
-    this.commentRanges = [];
+    this.b = encode(text);
+    this.p = 0;
+    this.r = [];
   }
 
-  peek() {
-    return this.pos < this.buf.length ? this.buf[this.pos] : null;
+  pk() {
+    return this.p < this.b.length ? this.b[this.p] : null;
   }
 
-  peekAt(lookahead) {
-    const idx = this.pos + lookahead;
-    return idx < this.buf.length ? this.buf[idx] : null;
+  at(lookahead) {
+    const idx = this.p + lookahead;
+    return idx < this.b.length ? this.b[idx] : null;
   }
 
-  isPeekedCharInRange(lookahead, start, end) {
-    const peeked = this.peekAt(lookahead);
+  inRange(lookahead, start, end) {
+    const peeked = this.at(lookahead);
     return peeked != null && peeked >= start && peeked <= end;
   }
 
-  chompTrivia() {
-    while (this.pos < this.buf.length) {
-      const b = this.buf[this.pos];
+  trivia() {
+    while (this.p < this.b.length) {
+      const b = this.b[this.p];
       if (b === 32 || b === 9 || b === 10) {
-        this.pos += 1;
+        this.p += 1;
       } else if (b === 13) {
-        this.pos += 1;
-        if (this.pos < this.buf.length && this.buf[this.pos] === 10) {
-          this.pos += 1;
+        this.p += 1;
+        if (this.p < this.b.length && this.b[this.p] === 10) {
+          this.p += 1;
         }
       } else if (b === 35) {
-        const start = this.pos;
-        this.pos += 1;
+        const start = this.p;
+        this.p += 1;
         while (
-          this.pos < this.buf.length &&
-          this.buf[this.pos] !== 10 &&
-          this.buf[this.pos] !== 13
+          this.p < this.b.length &&
+          this.b[this.p] !== 10 &&
+          this.b[this.p] !== 13
         ) {
-          this.pos += 1;
+          this.p += 1;
         }
-        this.commentRanges.push({ start, end: this.pos, className: "comment" });
+        this.r.push({ s: start, e: this.p, c: "c" });
       } else if (b >= 0 && b <= 31) {
-        this.pos += 1;
+        this.p += 1;
       } else {
         break;
       }
     }
   }
 
-  chompNumber() {
-    const initialDigit = this.buf[this.pos];
-    this.pos += 1;
+  number() {
+    const initialDigit = this.b[this.p];
+    this.p += 1;
 
     let tok = T_LITERAL;
     if (initialDigit === 48) {
       while (true) {
-        const c = this.peek() ?? 0;
+        const c = this.pk() ?? 0;
         if (c === 120 || c === 88) {
-          this.pos += 1;
-          if (!this.chompIntegerBase16()) {
+          this.p += 1;
+          if (!this.int16()) {
             tok = T_ERROR_END;
           }
-          tok = this.chompNumberSuffix(tok);
+          tok = this.suffix(tok);
           break;
         } else if (c === 111 || c === 79) {
-          this.pos += 1;
-          if (!this.chompIntegerBase8()) {
+          this.p += 1;
+          if (!this.int8()) {
             tok = T_ERROR_END;
           }
-          tok = this.chompNumberSuffix(tok);
+          tok = this.suffix(tok);
           break;
         } else if (c === 98 || c === 66) {
-          this.pos += 1;
-          if (!this.chompIntegerBase2()) {
+          this.p += 1;
+          if (!this.int2()) {
             tok = T_ERROR_END;
           }
-          tok = this.chompNumberSuffix(tok);
+          tok = this.suffix(tok);
           break;
-        } else if (isAsciiDigit(c)) {
-          tok = this.chompNumberBase10();
-          tok = this.chompNumberSuffix(tok);
+        } else if (dig(c)) {
+          tok = this.num10();
+          tok = this.suffix(tok);
           break;
         } else if (c === 95) {
-          this.pos += 1;
+          this.p += 1;
         } else if (c === 46) {
-          this.pos -= 1;
-          tok = this.chompNumberBase10();
-          tok = this.chompNumberSuffix(tok);
+          this.p -= 1;
+          tok = this.num10();
+          tok = this.suffix(tok);
           break;
         } else {
-          tok = this.chompNumberSuffix(tok);
+          tok = this.suffix(tok);
           break;
         }
       }
     } else {
-      tok = this.chompNumberBase10();
-      tok = this.chompNumberSuffix(tok);
+      tok = this.num10();
+      tok = this.suffix(tok);
     }
     return tok;
   }
 
-  chompExponent() {
-    const c = this.peek() ?? 0;
+  exp() {
+    const c = this.pk() ?? 0;
     if (c === 101 || c === 69) {
-      this.pos += 1;
-      const sign = this.peek() ?? 0;
+      this.p += 1;
+      const sign = this.pk() ?? 0;
       if (sign === 43 || sign === 45) {
-        this.pos += 1;
+        this.p += 1;
       }
-      if (!this.chompIntegerBase10()) {
+      if (!this.int10()) {
         return "EmptyExponent";
       }
       return true;
@@ -425,15 +405,15 @@ class RocCursor {
     return false;
   }
 
-  chompNumberSuffix(hypothesis) {
-    const c = this.peek();
+  suffix(hypothesis) {
+    const c = this.pk();
     if (c == null) {
       return hypothesis;
     }
     const isIdentChar =
-      isAsciiLower(c) ||
-      isAsciiUpper(c) ||
-      isAsciiDigit(c) ||
+      lo(c) ||
+      up(c) ||
+      dig(c) ||
       c === 95 ||
       c === 36 ||
       c >= 0x80;
@@ -441,32 +421,32 @@ class RocCursor {
       return hypothesis;
     }
 
-    const start = this.pos;
-    if (!this.chompIdentGeneral()) {
-      return updateIfNotMalformed(hypothesis, T_ERROR_END);
+    const start = this.p;
+    if (!this.ident()) {
+      return keepError(hypothesis, T_ERROR_END);
     }
-    const suffix = utf8Decode(this.buf.subarray(start, this.pos));
-    if (!ROC_NUMBER_SUFFIXES.has(suffix)) {
-      return updateIfNotMalformed(hypothesis, T_ERROR_END);
+    const suffix = decode(this.b.subarray(start, this.p));
+    if (!ROC_NUMBER_SUFFIXES.includes(" " + suffix + " ")) {
+      return keepError(hypothesis, T_ERROR_END);
     }
     return hypothesis;
   }
 
-  chompNumberBase10() {
+  num10() {
     let tokenType = T_LITERAL;
-    this.chompIntegerBase10();
+    this.int10();
     if (
-      (this.peek() ?? 0) === 46 &&
-      (this.isPeekedCharInRange(1, 48, 57) ||
-        this.peekAt(1) === 101 ||
-        this.peekAt(1) === 69)
+      (this.pk() ?? 0) === 46 &&
+      (this.inRange(1, 48, 57) ||
+        this.at(1) === 101 ||
+        this.at(1) === 69)
     ) {
-      this.pos += 1;
-      this.chompIntegerBase10();
+      this.p += 1;
+      this.int10();
       tokenType = T_LITERAL;
     }
 
-    const hasExponent = this.chompExponent();
+    const hasExponent = this.exp();
     if (hasExponent === "EmptyExponent") {
       return T_ERROR_END;
     }
@@ -476,15 +456,15 @@ class RocCursor {
     return tokenType;
   }
 
-  chompIntegerBase10() {
+  int10() {
     let containsDigits = false;
-    while (this.peek() != null) {
-      const c = this.peek();
-      if (isAsciiDigit(c)) {
+    while (this.pk() != null) {
+      const c = this.pk();
+      if (dig(c)) {
         containsDigits = true;
-        this.pos += 1;
+        this.p += 1;
       } else if (c === 95) {
-        this.pos += 1;
+        this.p += 1;
       } else {
         break;
       }
@@ -492,15 +472,15 @@ class RocCursor {
     return containsDigits;
   }
 
-  chompIntegerBase16() {
+  int16() {
     let containsDigits = false;
-    while (this.peek() != null) {
-      const c = this.peek();
-      if (isHexDigit(c)) {
+    while (this.pk() != null) {
+      const c = this.pk();
+      if (hex(c)) {
         containsDigits = true;
-        this.pos += 1;
+        this.p += 1;
       } else if (c === 95) {
-        this.pos += 1;
+        this.p += 1;
       } else {
         break;
       }
@@ -508,15 +488,15 @@ class RocCursor {
     return containsDigits;
   }
 
-  chompIntegerBase8() {
+  int8() {
     let containsDigits = false;
-    while (this.peek() != null) {
-      const c = this.peek();
+    while (this.pk() != null) {
+      const c = this.pk();
       if (c >= 48 && c <= 55) {
         containsDigits = true;
-        this.pos += 1;
+        this.p += 1;
       } else if (c === 95) {
-        this.pos += 1;
+        this.p += 1;
       } else {
         break;
       }
@@ -524,15 +504,15 @@ class RocCursor {
     return containsDigits;
   }
 
-  chompIntegerBase2() {
+  int2() {
     let containsDigits = false;
-    while (this.peek() != null) {
-      const c = this.peek();
+    while (this.pk() != null) {
+      const c = this.pk();
       if (c === 48 || c === 49) {
         containsDigits = true;
-        this.pos += 1;
+        this.p += 1;
       } else if (c === 95) {
-        this.pos += 1;
+        this.p += 1;
       } else {
         break;
       }
@@ -540,31 +520,34 @@ class RocCursor {
     return containsDigits;
   }
 
-  chompIdentLower() {
-    const start = this.pos;
-    if (!this.chompIdentGeneral()) {
+  lower() {
+    const start = this.p;
+    if (!this.ident()) {
       return T_ERROR_END;
     }
-    const ident = utf8Decode(this.buf.subarray(start, this.pos));
-    return ROC_KEYWORDS.get(ident) ?? T_LOWER;
+    const ident = decode(this.b.subarray(start, this.p));
+    if (ident === "and" || ident === "or") {
+      return T_OP;
+    }
+    return ROC_KEYWORDS.includes(" " + ident + " ") ? T_KEYWORD : T_LOWER;
   }
 
-  chompIdentGeneral() {
+  ident() {
     let valid = true;
-    while (this.pos < this.buf.length) {
-      const c = this.buf[this.pos];
+    while (this.p < this.b.length) {
+      const c = this.b[this.p];
       if (
-        isAsciiLower(c) ||
-        isAsciiUpper(c) ||
-        isAsciiDigit(c) ||
+        lo(c) ||
+        up(c) ||
+        dig(c) ||
         c === 95 ||
         c === 33 ||
         c === 36
       ) {
-        this.pos += 1;
+        this.p += 1;
       } else if (c >= 0x80) {
         valid = false;
-        this.pos += 1;
+        this.p += 1;
       } else {
         break;
       }
@@ -572,54 +555,54 @@ class RocCursor {
     return valid;
   }
 
-  chompInteger() {
-    while (this.pos < this.buf.length && isAsciiDigit(this.buf[this.pos])) {
-      this.pos += 1;
+  integer() {
+    while (this.p < this.b.length && dig(this.b[this.p])) {
+      this.p += 1;
     }
   }
 
-  chompEscapeSequenceWithQuote(quoteChar) {
-    const c = this.peek() ?? 0;
+  escape(quoteChar) {
+    const c = this.pk() ?? 0;
 
     if (c === 92 || c === 34 || c === 39 || c === 110 || c === 114 || c === 116 || c === 36) {
-      this.pos += 1;
+      this.p += 1;
       return true;
     }
 
     if (c === 117) {
-      this.pos += 1;
-      if (this.peek() === 40) {
-        this.pos += 1;
+      this.p += 1;
+      if (this.pk() === 40) {
+        this.p += 1;
       } else {
         return "InvalidUnicodeEscapeSequence";
       }
 
-      const hexStart = this.pos;
+      const hexStart = this.p;
       while (true) {
-        if (this.peek() === 41) {
-          if (this.pos === hexStart) {
-            this.pos += 1;
+        if (this.pk() === 41) {
+          if (this.p === hexStart) {
+            this.p += 1;
             return "InvalidUnicodeEscapeSequence";
           }
-          this.pos += 1;
+          this.p += 1;
           break;
-        } else if (this.peek() != null) {
-          const next = this.peek();
-          if (isHexDigit(next)) {
-            this.pos += 1;
+        } else if (this.pk() != null) {
+          const next = this.pk();
+          if (hex(next)) {
+            this.p += 1;
           } else {
-            while (this.pos < this.buf.length) {
-              const nextChar = this.peek() ?? 0;
+            while (this.p < this.b.length) {
+              const nextChar = this.pk() ?? 0;
               if (nextChar === 41 || nextChar === 10) {
                 break;
               }
               if (quoteChar != null && nextChar === quoteChar) {
                 break;
               }
-              this.pos += 1;
+              this.p += 1;
             }
-            if (this.pos < this.buf.length && this.peek() === 41) {
-              this.pos += 1;
+            if (this.p < this.b.length && this.pk() === 41) {
+              this.p += 1;
             }
             return "InvalidUnicodeEscapeSequence";
           }
@@ -628,9 +611,9 @@ class RocCursor {
         }
       }
 
-      const hexCode = utf8Decode(this.buf.subarray(hexStart, this.pos - 1));
+      const hexCode = decode(this.b.subarray(hexStart, this.p - 1));
       const codepoint = Number.parseInt(hexCode, 16);
-      if (!Number.isFinite(codepoint) || !isValidUnicodeCodepoint(codepoint)) {
+      if (!Number.isFinite(codepoint) || !validCp(codepoint)) {
         return "InvalidUnicodeEscapeSequence";
       }
 
@@ -640,17 +623,17 @@ class RocCursor {
     return "InvalidEscapeSequence";
   }
 
-  chompSingleQuoteLiteral() {
-    this.pos += 1;
+  single() {
+    this.p += 1;
     let state = "Empty";
 
-    while (this.pos < this.buf.length) {
-      const c = this.buf[this.pos];
+    while (this.p < this.b.length) {
+      const c = this.b[this.p];
       if (c === 10) {
         break;
       }
 
-      this.pos += 1;
+      this.p += 1;
 
       if (state === "Empty") {
         if (c === 39) {
@@ -658,12 +641,12 @@ class RocCursor {
         }
         if (c === 92) {
           state = "Enough";
-          if (this.chompEscapeSequenceWithQuote(39) !== true) {
+          if (this.escape(39) !== true) {
             state = "Invalid";
           }
         } else {
-          this.pos -= 1;
-          this.chompUTF8CodepointWithValidation();
+          this.p -= 1;
+          this.utf8();
           state = "Enough";
         }
       } else if (state === "Enough") {
@@ -683,71 +666,71 @@ class RocCursor {
     return T_ERROR_END;
   }
 
-  chompUTF8CodepointWithValidation() {
-    const c = this.buf[this.pos];
+  utf8() {
+    const c = this.b[this.p];
 
     if (c < 0x80) {
-      this.pos += 1;
+      this.p += 1;
       return c;
     }
 
-    const utf8Len = utf8SequenceLength(c);
-    if (utf8Len == null || this.pos + utf8Len > this.buf.length) {
-      this.pos += 1;
+    const utf8Len = u8len(c);
+    if (utf8Len == null || this.p + utf8Len > this.b.length) {
+      this.p += 1;
       return null;
     }
 
     let codepoint;
     if (utf8Len === 2) {
-      codepoint = ((c & 0x1f) << 6) | (this.buf[this.pos + 1] & 0x3f);
+      codepoint = ((c & 0x1f) << 6) | (this.b[this.p + 1] & 0x3f);
     } else if (utf8Len === 3) {
       codepoint =
         ((c & 0x0f) << 12) |
-        ((this.buf[this.pos + 1] & 0x3f) << 6) |
-        (this.buf[this.pos + 2] & 0x3f);
+        ((this.b[this.p + 1] & 0x3f) << 6) |
+        (this.b[this.p + 2] & 0x3f);
     } else {
       codepoint =
         ((c & 0x07) << 18) |
-        ((this.buf[this.pos + 1] & 0x3f) << 12) |
-        ((this.buf[this.pos + 2] & 0x3f) << 6) |
-        (this.buf[this.pos + 3] & 0x3f);
+        ((this.b[this.p + 1] & 0x3f) << 12) |
+        ((this.b[this.p + 2] & 0x3f) << 6) |
+        (this.b[this.p + 3] & 0x3f);
     }
 
-    this.pos += utf8Len;
+    this.p += utf8Len;
     return codepoint;
   }
 }
 
 class RocTokenizer {
   constructor(text) {
-    this.cursor = new RocCursor(text);
-    this.tokens = [];
-    this.stringInterpolationStack = [];
+    this.c = new RocCursor(text);
+    this.t = [];
+    this.s = [];
   }
 
-  lastTokenTag() {
-    return this.tokens.length === 0 ? null : this.tokens[this.tokens.length - 1].tag;
+  last() {
+    return this.t.length === 0 ? null : this.t[this.t.length - 1].t;
   }
 
-  pushToken(tag, start) {
-    this.tokens.push({ tag, start, end: this.cursor.pos });
+  push(tag, start) {
+    this.t.push({ t: tag, s: start, e: this.c.p });
   }
 
-  tokenizeKnownSymbol(start, b) {
-    const next = this.cursor.peekAt(1);
+  symbol(start, b) {
+    const next = this.c.at(1);
     if (next != null) {
-      const pairTag = TWO_BYTE_TOKENS.get((b << 8) | next);
+      const pairTag = TWO_BYTE_TOKENS[(b << 8) | next];
       if (pairTag != null) {
-        this.cursor.pos += 2;
-        this.pushToken(pairTag, start);
+        this.c.p += 2;
+        this.push(pairTag, start);
         return true;
       }
     }
 
-    const tag = ONE_BYTE_TOKENS.get(b);
+    const tag = ONE_BYTE_TOKENS[b];
     if (tag != null) {
-      this.cursor.pos += 1;
-      this.pushToken(tag, start);
+      this.c.p += 1;
+      this.push(tag, start);
       return true;
     }
 
@@ -757,297 +740,297 @@ class RocTokenizer {
   tokenize() {
     let sawWhitespace = true;
 
-    while (this.cursor.pos < this.cursor.buf.length) {
-      const start = this.cursor.pos;
+    while (this.c.p < this.c.b.length) {
+      const start = this.c.p;
       const sp = sawWhitespace;
       sawWhitespace = false;
-      const b = this.cursor.buf[this.cursor.pos];
+      const b = this.c.b[this.c.p];
 
       if (b <= 32 || b === 35) {
-        this.cursor.chompTrivia();
+        this.c.trivia();
         sawWhitespace = true;
       } else if (b === 46) {
-        this.tokenizeDot(start, sp);
+        this.dot(start, sp);
       } else if (b === 45) {
-        this.tokenizeMinus(start, sp);
+        this.minus(start, sp);
       } else if (b === 92) {
-        if (this.cursor.peekAt(1) === 92) {
-          this.tokenizeMultilineStringLiteral();
+        if (this.c.at(1) === 92) {
+          this.multiline();
         } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
+          this.c.p += 1;
+          this.push(T_OP, start);
         }
       } else if (b === 125) {
-        this.cursor.pos += 1;
-        if (this.stringInterpolationStack.length > 0) {
-          const last = this.stringInterpolationStack.pop();
-          this.pushToken(T_KEYWORD_END, start);
-          this.tokenizeStringLikeLiteralBody(last);
+        this.c.p += 1;
+        if (this.s.length > 0) {
+          const last = this.s.pop();
+          this.push(T_KEYWORD_END, start);
+          this.stringBody(last);
         } else {
-          this.pushToken(T_PUNCT_END, start);
+          this.push(T_PUNCT_END, start);
         }
-      } else if (this.tokenizeKnownSymbol(start, b)) {
+      } else if (this.symbol(start, b)) {
         continue;
       } else if (b === 95) {
-        this.tokenizeUnderscore(start);
+        this.under(start);
       } else if (b === 64) {
-        this.tokenizeOpaqueName(start);
+        this.opaque(start);
       } else if (b === 36) {
-        this.tokenizeDollar(start);
-      } else if (isAsciiDigit(b)) {
-        const tag = this.cursor.chompNumber();
-        this.pushToken(tag, start);
-      } else if (isAsciiLower(b)) {
-        const tag = this.cursor.chompIdentLower();
-        this.pushToken(tag, start);
-      } else if (isAsciiUpper(b)) {
+        this.dollar(start);
+      } else if (dig(b)) {
+        const tag = this.c.number();
+        this.push(tag, start);
+      } else if (lo(b)) {
+        const tag = this.c.lower();
+        this.push(tag, start);
+      } else if (up(b)) {
         let tag = T_UPPER;
-        if (!this.cursor.chompIdentGeneral()) {
+        if (!this.c.ident()) {
           tag = T_ERROR_END;
         }
-        this.pushToken(tag, start);
+        this.push(tag, start);
       } else if (b === 39) {
-        const tag = this.cursor.chompSingleQuoteLiteral();
-        this.pushToken(tag, start);
+        const tag = this.c.single();
+        this.push(tag, start);
       } else if (b === 34) {
-        this.tokenizeStringLikeLiteral();
+        this.string();
       } else if (b >= 0x80) {
-        this.cursor.chompIdentGeneral();
-        this.pushToken(T_ERROR_END, start);
+        this.c.ident();
+        this.push(T_ERROR_END, start);
       } else {
-        this.cursor.pos += 1;
-        this.pushToken(T_ERROR, start);
+        this.c.p += 1;
+        this.push(T_ERROR, start);
       }
     }
 
-    this.pushToken(T_NONE, this.cursor.pos);
+    this.push(T_NONE, this.c.p);
     return {
-      tokens: this.tokens,
-      comments: this.cursor.commentRanges,
-      bytes: this.cursor.buf,
+      t: this.t,
+      c: this.c.r,
+      b: this.c.b,
     };
   }
 
-  tokenizeDot(start, sp) {
-    const next = this.cursor.peekAt(1);
+  dot(start, sp) {
+    const next = this.c.at(1);
     if (next == null) {
-      this.cursor.pos += 1;
-      this.pushToken(T_PUNCT, start);
+      this.c.p += 1;
+      this.push(T_PUNCT, start);
     } else if (next === 46) {
-      if (this.cursor.peekAt(2) === 46) {
-        this.cursor.pos += 3;
-        this.pushToken(T_PUNCT, start);
-      } else if (this.cursor.peekAt(2) === 60) {
-        this.cursor.pos += 3;
-        this.pushToken(T_DOTDOT_OP, start);
-      } else if (this.cursor.peekAt(2) === 61) {
-        this.cursor.pos += 3;
-        this.pushToken(T_DOTDOT_OP, start);
+      if (this.c.at(2) === 46) {
+        this.c.p += 3;
+        this.push(T_PUNCT, start);
+      } else if (this.c.at(2) === 60) {
+        this.c.p += 3;
+        this.push(T_DOTDOT_OP, start);
+      } else if (this.c.at(2) === 61) {
+        this.c.p += 3;
+        this.push(T_DOTDOT_OP, start);
       } else {
-        this.cursor.pos += 2;
-        this.pushToken(T_PUNCT, start);
+        this.c.p += 2;
+        this.push(T_PUNCT, start);
       }
-    } else if (isAsciiDigit(next)) {
-      this.cursor.pos += 1;
-      this.cursor.chompInteger();
-      this.pushToken(T_DOT_LITERAL, start);
-    } else if (isAsciiLower(next)) {
+    } else if (dig(next)) {
+      this.c.p += 1;
+      this.c.integer();
+      this.push(T_DOT_LITERAL, start);
+    } else if (lo(next)) {
       let tag = T_DOT_LOWER;
-      this.cursor.pos += 1;
-      if (!this.cursor.chompIdentGeneral()) {
+      this.c.p += 1;
+      if (!this.c.ident()) {
         tag = T_DOT_ERROR;
       }
-      this.pushToken(tag, start);
-    } else if (isAsciiUpper(next)) {
+      this.push(tag, start);
+    } else if (up(next)) {
       let tag = T_DOT_UPPER;
-      this.cursor.pos += 1;
-      if (!this.cursor.chompIdentGeneral()) {
+      this.c.p += 1;
+      if (!this.c.ident()) {
         tag = T_DOT_ERROR;
       }
-      this.pushToken(tag, start);
+      this.push(tag, start);
     } else if (next >= 0x80 && next <= 0xff) {
-      this.cursor.pos += 1;
-      this.cursor.chompIdentGeneral();
-      this.pushToken(T_DOT_ERROR, start);
+      this.c.p += 1;
+      this.c.ident();
+      this.push(T_DOT_ERROR, start);
     } else if (next === 123) {
-      this.cursor.pos += 1;
-      this.pushToken(T_PUNCT, start);
+      this.c.p += 1;
+      this.push(T_PUNCT, start);
     } else if (next === 42) {
-      this.cursor.pos += 2;
-      this.pushToken(T_DOT_OP, start);
+      this.c.p += 2;
+      this.push(T_DOT_OP, start);
     } else {
-      this.cursor.pos += 1;
-      this.pushToken(T_PUNCT, start);
+      this.c.p += 1;
+      this.push(T_PUNCT, start);
     }
   }
 
-  tokenizeMinus(start, sp) {
-    const next = this.cursor.peekAt(1);
+  minus(start, sp) {
+    const next = this.c.at(1);
     if (next == null) {
-      this.cursor.pos += 1;
-      this.pushToken(T_OP, start);
+      this.c.p += 1;
+      this.push(T_OP, start);
     } else if (next === 62) {
-      this.cursor.pos += 2;
-      this.pushToken(T_OP, start);
+      this.c.p += 2;
+      this.push(T_OP, start);
     } else if (next === 32 || next === 9 || next === 10 || next === 13 || next === 35) {
-      this.cursor.pos += 1;
-      this.pushToken(T_OP, start);
-    } else if (isAsciiDigit(next)) {
-      const prev = this.lastTokenTag();
+      this.c.p += 1;
+      this.push(T_OP, start);
+    } else if (dig(next)) {
+      const prev = this.last();
       if (!sp && prev != null && (prev & F_EXPR_END) !== 0) {
-        this.cursor.pos += 1;
-        this.pushToken(T_OP, start);
+        this.c.p += 1;
+        this.push(T_OP, start);
       } else {
-        this.cursor.pos += 1;
-        const tag = this.cursor.chompNumber();
-        this.pushToken(tag, start);
+        this.c.p += 1;
+        const tag = this.c.number();
+        this.push(tag, start);
       }
     } else {
-      this.cursor.pos += 1;
-      this.pushToken(T_OP, start);
+      this.c.p += 1;
+      this.push(T_OP, start);
     }
   }
 
-  tokenizeUnderscore(start) {
-    const next = this.cursor.peekAt(1);
-    if (next != null && (isAsciiLower(next) || isAsciiUpper(next) || isAsciiDigit(next))) {
+  under(start) {
+    const next = this.c.at(1);
+    if (next != null && (lo(next) || up(next) || dig(next))) {
       let tag = T_LOWER;
-      this.cursor.pos += 2;
-      if (!this.cursor.chompIdentGeneral()) {
+      this.c.p += 2;
+      if (!this.c.ident()) {
         tag = T_ERROR_END;
       }
-      this.pushToken(tag, start);
+      this.push(tag, start);
     } else {
-      this.cursor.pos += 1;
-      this.pushToken(T_NONE, start);
+      this.c.p += 1;
+      this.push(T_NONE, start);
     }
   }
 
-  tokenizeOpaqueName(start) {
+  opaque(start) {
     let tok = T_UPPER;
-    const next = this.cursor.peekAt(1);
+    const next = this.c.at(1);
     if (
       next != null &&
-      (isAsciiLower(next) || isAsciiUpper(next) || isAsciiDigit(next) || next === 95 || next >= 0x80)
+      (lo(next) || up(next) || dig(next) || next === 95 || next >= 0x80)
     ) {
-      this.cursor.pos += 1;
-      if (!this.cursor.chompIdentGeneral()) {
+      this.c.p += 1;
+      if (!this.c.ident()) {
         tok = T_ERROR_END;
       }
     } else {
       tok = T_ERROR;
-      this.cursor.pos += 1;
+      this.c.p += 1;
     }
-    this.pushToken(tok, start);
+    this.push(tok, start);
   }
 
-  tokenizeDollar(start) {
-    const next = this.cursor.peekAt(1);
-    if (next != null && isAsciiLower(next)) {
+  dollar(start) {
+    const next = this.c.at(1);
+    if (next != null && lo(next)) {
       let tag = T_LOWER;
-      this.cursor.pos += 1;
-      if (!this.cursor.chompIdentGeneral()) {
+      this.c.p += 1;
+      if (!this.c.ident()) {
         tag = T_ERROR_END;
       }
-      this.pushToken(tag, start);
-    } else if (next != null && isAsciiUpper(next)) {
+      this.push(tag, start);
+    } else if (next != null && up(next)) {
       let tag = T_UPPER;
-      this.cursor.pos += 1;
-      if (!this.cursor.chompIdentGeneral()) {
+      this.c.p += 1;
+      if (!this.c.ident()) {
         tag = T_ERROR_END;
       }
-      this.pushToken(tag, start);
+      this.push(tag, start);
     } else {
-      this.cursor.pos += 1;
-      this.pushToken(T_ERROR, start);
+      this.c.p += 1;
+      this.push(T_ERROR, start);
     }
   }
 
-  tokenizeStringLikeLiteral() {
-    const start = this.cursor.pos;
-    this.cursor.pos += 1;
+  string() {
+    const start = this.c.p;
+    this.c.p += 1;
     let kind = "single_line";
-    if (this.cursor.peek() === 34 && this.cursor.peekAt(1) === 34) {
-      this.cursor.pos += 2;
+    if (this.c.pk() === 34 && this.c.at(1) === 34) {
+      this.c.p += 2;
       kind = "multi_line";
-      this.pushToken(T_STRING, start);
+      this.push(T_STRING, start);
     } else {
-      this.pushToken(T_STRING, start);
+      this.push(T_STRING, start);
     }
-    this.tokenizeStringLikeLiteralBody(kind);
+    this.stringBody(kind);
   }
 
-  tokenizeMultilineStringLiteral() {
-    const start = this.cursor.pos;
-    this.cursor.pos += 2;
-    this.pushToken(T_STRING, start);
-    this.tokenizeStringLikeLiteralBody("multi_line");
+  multiline() {
+    const start = this.c.p;
+    this.c.p += 2;
+    this.push(T_STRING, start);
+    this.stringBody("multi_line");
   }
 
-  tokenizeStringLikeLiteralBody(kind) {
-    const start = this.cursor.pos;
+  stringBody(kind) {
+    const start = this.c.p;
     let stringPartTag = T_STRING;
-    while (this.cursor.pos < this.cursor.buf.length) {
-      const c = this.cursor.buf[this.cursor.pos];
-      if (c === 36 && this.cursor.peekAt(1) === 123) {
-        this.pushToken(stringPartTag, start);
-        const dollarStart = this.cursor.pos;
-        this.cursor.pos += 2;
-        this.pushToken(T_KEYWORD, dollarStart);
-        this.stringInterpolationStack.push(kind);
+    while (this.c.p < this.c.b.length) {
+      const c = this.c.b[this.c.p];
+      if (c === 36 && this.c.at(1) === 123) {
+        this.push(stringPartTag, start);
+        const dollarStart = this.c.p;
+        this.c.p += 2;
+        this.push(T_KEYWORD, dollarStart);
+        this.s.push(kind);
         return;
       } else if (c === 10) {
-        this.pushToken(stringPartTag, start);
+        this.push(stringPartTag, start);
         if (kind === "single_line") {
-          this.pushToken(T_STRING_END, this.cursor.pos);
+          this.push(T_STRING_END, this.c.p);
         }
         return;
       } else if (kind === "single_line" && c === 34) {
-        this.pushToken(stringPartTag, start);
-        const stringPartEnd = this.cursor.pos;
-        this.cursor.pos += 1;
-        this.pushToken(T_STRING_END, stringPartEnd);
+        this.push(stringPartTag, start);
+        const stringPartEnd = this.c.p;
+        this.c.p += 1;
+        this.push(T_STRING_END, stringPartEnd);
         return;
       } else {
-        this.cursor.chompUTF8CodepointWithValidation();
-        if (c === 92 && this.cursor.chompEscapeSequenceWithQuote(34) !== true) {
+        this.c.utf8();
+        if (c === 92 && this.c.escape(34) !== true) {
           stringPartTag = T_ERROR;
         }
       }
     }
-    this.pushToken(stringPartTag, start);
+    this.push(stringPartTag, start);
   }
 }
 
-function tokenizeRocSource(source) {
+function rocTokens(source) {
   return new RocTokenizer(source).tokenize();
 }
 
-function classForRocToken(tag) {
+function tokenClass(tag) {
   return TOK_CLASS[tag & C_MASK];
 }
 
-function appendRocTokenHighlight(ranges, token) {
-  const className = classForRocToken(token.tag);
-  if (className == null) {
+function addToken(ranges, token) {
+  const cls = tokenClass(token.t);
+  if (cls == null) {
     return;
   }
 
-  if ((token.tag & F_DOT_PREFIX) !== 0 && token.start + 1 < token.end) {
-    ranges.push({ start: token.start, end: token.start + 1, className: "punctuation" });
-    ranges.push({ start: token.start + 1, end: token.end, className });
-  } else if ((token.tag & F_DOTDOT_PREFIX) !== 0 && token.start + 2 < token.end) {
-    ranges.push({ start: token.start, end: token.start + 2, className: "punctuation" });
-    ranges.push({ start: token.start + 2, end: token.end, className });
+  if ((token.t & F_DOT_PREFIX) !== 0 && token.s + 1 < token.e) {
+    ranges.push({ s: token.s, e: token.s + 1, c: "p" });
+    ranges.push({ s: token.s + 1, e: token.e, c: cls });
+  } else if ((token.t & F_DOTDOT_PREFIX) !== 0 && token.s + 2 < token.e) {
+    ranges.push({ s: token.s, e: token.s + 2, c: "p" });
+    ranges.push({ s: token.s + 2, e: token.e, c: cls });
   } else {
-    ranges.push({ start: token.start, end: token.end, className });
+    ranges.push({ s: token.s, e: token.e, c: cls });
   }
 }
 
-function renderHighlightedRocSource(source) {
-  const tokenized = tokenizeRocSource(source);
-  const ranges = [...tokenized.comments];
-  const tokens = tokenized.tokens.filter((token) => token.start !== token.end);
+function highlightRoc(source) {
+  const tokenized = rocTokens(source);
+  const ranges = [...tokenized.c];
+  const tokens = tokenized.t.filter((token) => token.s !== token.e);
 
   for (let i = 0; i < tokens.length; i += 1) {
     const previous = tokens[i - 1];
@@ -1056,39 +1039,39 @@ function renderHighlightedRocSource(source) {
     if (
       previous != null &&
       next != null &&
-      (previous.tag & F_FIELD_PREFIX) !== 0 &&
-      (token.tag & F_FIELD_NAME) !== 0 &&
-      (next.tag & F_COLON) !== 0 &&
-      utf8Decode(tokenized.bytes.subarray(token.end, next.start)).trim() === ""
+      (previous.t & F_FIELD_PREFIX) !== 0 &&
+      (token.t & F_FIELD_NAME) !== 0 &&
+      (next.t & F_COLON) !== 0 &&
+      decode(tokenized.b.subarray(token.e, next.s)).trim() === ""
     ) {
-      ranges.push({ start: token.start, end: next.end, className: "field" });
+      ranges.push({ s: token.s, e: next.e, c: "f" });
       i += 1;
     } else {
-      appendRocTokenHighlight(ranges, token);
+      addToken(ranges, token);
     }
   }
 
-  ranges.sort((a, b) => a.start - b.start || a.end - b.end);
+  ranges.sort((a, b) => a.s - b.s || a.e - b.e);
 
   let html = "";
   let lastEnd = 0;
   for (const range of ranges) {
-    if (range.start < lastEnd) {
+    if (range.s < lastEnd) {
       continue;
     }
-    html += escapeHtml(utf8Decode(tokenized.bytes.subarray(lastEnd, range.start)));
-    html += `<span class="${range.className}">`;
-    html += escapeHtml(utf8Decode(tokenized.bytes.subarray(range.start, range.end)));
+    html += htmlEscape(decode(tokenized.b.subarray(lastEnd, range.s)));
+    html += `<span class="${range.c}">`;
+    html += htmlEscape(decode(tokenized.b.subarray(range.s, range.e)));
     html += "</span>";
-    lastEnd = range.end;
+    lastEnd = range.e;
   }
-  html += escapeHtml(utf8Decode(tokenized.bytes.subarray(lastEnd)));
+  html += htmlEscape(decode(tokenized.b.subarray(lastEnd)));
   return html || " ";
 }
 
-function setupHighlightedSource(textarea, highlight) {
+function setupHighlight(textarea, highlight) {
   const updateHighlight = () => {
-    highlight.innerHTML = renderHighlightedRocSource(textarea.value);
+    highlight.innerHTML = highlightRoc(textarea.value);
   };
 
   const syncScroll = () => {
@@ -1103,7 +1086,7 @@ function setupHighlightedSource(textarea, highlight) {
   syncScroll();
 }
 
-function setupExample(div) {
+function setup(div) {
   // The Run button is added statically in the markup (so it shows even before
   // this script loads). Pull it out before reading the source so its label
   // doesn't end up in the Roc code, then reuse it below.
@@ -1126,7 +1109,7 @@ function setupExample(div) {
   const sourceHighlight = document.createElement("pre");
   sourceHighlight.className = "roc-source-highlight";
   sourceHighlight.setAttribute("aria-hidden", "true");
-  setupHighlightedSource(textarea, sourceHighlight);
+  setupHighlight(textarea, sourceHighlight);
 
   // Keep Tab from leaving the textarea
   textarea.addEventListener("keydown", (e) => {
@@ -1147,10 +1130,10 @@ function setupExample(div) {
 
   runButton.addEventListener("click", async () => {
     // ---- 1. lazy-load compiler on first click ----
-    if (!wasmInstance) {
+    if (!inst) {
       outputArea.textContent = "Loading compiler\u2026";
       try {
-        await loadCompiler();
+        await load();
       } catch (err) {
         outputArea.textContent = "Could not load the Roc compiler: " + err;
         return;
@@ -1162,40 +1145,40 @@ function setupExample(div) {
     outputArea.classList.add("running");
     runButton.disabled = true;
 
-    const captured = { programOutput: "", compilerMessages: "" };
-    runCapture = captured;
+    const captured = { out: "", err: "" };
+    capture = captured;
     let trapped = false;
 
     try {
-      wasmInstance.exports.init();
+      inst.exports.init();
 
-      const encoded = utf8Encode(textarea.value);
-      const ptr = wasmInstance.exports.allocateBuffer(encoded.length);
+      const encoded = encode(textarea.value);
+      const ptr = inst.exports.allocateBuffer(encoded.length);
       if (!ptr) throw new Error("allocateBuffer returned null");
-      new Uint8Array(wasmMemory.buffer, ptr, encoded.length).set(encoded);
+      new Uint8Array(mem.buffer, ptr, encoded.length).set(encoded);
 
-      wasmInstance.exports.compileAndRun(ptr, encoded.length);
+      inst.exports.compileAndRun(ptr, encoded.length);
     } catch (err) {
-      captured.compilerMessages +=
+      captured.err +=
         "\x1b[1;31mCompiler crashed\x1b[0m\n" + String(err) + "\n";
       trapped = true;
     }
 
-    runCapture = null;
+    capture = null;
 
     // ---- 3. display results ----
     let html = "";
-    if (captured.compilerMessages) html += renderTerminalBlock(captured.compilerMessages);
-    if (captured.programOutput) {
+    if (captured.err) html += terminal(captured.err);
+    if (captured.out) {
       html +=
         '<span class="roc-output-label">Output:\n</span>' +
-        renderTerminalBlock(captured.programOutput);
+        terminal(captured.out);
     }
     outputArea.innerHTML = html || "(no output)";
     outputArea.classList.remove("running");
 
     // ---- 4. recover from trap so later runs work ----
-    if (trapped) await recoverCompiler();
+    if (trapped) await recover();
 
     runButton.disabled = false;
   });
@@ -1209,11 +1192,11 @@ function setupExample(div) {
 
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".roc-interactive").forEach(setupExample);
+  document.querySelectorAll(".roc-interactive").forEach(setup);
 
   // Pre-download the compiler in the background at low priority so the first
   // Run click is instant. Errors are ignored here — the click handler retries.
-  const preload = () => loadCompiler().catch(() => {});
+  const preload = () => load().catch(() => {});
   if ("requestIdleCallback" in window) {
     requestIdleCallback(preload);
   } else {

@@ -925,9 +925,8 @@ details {
 /* Comments `#` and Documentation comments `##` */
 samp .comment,
 code .comment,
-.roc-interactive .ansi-fg-black,
-.roc-interactive .ansi-fg-bright-black,
-.roc-source-highlight .comment {
+.roc-interactive .roc-output .c,
+.roc-source-highlight .c {
     color: #ccc;
 }
 
@@ -942,12 +941,9 @@ samp .string.end,
 code .string.end,
 samp .constant,
 code .constant,
-.roc-source-highlight .literal,
-.roc-source-highlight .string,
-.roc-interactive .ansi-fg-green,
-.roc-interactive .ansi-fg-bright-green,
-.roc-interactive .ansi-fg-cyan,
-.roc-interactive .ansi-fg-bright-cyan,
+.roc-source-highlight .n,
+.roc-source-highlight .s,
+.roc-interactive .roc-output .n,
 samp .literal,
 code .literal {
     color: var(--dark-cyan);
@@ -964,13 +960,8 @@ samp .punctuation.terminator,
 code .punctuation.terminator,
 samp .kw,
 code .kw,
-.roc-interactive .ansi-fg-blue,
-.roc-interactive .ansi-fg-bright-blue,
-.roc-interactive .ansi-fg-magenta,
-.roc-interactive .ansi-fg-bright-magenta,
-.roc-interactive .ansi-fg-yellow,
-.roc-interactive .ansi-fg-bright-yellow,
-.roc-source-highlight .keyword {
+.roc-interactive .roc-output .k,
+.roc-source-highlight .k {
     color: var(--primary-1);
 }
 
@@ -981,19 +972,19 @@ samp .keyword.operator,
 code .keyword.operator,
 samp .colon,
 code .colon,
-.roc-source-highlight .op {
+.roc-source-highlight .o {
     color: var(--primary-1);
 }
 
 /* Delimieters */
 samp .delimiter,
 code .delimiter,
-.roc-source-highlight .delimiter {
+.roc-source-highlight .d {
     color: var(--primary-1);
 }
 
-.roc-source-highlight .field,
-.roc-source-highlight .punctuation {
+.roc-source-highlight .f,
+.roc-source-highlight .p {
     color: #aeb4c6;
 }
 
@@ -1006,18 +997,16 @@ samp .meta.block,
 code .meta.block,
 samp .lowerident,
 code .lowerident,
-.roc-interactive .ansi-fg-white,
-.roc-interactive .ansi-fg-bright-white,
+.roc-interactive .roc-output .v,
 .roc-interactive .roc-output pre.roc-terminal,
-.roc-source-highlight .lowerident {
+.roc-source-highlight .v {
     color: white;
 }
 
 samp .error,
 code .error,
-.roc-interactive .ansi-fg-red,
-.roc-interactive .ansi-fg-bright-red,
-.roc-source-highlight .error {
+.roc-interactive .roc-output .e,
+.roc-source-highlight .e {
     color: hsl(0, 96%, 67%);
 }
 
@@ -1028,13 +1017,13 @@ samp .meta.path,
 code .meta.path,
 samp .upperident,
 code .upperident,
-.roc-source-highlight .upperident {
+.roc-source-highlight .u {
     color: var(--dark-cyan);
 }
 
 samp .dim,
 code .dim,
-.roc-interactive .ansi-dim {
+.roc-interactive .roc-output .m {
     opacity: 0.55;
 }
 
@@ -1801,15 +1790,15 @@ code .dim,
     white-space: pre;
 }
 
-.roc-interactive .ansi-bold {
+.roc-interactive .roc-output .b {
     font-weight: 700;
 }
 
-.roc-interactive .ansi-italic {
+.roc-interactive .roc-output .i {
     font-style: italic;
 }
 
-.roc-interactive .ansi-underline {
+.roc-interactive .roc-output .x {
     text-decoration: underline;
 }
 
