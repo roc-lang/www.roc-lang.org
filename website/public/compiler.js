@@ -225,6 +225,42 @@ const T_DOT_OP = C_OP | F_DOT_PREFIX;
 const T_DOT_ERROR = C_ERROR | F_EXPR_END | F_DOT_PREFIX;
 const T_DOTDOT_OP = C_OP | F_DOTDOT_PREFIX;
 
+const TWO_BYTE_TOKENS = new Map([
+  [0x213d, T_OP], // !=
+  [0x3f3f, T_OP], // ??
+  [0x7c3e, T_OP], // |>
+  [0x2f2f, T_OP], // //
+  [0x3e3d, T_OP], // >=
+  [0x3c3d, T_OP], // <=
+  [0x3c2d, T_OP_FIELD_PREFIX], // <-
+  [0x3d3d, T_OP], // ==
+  [0x3d3e, T_OP], // =>
+  [0x3a3d, T_OP], // :=
+  [0x3a3a, T_OP], // ::
+]);
+
+const ONE_BYTE_TOKENS = new Map([
+  [33, T_OP], // !
+  [38, T_OP_FIELD_PREFIX], // &
+  [44, T_FIELD_PREFIX], // ,
+  [63, T_OP], // ?
+  [124, T_OP], // |
+  [43, T_OP], // +
+  [42, T_OP], // *
+  [47, T_OP], // /
+  [37, T_OP], // %
+  [94, T_OP], // ^
+  [62, T_OP], // >
+  [60, T_OP], // <
+  [61, T_OP], // =
+  [58, T_COLON], // :
+  [40, T_PUNCT], // (
+  [91, T_DELIM], // [
+  [123, T_FIELD_PREFIX], // {
+  [41, T_PUNCT_END], // )
+  [93, T_DELIM_END], // ]
+]);
+
 const ROC_KEYWORDS = new Map([
   ["and", T_OP],
   ["or", T_OP],
@@ -257,10 +293,6 @@ function isAsciiDigit(c) {
 
 function isHexDigit(c) {
   return isAsciiDigit(c) || (c >= 97 && c <= 102) || (c >= 65 && c <= 70);
-}
-
-function canFollowUnaryMinus(c) {
-  return isAsciiLower(c) || isAsciiUpper(c) || c === 95 || c === 40 || c >= 0x80;
 }
 
 function utf8SequenceLength(c) {
@@ -701,6 +733,27 @@ class RocTokenizer {
     this.tokens.push({ tag, start, end: this.cursor.pos });
   }
 
+  tokenizeKnownSymbol(start, b) {
+    const next = this.cursor.peekAt(1);
+    if (next != null) {
+      const pairTag = TWO_BYTE_TOKENS.get((b << 8) | next);
+      if (pairTag != null) {
+        this.cursor.pos += 2;
+        this.pushToken(pairTag, start);
+        return true;
+      }
+    }
+
+    const tag = ONE_BYTE_TOKENS.get(b);
+    if (tag != null) {
+      this.cursor.pos += 1;
+      this.pushToken(tag, start);
+      return true;
+    }
+
+    return false;
+  }
+
   tokenize() {
     let sawWhitespace = true;
 
@@ -717,50 +770,6 @@ class RocTokenizer {
         this.tokenizeDot(start, sp);
       } else if (b === 45) {
         this.tokenizeMinus(start, sp);
-      } else if (b === 33) {
-        if (this.cursor.peekAt(1) === 61) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
-        }
-      } else if (b === 38) {
-        this.cursor.pos += 1;
-        this.pushToken(T_OP_FIELD_PREFIX, start);
-      } else if (b === 44) {
-        this.cursor.pos += 1;
-        this.pushToken(T_FIELD_PREFIX, start);
-      } else if (b === 63) {
-        if (this.cursor.peekAt(1) === 63) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
-        }
-      } else if (b === 124) {
-        if (this.cursor.peekAt(1) === 62) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
-        }
-      } else if (b === 43) {
-        this.cursor.pos += 1;
-        this.pushToken(T_OP, start);
-      } else if (b === 42) {
-        this.cursor.pos += 1;
-        this.pushToken(T_OP, start);
-      } else if (b === 47) {
-        if (this.cursor.peekAt(1) === 47) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
-        }
       } else if (b === 92) {
         if (this.cursor.peekAt(1) === 92) {
           this.tokenizeMultilineStringLiteral();
@@ -768,68 +777,6 @@ class RocTokenizer {
           this.cursor.pos += 1;
           this.pushToken(T_OP, start);
         }
-      } else if (b === 37) {
-        this.cursor.pos += 1;
-        this.pushToken(T_OP, start);
-      } else if (b === 94) {
-        this.cursor.pos += 1;
-        this.pushToken(T_OP, start);
-      } else if (b === 62) {
-        if (this.cursor.peekAt(1) === 61) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
-        }
-      } else if (b === 60) {
-        if (this.cursor.peekAt(1) === 61) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else if (this.cursor.peekAt(1) === 45) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP_FIELD_PREFIX, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
-        }
-      } else if (b === 61) {
-        if (this.cursor.peekAt(1) === 61) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else if (this.cursor.peekAt(1) === 62) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_OP, start);
-        }
-      } else if (b === 58) {
-        if (this.cursor.peekAt(1) === 61) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else if (this.cursor.peekAt(1) === 58) {
-          this.cursor.pos += 2;
-          this.pushToken(T_OP, start);
-        } else {
-          this.cursor.pos += 1;
-          this.pushToken(T_COLON, start);
-        }
-      } else if (b === 40) {
-        this.cursor.pos += 1;
-        this.pushToken(T_PUNCT, start);
-      } else if (b === 91) {
-        this.cursor.pos += 1;
-        this.pushToken(T_DELIM, start);
-      } else if (b === 123) {
-        this.cursor.pos += 1;
-        this.pushToken(T_FIELD_PREFIX, start);
-      } else if (b === 41) {
-        this.cursor.pos += 1;
-        this.pushToken(T_PUNCT_END, start);
-      } else if (b === 93) {
-        this.cursor.pos += 1;
-        this.pushToken(T_DELIM_END, start);
       } else if (b === 125) {
         this.cursor.pos += 1;
         if (this.stringInterpolationStack.length > 0) {
@@ -839,6 +786,8 @@ class RocTokenizer {
         } else {
           this.pushToken(T_PUNCT_END, start);
         }
+      } else if (this.tokenizeKnownSymbol(start, b)) {
+        continue;
       } else if (b === 95) {
         this.tokenizeUnderscore(start);
       } else if (b === 64) {
