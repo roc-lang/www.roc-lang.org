@@ -40,9 +40,18 @@ async function load() {
   if (loading) return loading; // another click is loading it
 
   loading = (async () => {
-    const response = await fetch("echo.wasm", { priority: "low" });
-    const { module, instance } = await WebAssembly.instantiateStreaming(
-      response,
+    // echo.wasm is shipped zstd-compressed (~3 MB vs ~26 MB decompressed) so it
+    // fits under Cloudflare Workers Assets' 25 MiB per-file limit. Decompress it
+    // here instead of relying on instantiateStreaming, which needs a native wasm
+    // response.
+    const [{ decompress }, response] = await Promise.all([
+      import("/fzstd.mjs"),
+      fetch("/echo.wasm.zst", { priority: "low" }),
+    ]);
+    const compressed = new Uint8Array(await response.arrayBuffer());
+    const wasmBytes = decompress(compressed);
+    const { module, instance } = await WebAssembly.instantiate(
+      wasmBytes,
       imports(),
     );
     mod = module;

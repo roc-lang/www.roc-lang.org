@@ -52,8 +52,8 @@ full_clean_build! = |{}|
     _ = Dir.delete_all!("roc")
     _ = Dir.delete_all!(new_compiler_dir)
 
-    # Download latest echo.wasm from nightlies for the interactive compiler
-    _ = File.delete!("public/echo.wasm")
+    # Download latest echo.wasm.zst from nightlies for the interactive compiler
+    _ = File.delete!("public/echo.wasm.zst")
     ensure_echo_wasm_present!({})?
 
     Cmd.exec!("cp", ["-r", "public", "build"])?
@@ -230,18 +230,17 @@ ensure_repl_present! = |{}|
 
 ensure_echo_wasm_present! : {} => Result {} _
 ensure_echo_wasm_present! = |{}|
-    wasm_path = "public/echo.wasm"
     wasm_zst_path = "public/echo.wasm.zst"
-    already = File.is_file!(wasm_path) |> Result.with_default(Bool.false)
+    already = File.is_file!(wasm_zst_path) |> Result.with_default(Bool.false)
     if already then
         Ok({})
     else
-        # GitHub's /releases/latest/download/ URL redirects to the latest asset
+        # GitHub's /releases/latest/download/ URL redirects to the latest asset.
+        # Ship the .zst as-is (~3 MB vs ~26 MB decompressed): Cloudflare Workers
+        # Assets rejects any single asset over 25 MiB, so the uncompressed wasm
+        # can't be deployed directly. The browser decompresses it on load via
+        # vendored fzstd.mjs (see public/compiler.js).
         Cmd.exec!("curl", ["-fsSL", "-o", wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
-        Cmd.exec!("zstd", ["-d", "--force", wasm_zst_path, "-o", wasm_path])?
-        # Drop the compressed artifact so it isn't shipped; the browser fetches
-        # echo.wasm and Cloudflare compresses it on the wire via Content-Encoding.
-        File.delete!(wasm_zst_path)?
         Ok({})
 
 ensure_builtins_present! : {} => Result {} _
