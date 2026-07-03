@@ -40,6 +40,8 @@ jobs:
         with:
           version: nightly-new-compiler
 
+      - run: roc version
+
       - name: Test interactive Roc widgets
         run: ci_scripts/test_interactive_roc.sh
 
