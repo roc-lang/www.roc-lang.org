@@ -157,102 +157,56 @@ function terminal(text) {
   return `<pre class="roc-terminal">${ansi(text)}</pre>`;
 }
 
-const TOK_CLASS = [
-  null,
-  "u",
-  "v",
-  "n",
-  "s",
-  "k",
-  "p",
-  "d",
-  "o",
-  "e",
-];
-const C_MASK = 15;
-const C_UPPER = 1;
-const C_LOWER = 2;
-const C_LITERAL = 3;
-const C_STRING = 4;
-const C_KEYWORD = 5;
-const C_PUNCT = 6;
-const C_DELIM = 7;
-const C_OP = 8;
-const C_ERROR = 9;
-const F_EXPR_END = 16;
-const F_FIELD_PREFIX = 32;
-const F_FIELD_NAME = 64;
-const F_DOT_PREFIX = 128;
-const F_DOTDOT_PREFIX = 256;
-const F_COLON = 512;
-
-const T_NONE = 0;
-const T_ERROR = C_ERROR;
-const T_ERROR_END = C_ERROR | F_EXPR_END;
-const T_UPPER = C_UPPER | F_EXPR_END;
-const T_LOWER = C_LOWER | F_EXPR_END | F_FIELD_NAME;
-const T_LITERAL = C_LITERAL | F_EXPR_END;
-const T_STRING = C_STRING;
-const T_STRING_END = C_STRING | F_EXPR_END;
-const T_KEYWORD = C_KEYWORD;
-const T_KEYWORD_END = C_KEYWORD | F_EXPR_END;
-const T_PUNCT = C_PUNCT;
-const T_PUNCT_END = C_PUNCT | F_EXPR_END;
-const T_FIELD_PREFIX = C_PUNCT | F_FIELD_PREFIX;
-const T_DELIM = C_DELIM;
-const T_DELIM_END = C_DELIM | F_EXPR_END;
-const T_OP = C_OP;
-const T_OP_FIELD_PREFIX = C_OP | F_FIELD_PREFIX;
-const T_COLON = C_OP | F_COLON;
-const T_DOT_LOWER = C_LOWER | F_EXPR_END | F_DOT_PREFIX;
-const T_DOT_UPPER = C_UPPER | F_EXPR_END | F_DOT_PREFIX;
-const T_DOT_LITERAL = C_LITERAL | F_EXPR_END | F_DOT_PREFIX;
-const T_DOT_OP = C_OP | F_DOT_PREFIX;
-const T_DOT_ERROR = C_ERROR | F_EXPR_END | F_DOT_PREFIX;
-const T_DOTDOT_OP = C_OP | F_DOTDOT_PREFIX;
+const CL = [null, "u", "v", "n", "s", "k", "p", "d", "o", "e", "c"];
+const M = 15, X = 16, A = 32, N = 64, B = 128, G = 256, H = 512;
+const Z = 0, ER = 9, EE = 25, U = 17, L = 82, NUM = 19, S = 4, SE = 20;
+const K = 5, KE = 21, P = 6, PE = 22, F = 38, D = 7, DE = 23, O = 8;
+const OF = 40, CO = 520, DL = 210, DU = 145, DN = 147, DO = 136;
+const DER = 153, DD = 264, CM = 10;
 
 const TWO_BYTE_TOKENS = {
-  0x213d: T_OP, // !=
-  0x3f3f: T_OP, // ??
-  0x7c3e: T_OP, // |>
-  0x2f2f: T_OP, // //
-  0x3e3d: T_OP, // >=
-  0x3c3d: T_OP, // <=
-  0x3c2d: T_OP_FIELD_PREFIX, // <-
-  0x3d3d: T_OP, // ==
-  0x3d3e: T_OP, // =>
-  0x3a3d: T_OP, // :=
-  0x3a3a: T_OP, // ::
+  0x213d: O, // !=
+  0x3f3f: O, // ??
+  0x7c3e: O, // |>
+  0x2f2f: O, // //
+  0x3e3d: O, // >=
+  0x3c3d: O, // <=
+  0x3c2d: OF, // <-
+  0x3d3d: O, // ==
+  0x3d3e: O, // =>
+  0x3a3d: O, // :=
+  0x3a3a: O, // ::
 };
 
 const ONE_BYTE_TOKENS = {
-  33: T_OP, // !
-  38: T_OP_FIELD_PREFIX, // &
-  44: T_FIELD_PREFIX, // ,
-  63: T_OP, // ?
-  124: T_OP, // |
-  43: T_OP, // +
-  42: T_OP, // *
-  47: T_OP, // /
-  37: T_OP, // %
-  94: T_OP, // ^
-  62: T_OP, // >
-  60: T_OP, // <
-  61: T_OP, // =
-  58: T_COLON, // :
-  40: T_PUNCT, // (
-  91: T_DELIM, // [
-  123: T_FIELD_PREFIX, // {
-  41: T_PUNCT_END, // )
-  93: T_DELIM_END, // ]
+  33: O, // !
+  38: OF, // &
+  44: F, // ,
+  63: O, // ?
+  124: O, // |
+  43: O, // +
+  42: O, // *
+  47: O, // /
+  37: O, // %
+  94: O, // ^
+  62: O, // >
+  60: O, // <
+  61: O, // =
+  58: CO, // :
+  40: P, // (
+  91: D, // [
+  123: F, // {
+  41: PE, // )
+  93: DE, // ]
 };
 
-const ROC_KEYWORDS =
-  " app as crash dbg else expect exposes exposing for generates has hosted if implements import imports in interface match module package packages platform provides requires return targets var where while with break ";
-const ROC_NUMBER_SUFFIXES = " dec f32 f64 i128 i16 i32 i64 i8 nat u128 u16 u32 u64 u8 ";
+const KWDS =
+  /^(app|as|crash|dbg|else|expect|exposes|exposing|for|generates|has|hosted|if|implements|import|imports|in|interface|match|module|package|packages|platform|provides|requires|return|targets|var|where|while|with|break)$/;
+const SUF =
+  /^(dec|f32|f64|i128|i16|i32|i64|i8|nat|u128|u16|u32|u64|u8)$/;
 
 function tokenError(tok) {
-  return (tok & C_MASK) === C_ERROR;
+  return (tok & M) === ER;
 }
 
 function keepError(tok, next) {
@@ -287,11 +241,12 @@ function validCp(codepoint) {
   return codepoint <= 0x10ffff && !(codepoint >= 0xd800 && codepoint <= 0xdfff);
 }
 
-class RocCursor {
+class RocTokenizer {
   constructor(text) {
     this.b = encode(text);
     this.p = 0;
-    this.r = [];
+    this.t = [];
+    this.s = [];
   }
 
   pk() {
@@ -328,7 +283,7 @@ class RocCursor {
         ) {
           this.p += 1;
         }
-        this.r.push({ s: start, e: this.p, c: "c" });
+        this.t.push([CM, start, this.p]);
       } else if (b >= 0 && b <= 31) {
         this.p += 1;
       } else {
@@ -341,28 +296,28 @@ class RocCursor {
     const initialDigit = this.b[this.p];
     this.p += 1;
 
-    let tok = T_LITERAL;
+    let tok = NUM;
     if (initialDigit === 48) {
       while (true) {
         const c = this.pk() ?? 0;
         if (c === 120 || c === 88) {
           this.p += 1;
           if (!this.int16()) {
-            tok = T_ERROR_END;
+            tok = EE;
           }
           tok = this.suffix(tok);
           break;
         } else if (c === 111 || c === 79) {
           this.p += 1;
           if (!this.int8()) {
-            tok = T_ERROR_END;
+            tok = EE;
           }
           tok = this.suffix(tok);
           break;
         } else if (c === 98 || c === 66) {
           this.p += 1;
           if (!this.int2()) {
-            tok = T_ERROR_END;
+            tok = EE;
           }
           tok = this.suffix(tok);
           break;
@@ -423,17 +378,17 @@ class RocCursor {
 
     const start = this.p;
     if (!this.ident()) {
-      return keepError(hypothesis, T_ERROR_END);
+      return keepError(hypothesis, EE);
     }
     const suffix = decode(this.b.subarray(start, this.p));
-    if (!ROC_NUMBER_SUFFIXES.includes(" " + suffix + " ")) {
-      return keepError(hypothesis, T_ERROR_END);
+    if (!SUF.test(suffix)) {
+      return keepError(hypothesis, EE);
     }
     return hypothesis;
   }
 
   num10() {
-    let tokenType = T_LITERAL;
+    let tokenType = NUM;
     this.int10();
     if (
       (this.pk() ?? 0) === 46 &&
@@ -443,15 +398,15 @@ class RocCursor {
     ) {
       this.p += 1;
       this.int10();
-      tokenType = T_LITERAL;
+      tokenType = NUM;
     }
 
     const hasExponent = this.exp();
     if (hasExponent === "EmptyExponent") {
-      return T_ERROR_END;
+      return EE;
     }
     if (hasExponent) {
-      tokenType = T_LITERAL;
+      tokenType = NUM;
     }
     return tokenType;
   }
@@ -523,13 +478,13 @@ class RocCursor {
   lower() {
     const start = this.p;
     if (!this.ident()) {
-      return T_ERROR_END;
+      return EE;
     }
     const ident = decode(this.b.subarray(start, this.p));
     if (ident === "and" || ident === "or") {
-      return T_OP;
+      return O;
     }
-    return ROC_KEYWORDS.includes(" " + ident + " ") ? T_KEYWORD : T_LOWER;
+    return KWDS.test(ident) ? K : L;
   }
 
   ident() {
@@ -637,7 +592,7 @@ class RocCursor {
 
       if (state === "Empty") {
         if (c === 39) {
-          return T_ERROR_END;
+          return EE;
         }
         if (c === 92) {
           state = "Enough";
@@ -651,19 +606,19 @@ class RocCursor {
         }
       } else if (state === "Enough") {
         if (c === 39) {
-          return T_STRING_END;
+          return SE;
         }
         state = "TooLong";
       } else if (state === "TooLong") {
         if (c === 39) {
-          return T_ERROR_END;
+          return EE;
         }
       } else if (state === "Invalid" && c === 39) {
-        return T_ERROR_END;
+        return EE;
       }
     }
 
-    return T_ERROR_END;
+    return EE;
   }
 
   utf8() {
@@ -699,29 +654,24 @@ class RocCursor {
     this.p += utf8Len;
     return codepoint;
   }
-}
-
-class RocTokenizer {
-  constructor(text) {
-    this.c = new RocCursor(text);
-    this.t = [];
-    this.s = [];
-  }
-
   last() {
-    return this.t.length === 0 ? null : this.t[this.t.length - 1].t;
+    for (let i = this.t.length - 1; i >= 0; i -= 1) {
+      const tag = this.t[i][0];
+      if (tag !== CM) return tag;
+    }
+    return null;
   }
 
   push(tag, start) {
-    this.t.push({ t: tag, s: start, e: this.c.p });
+    this.t.push([tag, start, this.p]);
   }
 
   symbol(start, b) {
-    const next = this.c.at(1);
+    const next = this.at(1);
     if (next != null) {
       const pairTag = TWO_BYTE_TOKENS[(b << 8) | next];
       if (pairTag != null) {
-        this.c.p += 2;
+        this.p += 2;
         this.push(pairTag, start);
         return true;
       }
@@ -729,7 +679,7 @@ class RocTokenizer {
 
     const tag = ONE_BYTE_TOKENS[b];
     if (tag != null) {
-      this.c.p += 1;
+      this.p += 1;
       this.push(tag, start);
       return true;
     }
@@ -740,34 +690,34 @@ class RocTokenizer {
   tokenize() {
     let sawWhitespace = true;
 
-    while (this.c.p < this.c.b.length) {
-      const start = this.c.p;
+    while (this.p < this.b.length) {
+      const start = this.p;
       const sp = sawWhitespace;
       sawWhitespace = false;
-      const b = this.c.b[this.c.p];
+      const b = this.b[this.p];
 
       if (b <= 32 || b === 35) {
-        this.c.trivia();
+        this.trivia();
         sawWhitespace = true;
       } else if (b === 46) {
         this.dot(start, sp);
       } else if (b === 45) {
         this.minus(start, sp);
       } else if (b === 92) {
-        if (this.c.at(1) === 92) {
+        if (this.at(1) === 92) {
           this.multiline();
         } else {
-          this.c.p += 1;
-          this.push(T_OP, start);
+          this.p += 1;
+          this.push(O, start);
         }
       } else if (b === 125) {
-        this.c.p += 1;
+        this.p += 1;
         if (this.s.length > 0) {
           const last = this.s.pop();
-          this.push(T_KEYWORD_END, start);
+          this.push(KE, start);
           this.stringBody(last);
         } else {
-          this.push(T_PUNCT_END, start);
+          this.push(PE, start);
         }
       } else if (this.symbol(start, b)) {
         continue;
@@ -778,223 +728,222 @@ class RocTokenizer {
       } else if (b === 36) {
         this.dollar(start);
       } else if (dig(b)) {
-        const tag = this.c.number();
+        const tag = this.number();
         this.push(tag, start);
       } else if (lo(b)) {
-        const tag = this.c.lower();
+        const tag = this.lower();
         this.push(tag, start);
       } else if (up(b)) {
-        let tag = T_UPPER;
-        if (!this.c.ident()) {
-          tag = T_ERROR_END;
+        let tag = U;
+        if (!this.ident()) {
+          tag = EE;
         }
         this.push(tag, start);
       } else if (b === 39) {
-        const tag = this.c.single();
+        const tag = this.single();
         this.push(tag, start);
       } else if (b === 34) {
         this.string();
       } else if (b >= 0x80) {
-        this.c.ident();
-        this.push(T_ERROR_END, start);
+        this.ident();
+        this.push(EE, start);
       } else {
-        this.c.p += 1;
-        this.push(T_ERROR, start);
+        this.p += 1;
+        this.push(ER, start);
       }
     }
 
-    this.push(T_NONE, this.c.p);
+    this.push(Z, this.p);
     return {
       t: this.t,
-      c: this.c.r,
-      b: this.c.b,
+      b: this.b,
     };
   }
 
   dot(start, sp) {
-    const next = this.c.at(1);
+    const next = this.at(1);
     if (next == null) {
-      this.c.p += 1;
-      this.push(T_PUNCT, start);
+      this.p += 1;
+      this.push(P, start);
     } else if (next === 46) {
-      if (this.c.at(2) === 46) {
-        this.c.p += 3;
-        this.push(T_PUNCT, start);
-      } else if (this.c.at(2) === 60) {
-        this.c.p += 3;
-        this.push(T_DOTDOT_OP, start);
-      } else if (this.c.at(2) === 61) {
-        this.c.p += 3;
-        this.push(T_DOTDOT_OP, start);
+      if (this.at(2) === 46) {
+        this.p += 3;
+        this.push(P, start);
+      } else if (this.at(2) === 60) {
+        this.p += 3;
+        this.push(DD, start);
+      } else if (this.at(2) === 61) {
+        this.p += 3;
+        this.push(DD, start);
       } else {
-        this.c.p += 2;
-        this.push(T_PUNCT, start);
+        this.p += 2;
+        this.push(P, start);
       }
     } else if (dig(next)) {
-      this.c.p += 1;
-      this.c.integer();
-      this.push(T_DOT_LITERAL, start);
+      this.p += 1;
+      this.integer();
+      this.push(DN, start);
     } else if (lo(next)) {
-      let tag = T_DOT_LOWER;
-      this.c.p += 1;
-      if (!this.c.ident()) {
-        tag = T_DOT_ERROR;
+      let tag = DL;
+      this.p += 1;
+      if (!this.ident()) {
+        tag = DER;
       }
       this.push(tag, start);
     } else if (up(next)) {
-      let tag = T_DOT_UPPER;
-      this.c.p += 1;
-      if (!this.c.ident()) {
-        tag = T_DOT_ERROR;
+      let tag = DU;
+      this.p += 1;
+      if (!this.ident()) {
+        tag = DER;
       }
       this.push(tag, start);
     } else if (next >= 0x80 && next <= 0xff) {
-      this.c.p += 1;
-      this.c.ident();
-      this.push(T_DOT_ERROR, start);
+      this.p += 1;
+      this.ident();
+      this.push(DER, start);
     } else if (next === 123) {
-      this.c.p += 1;
-      this.push(T_PUNCT, start);
+      this.p += 1;
+      this.push(P, start);
     } else if (next === 42) {
-      this.c.p += 2;
-      this.push(T_DOT_OP, start);
+      this.p += 2;
+      this.push(DO, start);
     } else {
-      this.c.p += 1;
-      this.push(T_PUNCT, start);
+      this.p += 1;
+      this.push(P, start);
     }
   }
 
   minus(start, sp) {
-    const next = this.c.at(1);
+    const next = this.at(1);
     if (next == null) {
-      this.c.p += 1;
-      this.push(T_OP, start);
+      this.p += 1;
+      this.push(O, start);
     } else if (next === 62) {
-      this.c.p += 2;
-      this.push(T_OP, start);
+      this.p += 2;
+      this.push(O, start);
     } else if (next === 32 || next === 9 || next === 10 || next === 13 || next === 35) {
-      this.c.p += 1;
-      this.push(T_OP, start);
+      this.p += 1;
+      this.push(O, start);
     } else if (dig(next)) {
       const prev = this.last();
-      if (!sp && prev != null && (prev & F_EXPR_END) !== 0) {
-        this.c.p += 1;
-        this.push(T_OP, start);
+      if (!sp && prev != null && (prev & X) !== 0) {
+        this.p += 1;
+        this.push(O, start);
       } else {
-        this.c.p += 1;
-        const tag = this.c.number();
+        this.p += 1;
+        const tag = this.number();
         this.push(tag, start);
       }
     } else {
-      this.c.p += 1;
-      this.push(T_OP, start);
+      this.p += 1;
+      this.push(O, start);
     }
   }
 
   under(start) {
-    const next = this.c.at(1);
+    const next = this.at(1);
     if (next != null && (lo(next) || up(next) || dig(next))) {
-      let tag = T_LOWER;
-      this.c.p += 2;
-      if (!this.c.ident()) {
-        tag = T_ERROR_END;
+      let tag = L;
+      this.p += 2;
+      if (!this.ident()) {
+        tag = EE;
       }
       this.push(tag, start);
     } else {
-      this.c.p += 1;
-      this.push(T_NONE, start);
+      this.p += 1;
+      this.push(Z, start);
     }
   }
 
   opaque(start) {
-    let tok = T_UPPER;
-    const next = this.c.at(1);
+    let tok = U;
+    const next = this.at(1);
     if (
       next != null &&
       (lo(next) || up(next) || dig(next) || next === 95 || next >= 0x80)
     ) {
-      this.c.p += 1;
-      if (!this.c.ident()) {
-        tok = T_ERROR_END;
+      this.p += 1;
+      if (!this.ident()) {
+        tok = EE;
       }
     } else {
-      tok = T_ERROR;
-      this.c.p += 1;
+      tok = ER;
+      this.p += 1;
     }
     this.push(tok, start);
   }
 
   dollar(start) {
-    const next = this.c.at(1);
+    const next = this.at(1);
     if (next != null && lo(next)) {
-      let tag = T_LOWER;
-      this.c.p += 1;
-      if (!this.c.ident()) {
-        tag = T_ERROR_END;
+      let tag = L;
+      this.p += 1;
+      if (!this.ident()) {
+        tag = EE;
       }
       this.push(tag, start);
     } else if (next != null && up(next)) {
-      let tag = T_UPPER;
-      this.c.p += 1;
-      if (!this.c.ident()) {
-        tag = T_ERROR_END;
+      let tag = U;
+      this.p += 1;
+      if (!this.ident()) {
+        tag = EE;
       }
       this.push(tag, start);
     } else {
-      this.c.p += 1;
-      this.push(T_ERROR, start);
+      this.p += 1;
+      this.push(ER, start);
     }
   }
 
   string() {
-    const start = this.c.p;
-    this.c.p += 1;
+    const start = this.p;
+    this.p += 1;
     let kind = "single_line";
-    if (this.c.pk() === 34 && this.c.at(1) === 34) {
-      this.c.p += 2;
+    if (this.pk() === 34 && this.at(1) === 34) {
+      this.p += 2;
       kind = "multi_line";
-      this.push(T_STRING, start);
+      this.push(S, start);
     } else {
-      this.push(T_STRING, start);
+      this.push(S, start);
     }
     this.stringBody(kind);
   }
 
   multiline() {
-    const start = this.c.p;
-    this.c.p += 2;
-    this.push(T_STRING, start);
+    const start = this.p;
+    this.p += 2;
+    this.push(S, start);
     this.stringBody("multi_line");
   }
 
   stringBody(kind) {
-    const start = this.c.p;
-    let stringPartTag = T_STRING;
-    while (this.c.p < this.c.b.length) {
-      const c = this.c.b[this.c.p];
-      if (c === 36 && this.c.at(1) === 123) {
+    const start = this.p;
+    let stringPartTag = S;
+    while (this.p < this.b.length) {
+      const c = this.b[this.p];
+      if (c === 36 && this.at(1) === 123) {
         this.push(stringPartTag, start);
-        const dollarStart = this.c.p;
-        this.c.p += 2;
-        this.push(T_KEYWORD, dollarStart);
+        const dollarStart = this.p;
+        this.p += 2;
+        this.push(K, dollarStart);
         this.s.push(kind);
         return;
       } else if (c === 10) {
         this.push(stringPartTag, start);
         if (kind === "single_line") {
-          this.push(T_STRING_END, this.c.p);
+          this.push(SE, this.p);
         }
         return;
       } else if (kind === "single_line" && c === 34) {
         this.push(stringPartTag, start);
-        const stringPartEnd = this.c.p;
-        this.c.p += 1;
-        this.push(T_STRING_END, stringPartEnd);
+        const stringPartEnd = this.p;
+        this.p += 1;
+        this.push(SE, stringPartEnd);
         return;
       } else {
-        this.c.utf8();
-        if (c === 92 && this.c.escape(34) !== true) {
-          stringPartTag = T_ERROR;
+        this.utf8();
+        if (c === 92 && this.escape(34) !== true) {
+          stringPartTag = ER;
         }
       }
     }
@@ -1002,35 +951,12 @@ class RocTokenizer {
   }
 }
 
-function rocTokens(source) {
-  return new RocTokenizer(source).tokenize();
-}
-
-function tokenClass(tag) {
-  return TOK_CLASS[tag & C_MASK];
-}
-
-function addToken(ranges, token) {
-  const cls = tokenClass(token.t);
-  if (cls == null) {
-    return;
-  }
-
-  if ((token.t & F_DOT_PREFIX) !== 0 && token.s + 1 < token.e) {
-    ranges.push({ s: token.s, e: token.s + 1, c: "p" });
-    ranges.push({ s: token.s + 1, e: token.e, c: cls });
-  } else if ((token.t & F_DOTDOT_PREFIX) !== 0 && token.s + 2 < token.e) {
-    ranges.push({ s: token.s, e: token.s + 2, c: "p" });
-    ranges.push({ s: token.s + 2, e: token.e, c: cls });
-  } else {
-    ranges.push({ s: token.s, e: token.e, c: cls });
-  }
-}
-
 function highlightRoc(source) {
-  const tokenized = rocTokens(source);
-  const ranges = [...tokenized.c];
-  const tokens = tokenized.t.filter((token) => token.s !== token.e);
+  const tokenized = new RocTokenizer(source).tokenize();
+  const tokens = tokenized.t.filter(
+    (token) => token[0] !== CM && token[1] !== token[2],
+  );
+  const fields = new Map();
 
   for (let i = 0; i < tokens.length; i += 1) {
     const previous = tokens[i - 1];
@@ -1039,31 +965,53 @@ function highlightRoc(source) {
     if (
       previous != null &&
       next != null &&
-      (previous.t & F_FIELD_PREFIX) !== 0 &&
-      (token.t & F_FIELD_NAME) !== 0 &&
-      (next.t & F_COLON) !== 0 &&
-      decode(tokenized.b.subarray(token.e, next.s)).trim() === ""
+      (previous[0] & A) !== 0 &&
+      (token[0] & N) !== 0 &&
+      (next[0] & H) !== 0 &&
+      decode(tokenized.b.subarray(token[2], next[1])).trim() === ""
     ) {
-      ranges.push({ s: token.s, e: next.e, c: "f" });
-      i += 1;
-    } else {
-      addToken(ranges, token);
+      fields.set(token[1], next[2]);
     }
   }
 
-  ranges.sort((a, b) => a.s - b.s || a.e - b.e);
-
   let html = "";
   let lastEnd = 0;
-  for (const range of ranges) {
-    if (range.s < lastEnd) {
+
+  const emit = (start, end, cls) => {
+    html += htmlEscape(decode(tokenized.b.subarray(lastEnd, start)));
+    html += `<span class="${cls}">`;
+    html += htmlEscape(decode(tokenized.b.subarray(start, end)));
+    html += "</span>";
+    lastEnd = end;
+  };
+
+  for (const token of tokenized.t) {
+    const tag = token[0];
+    let start = token[1];
+    let end = token[2];
+    if (start === end || start < lastEnd) {
       continue;
     }
-    html += htmlEscape(decode(tokenized.b.subarray(lastEnd, range.s)));
-    html += `<span class="${range.c}">`;
-    html += htmlEscape(decode(tokenized.b.subarray(range.s, range.e)));
-    html += "</span>";
-    lastEnd = range.e;
+
+    const fieldEnd = fields.get(start);
+    let cls = fieldEnd == null ? CL[tag & M] : "f";
+    if (cls == null) {
+      continue;
+    }
+
+    if (fieldEnd != null) {
+      end = fieldEnd;
+    }
+
+    if (fieldEnd == null && (tag & B) !== 0 && start + 1 < end) {
+      emit(start, start + 1, "p");
+      emit(start + 1, end, cls);
+    } else if (fieldEnd == null && (tag & G) !== 0 && start + 2 < end) {
+      emit(start, start + 2, "p");
+      emit(start + 2, end, cls);
+    } else {
+      emit(start, end, cls);
+    }
   }
   html += htmlEscape(decode(tokenized.b.subarray(lastEnd)));
   return html || " ";
