@@ -23,8 +23,14 @@ mv roc_nightly* roc_nightly
 export PATH=$PATH:$(pwd)/roc_nightly
 
 # Install the no-npm asset minifier used by the production build.
+# GOBIN is set explicitly because installing this package can trigger Go's
+# automatic toolchain switch (it requires a newer Go than what's active),
+# and `go env GOPATH` queried afterwards can then resolve to a different
+# directory than the one the switched toolchain actually installed into.
+export GOBIN="$(pwd)/gobin"
+mkdir -p "$GOBIN"
 go install github.com/tdewolff/minify/v2/cmd/minify@v2.24.13
-export PATH=$PATH:$(go env GOPATH)/bin
+export PATH=$PATH:$GOBIN
 
 cd website
 roc check build_website.roc
