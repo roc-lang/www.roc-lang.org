@@ -13,6 +13,7 @@ import cli.Utc
 # Usage:
 #   roc ./build_website.roc           # full, clean build (no cache)
 #   roc ./build_website.roc --cache   # incremental build using cache
+#   roc ./build_website.roc --minify  # minify build assets after building
 
 latest_stable_tag = "alpha4-rolling"
 cache_marker_path = ".cache/site.millis"
@@ -22,6 +23,7 @@ main! : List Arg => Result {} _
 main! = |raw_args|
     args = List.map(raw_args, Arg.display)
     use_cache = List.any(args, |a| a == "--cache")
+    use_minify = List.any(args, |a| a == "--minify")
 
     cwd_path = Env.cwd!({}) ? EncCwdFailed
     cwd_path_str = Path.display(cwd_path)
@@ -38,7 +40,30 @@ main! = |raw_args|
     else
         full_clean_build!({})?
 
+    if use_minify then
+        minify_build_assets!({})?
+    else
+        {}
+
     Stdout.line!("Website built in dir 'website/build'.")
+
+minify_build_assets! : {} => Result {} _
+minify_build_assets! = |{}|
+    minify_build_asset!("build/compiler.js")?
+    minify_build_asset!("build/site.js")?
+    minify_build_asset!("build/site.css")?
+
+    Ok({})
+
+minify_build_asset! : Str => Result {} _
+minify_build_asset! = |path|
+    tmp_path = "${path}.min"
+
+    _ = File.delete!(tmp_path)
+    Cmd.exec!("minify", ["-o", tmp_path, path])?
+    Cmd.exec!("mv", [tmp_path, path])?
+
+    Ok({})
 
 # ----------------
 # Full clean build
@@ -51,6 +76,10 @@ full_clean_build! = |{}|
     _ = Dir.delete_all!("examples-main")
     _ = Dir.delete_all!("roc")
     _ = Dir.delete_all!(new_compiler_dir)
+
+    # Download latest echo.wasm.zst from nightlies for the interactive compiler
+    _ = File.delete!("public/echo.wasm.zst")
+    ensure_echo_wasm_present!({})?
 
     Cmd.exec!("cp", ["-r", "public", "build"])?
 
@@ -144,6 +173,7 @@ build_with_cache! = |{}|
     ensure_examples_present!({})?
     ensure_fonts_present!({})?
     ensure_repl_present!({})?
+    ensure_echo_wasm_present!({})?
     ensure_builtins_present!({})?
 
     # 3) Only rebuild site output if content/public changed since last time
@@ -229,6 +259,21 @@ ensure_repl_present! = |{}|
         Dir.create!("build/repl") ? CreateReplDirFailed
         Cmd.exec!("tar", ["-xzf", repl_tarfile, "-C", "build/repl"])?
         _ = File.delete!(repl_tarfile)
+        Ok({})
+
+ensure_echo_wasm_present! : {} => Result {} _
+ensure_echo_wasm_present! = |{}|
+    wasm_zst_path = "public/echo.wasm.zst"
+    already = File.is_file!(wasm_zst_path) |> Result.with_default(Bool.false)
+    if already then
+        Ok({})
+    else
+        # GitHub's /releases/latest/download/ URL redirects to the latest asset.
+        # Ship the .zst as-is (~3 MB vs ~26 MB decompressed): Cloudflare Workers
+        # Assets rejects any single asset over 25 MiB, so the uncompressed wasm
+        # can't be deployed directly. The browser decompresses it on load via
+        # vendored fzstd.mjs (see public/compiler.js).
+        Cmd.exec!("curl", ["-fsSL", "-o", wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
         Ok({})
 
 ensure_builtins_present! : {} => Result {} _

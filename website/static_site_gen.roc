@@ -5,7 +5,7 @@ app [main!] {
 import pf.SSG
 #import pf.Types
 import pf.Html exposing [header, nav, div, link, text, a, span, html, head, body, meta, script, footer]
-import pf.Html.Attributes exposing [id, aria_label, aria_hidden, title, href, class, rel, content, lang, charset, name, color]
+import pf.Html.Attributes exposing [id, aria_label, aria_hidden, title, href, class, rel, content, lang, charset, name, color, src]
 #import "content/tutorial.md" as tutorial_markdown : Str
 
 #import InteractiveRocExample
@@ -130,6 +130,7 @@ view = |page_path_str, html_content|
             # hidden via CSS using a .no-js selector will apply to the initial layout
             # of the body instead of having a flash of content that immediately gets hidden.
             script([], [text("document.documentElement.className = document.documentElement.className.replace('no-js', '');")]),
+            script([src("/compiler.js")], []),
         ]),
         body(body_attrs, [
             view_navbar(page_path_str),

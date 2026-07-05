@@ -36,7 +36,20 @@ jobs:
           cd website
           roc check build_website.roc
 
+      - name: Remove previous Roc install to avoid dir-name collision
+        run: rm -rf roc_nightly-*
+
+      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+        with:
+          version: nightly-new-compiler
+
+      - run: roc version
+
+      - name: Test interactive Roc widgets
+        run: ci_scripts/test_interactive_roc.sh
+
   test-install-script-unix:
+    needs: ci-checks
     strategy:
       matrix:
         include:
@@ -120,6 +133,7 @@ jobs:
           echo "✅ PATH successfully updated in $PROFILE"
 
   test-install-script-windows:
+    needs: ci-checks
     strategy:
       matrix:
         include:

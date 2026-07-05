@@ -41,6 +41,26 @@
 In its current state, the new compiler is only suited for things like programming puzzles.
 In any case, the [all syntax example](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc) offers a great overview of the language.
 
+You can run the full compiler in the browser without a backend server!
+<div class="roc-interactive front-page">
+<pre class="roc-source">print_remaining! = |todos|
+    todos
+        .keep_if(|todo| !todo.done)
+        .for_each!(|todo| echo!("- ${todo.name} \n"))
+<!--  -->
+main! = |_args| {
+    todos = [
+        { name: "Learn Roc",       done: True },
+        { name: "Buy groceries",   done: True },
+        { name: "Write blog post", done: False },
+        { name: "Call mom",        done: False },
+    ]
+    print_remaining!(todos)
+    Ok({})
+}</pre>
+<button class="roc-run">Enable JS to Run</button>
+</div>
+
 To get started with the language, try the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
 
 <a class="btn-small" href="https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md">Tutorial</a>
