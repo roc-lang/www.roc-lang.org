@@ -184,6 +184,8 @@ build_with_cache! = |brotli_quality, refresh_compiler|
     ensure_repl_present!({})?
     ensure_echo_wasm_present!(brotli_quality, refresh_compiler)?
     ensure_builtins_present!({})?
+    patch_builtins_html!({})?
+    write_builtins_redirects!({})?
 
     # 3) Only rebuild site output if content/public changed since last time
     last_build_millis = read_cache_millis!(cache_marker_path) |> Result.with_default(0i128)
@@ -206,9 +208,6 @@ build_with_cache! = |brotli_quality, refresh_compiler|
             Cmd.exec!("roc", ["build", "--linker", "legacy", "static_site_gen.roc"])?
             Cmd.exec!("./static_site_gen", ["content", "build"])?
 
-            # Patching steps that affect builtins and examples HTML (idempotent)
-            patch_builtins_html!({})?
-            write_builtins_redirects!({})?
             add_github_links_to_examples!({})?
         else
             Stdout.line!("Content unchanged; skipping static site generation.")?
@@ -498,6 +497,56 @@ detect_platform! = |{}|
 
 patch_builtins_html! : {} => Result {} _
 patch_builtins_html! = |{}|
+    runtime_highlight_css =
+        """
+
+        /* Roc docs runtime syntax highlights */
+        pre:has(> code.roc-highlight),
+        .entry-signature:has(.roc-highlight),
+        .entry-type-def.roc-highlight {
+            background-color: #202746;
+            color: #e0d6f0;
+        }
+
+        pre > code.roc-highlight,
+        .entry-signature-code.roc-highlight,
+        .type-ahead-signature.roc-highlight {
+            background: transparent;
+            color: #e0d6f0;
+        }
+
+        ::highlight(roc-c) {
+            color: #ccc;
+        }
+
+        ::highlight(roc-n),
+        ::highlight(roc-s),
+        ::highlight(roc-u) {
+            color: #4eefd9;
+        }
+
+        ::highlight(roc-k),
+        ::highlight(roc-o),
+        ::highlight(roc-d) {
+            color: #9b6bf2;
+        }
+
+        ::highlight(roc-f),
+        ::highlight(roc-p) {
+            color: #aeb4c6;
+        }
+
+        ::highlight(roc-v) {
+            color: white;
+        }
+
+        ::highlight(roc-e) {
+            color: hsl(0, 96%, 67%);
+        }
+
+        /* End Roc docs runtime syntax highlights */
+        """
+
     sidebar_chevron_css =
         """
 
@@ -568,6 +617,9 @@ patch_builtins_html! = |{}|
     replace_each_in_file_prefix!("build/builtins/main/index.html", 20000, docs_index_replacements) ? BuiltinsDocsReplaceFailed
 
     append_to_file_if_missing!("build/builtins/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
+    replace_block_or_append_to_file!("build/builtins/main/styles.css", "/* Roc docs runtime syntax highlights */", "/* End Roc docs runtime syntax highlights */", runtime_highlight_css) ? BuiltinsDocsCssReplaceFailed
+
+    Cmd.exec!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/builtins/main"]) ? BuiltinsDocsRuntimeHighlightFailed
 
     remove_between_in_file!("build/builtins/main/search.js", "const toggleSidebarEntryActive = (moduleName) => {", "const setupSearch = () => {") ? BuiltinsDocsJsReplaceFailed
     remove_between_in_file!("build/builtins/main/search.js", "if (document.querySelector(\".module-name\")) {", "if (document.getElementById(\"module-search\")) {") ? BuiltinsDocsJsReplaceFailed
@@ -695,6 +747,22 @@ append_to_file_if_missing! = |file_path_str, marker_str, append_str|
         Ok({})
     else
         File.write_utf8!(Str.concat(file_content, append_str), file_path_str)
+
+replace_block_or_append_to_file! = |file_path_str, start_marker_str, end_marker_str, replacement_str|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_content = File.read_utf8!(file_path_str)?
+
+    when Str.split_first(file_content, start_marker_str) is
+        Ok({ before, after }) ->
+            when Str.split_first(after, end_marker_str) is
+                Ok(after_end) ->
+                    File.write_utf8!(Str.concat(before, Str.concat(replacement_str, after_end.after)), file_path_str)
+
+                Err(_) ->
+                    File.write_utf8!(Str.concat(before, replacement_str), file_path_str)
+
+        Err(_) ->
+            File.write_utf8!(Str.concat(file_content, replacement_str), file_path_str)
 
 list_matching_files! = |root_str, suffix_str|
     files = list_files_recursive!(Path.from_str(root_str))?

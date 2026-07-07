@@ -1252,6 +1252,9 @@ function setup(div) {
 
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".roc-interactive").forEach(setup);
-  preloadCompiler();
+  const interactiveWidgets = document.querySelectorAll(".roc-interactive");
+  interactiveWidgets.forEach(setup);
+  document.querySelectorAll(".roc-highlight").forEach(applyRocSyntaxHighlights);
+
+  if (interactiveWidgets.length > 0) preloadCompiler();
 });
