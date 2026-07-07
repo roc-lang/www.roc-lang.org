@@ -924,7 +924,9 @@ details {
 
 /* Comments `#` and Documentation comments `##` */
 samp .comment,
-code .comment {
+code .comment,
+.roc-interactive .roc-output .c,
+.roc-source-highlight .c {
     color: #ccc;
 }
 
@@ -939,6 +941,9 @@ samp .string.end,
 code .string.end,
 samp .constant,
 code .constant,
+.roc-source-highlight .n,
+.roc-source-highlight .s,
+.roc-interactive .roc-output .n,
 samp .literal,
 code .literal {
     color: var(--dark-cyan);
@@ -954,7 +959,9 @@ code .punctuation.separator,
 samp .punctuation.terminator,
 code .punctuation.terminator,
 samp .kw,
-code .kw {
+code .kw,
+.roc-interactive .roc-output .k,
+.roc-source-highlight .k {
     color: var(--primary-1);
 }
 
@@ -964,14 +971,21 @@ code .op,
 samp .keyword.operator,
 code .keyword.operator,
 samp .colon,
-code .colon {
+code .colon,
+.roc-source-highlight .o {
     color: var(--primary-1);
 }
 
 /* Delimieters */
 samp .delimiter,
-code .delimiter {
+code .delimiter,
+.roc-source-highlight .d {
     color: var(--primary-1);
+}
+
+.roc-source-highlight .f,
+.roc-source-highlight .p {
+    color: #aeb4c6;
 }
 
 /* Variables modules and field names */
@@ -982,12 +996,17 @@ code .meta.group,
 samp .meta.block,
 code .meta.block,
 samp .lowerident,
-code .lowerident {
+code .lowerident,
+.roc-interactive .roc-output .v,
+.roc-interactive .roc-output pre.roc-terminal,
+.roc-source-highlight .v {
     color: white;
 }
 
 samp .error,
-code .error {
+code .error,
+.roc-interactive .roc-output .e,
+.roc-source-highlight .e {
     color: hsl(0, 96%, 67%);
 }
 
@@ -997,12 +1016,14 @@ code .type,
 samp .meta.path,
 code .meta.path,
 samp .upperident,
-code .upperident {
+code .upperident,
+.roc-source-highlight .u {
     color: var(--dark-cyan);
 }
 
 samp .dim,
-code .dim {
+code .dim,
+.roc-interactive .roc-output .m {
     opacity: 0.55;
 }
 
@@ -1654,22 +1675,50 @@ code .dim {
     max-width: 720px;
 }
 
-.roc-interactive textarea.roc-source {
+.roc-interactive .roc-source-editor {
+    position: relative;
+}
+
+.roc-interactive textarea.roc-source,
+.roc-interactive .roc-source-highlight {
     display: block;
     width: 100%;
     box-sizing: border-box;
-    border: none;
+    min-height: 100%;
+    margin: 0;
     padding: 0.75em;
     font-family: monospace;
     font-size: var(--font-size-normal);
+    line-height: normal;
     tab-size: 4;
-    resize: vertical;
-    background: var(--dark-code-bg);
-    color: #e0d6f0;
     border: 1px solid #ddd;
     white-space: pre;
     overflow-wrap: normal;
     overflow-x: auto;
+}
+
+.roc-interactive textarea.roc-source {
+    position: relative;
+    z-index: 1;
+    resize: vertical;
+    background: transparent;
+    color: transparent;
+    caret-color: #e0d6f0;
+}
+
+.roc-interactive textarea.roc-source::selection {
+    background: color-mix(in srgb, var(--primary-2) 45%, transparent);
+    color: transparent;
+}
+
+.roc-interactive .roc-source-highlight {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: var(--dark-code-bg);
+    color: #e0d6f0;
 }
 
 /* Shown only when JS is disabled — the script replaces it with the textarea above. */
@@ -1725,12 +1774,32 @@ code .dim {
     color: var(--text-color);
 }
 
-.roc-interactive .roc-output pre {
+.roc-interactive .roc-output pre,
+.roc-interactive .roc-output pre.roc-terminal {
     padding: 0.75em;
     background-color: #151517;
     margin: 0;
     font: inherit;
+    line-height: 1.35;
     white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+.roc-interactive .roc-output pre.roc-terminal {
+    line-height: 1.175;
+    white-space: pre;
+}
+
+.roc-interactive .roc-output .b {
+    font-weight: 700;
+}
+
+.roc-interactive .roc-output .i {
+    font-style: italic;
+}
+
+.roc-interactive .roc-output .x {
+    text-decoration: underline;
 }
 
 /* Right-align the Run button so it falls under the thumb on mobile. Defined
@@ -1743,7 +1812,7 @@ code .dim {
     }
 }
 
-/* ---- compiler diagnostics (emitted as HTML by js_stderr) ---- */
+/* ---- legacy compiler diagnostics ---- */
 
 .report {
     border-left: 3px solid #555;
