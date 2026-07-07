@@ -88,7 +88,7 @@ full_clean_build! = |{}|
     Cmd.exec!("unzip", ["-o", "-q", "examples-main.zip"])?
     Cmd.exec!("cp", ["-R", "examples-main/examples/", "content/examples/"])?
     # replace links in content/examples/index.md to work on the WIP site
-    Cmd.exec!("perl", ["-pi", "-e", "s|\\]\\(/|\\]\\(/examples/|g", "content/examples/index.md"])?
+    replace_all_in_file!("content/examples/index.md", "](/", "](/examples/")?
     Dir.delete_all!("examples-main") ? DeleteExamplesMainDirFailed
     File.delete!("examples-main.zip") ? DeleteExamplesMainZipFailed
 
@@ -224,7 +224,7 @@ ensure_examples_present! = |{}|
         Cmd.exec!("curl", ["-fL", "-o", "examples-main.zip", "https://github.com/roc-lang/examples/archive/refs/heads/main.zip"])?
         Cmd.exec!("unzip", ["-o", "-q", "examples-main.zip"])?
         Cmd.exec!("cp", ["-R", "examples-main/examples/", "content/examples/"])?
-        Cmd.exec!("perl", ["-pi", "-e", "s|\\]\\(/|\\]\\(/examples/|g", "content/examples/index.md"])?
+        replace_all_in_file!("content/examples/index.md", "](/", "](/examples/")?
         _ = Dir.delete_all!("examples-main")
         _ = File.delete!("examples-main.zip")
         Ok({})
@@ -430,19 +430,14 @@ compiler_commit_sha! = |{}|
 
 detect_platform! : {} => Result Str _
 detect_platform! = |{}|
-    os_out = Cmd.new("uname") |> Cmd.arg("-s") |> Cmd.exec_output!()?
-    arch_out = Cmd.new("uname") |> Cmd.arg("-m") |> Cmd.exec_output!()?
+    platform = Env.platform!({})
 
-    os = Str.trim(os_out.stdout_utf8)
-    arch = Str.trim(arch_out.stdout_utf8)
-    platform_key = "${os}-${arch}"
-
-    when platform_key is
-        "Darwin-arm64" -> Ok("macos_apple_silicon")
-        "Darwin-x86_64" -> Ok("macos_x86_64")
-        "Linux-x86_64" -> Ok("linux_x86_64")
-        "Linux-aarch64" -> Ok("linux_arm64")
-        _ -> Err(UnsupportedPlatform(platform_key))
+    when (platform.os, platform.arch) is
+        (MACOS, AARCH64) -> Ok("macos_apple_silicon")
+        (MACOS, X64) -> Ok("macos_x86_64")
+        (LINUX, X64) -> Ok("linux_x86_64")
+        (LINUX, AARCH64) -> Ok("linux_arm64")
+        _ -> Err(UnsupportedPlatform(Inspect.to_str(platform)))
 
 # ------------------------------
 # Content patching & redirects
@@ -456,12 +451,16 @@ patch_builtins_html! = |{}|
         /* Roc docs sidebar chevrons */
         .sidebar-module-link > .entry-toggle {
             align-items: center;
+            appearance: none;
+            background: none;
+            border: 0;
             color: currentColor;
             display: inline-flex;
             flex: 0 0 auto;
             font-size: 0;
             justify-content: center;
             line-height: 0;
+            padding: 0;
             pointer-events: none;
             transition: color 80ms linear;
         }
@@ -503,25 +502,17 @@ patch_builtins_html! = |{}|
         (">Documentation</a></h1>", ">Roc Docs</a></h1>"),
     ]
 
-    Cmd.exec!(
-        "find",
-        [
-            "build/builtins/main",
-            "-type",
-            "f",
-            "-name",
-            "index.html",
-            "-exec",
-            "perl",
-            "-0pi",
-            "-e",
-            "s|<button class=\"entry-toggle\"></button>|<span class=\"entry-toggle\"></span>|g; s|${builtins_tip_html}||g; s|</nav>|${builtins_tip_html}</nav>|",
-            "{}",
-            "+",
-        ],
+    main_index_paths = list_matching_files!("build/builtins/main", "/index.html")?
+
+    assert(!List.is_empty(main_index_paths), IndexCleanPathsWasEmpty)?
+
+    List.for_each_try!(
+        main_index_paths,
+        |index_path|
+            patch_builtins_nav_in_file!(index_path, builtins_tip_html)
     ) ? BuiltinsDocsReplaceFailed
 
-    replace_each_in_file!("build/builtins/main/index.html", docs_index_replacements) ? BuiltinsDocsReplaceFailed
+    replace_each_in_file_prefix!("build/builtins/main/index.html", 20000, docs_index_replacements) ? BuiltinsDocsReplaceFailed
 
     append_to_file_if_missing!("build/builtins/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
 
@@ -620,14 +611,7 @@ add_github_links_to_examples! = |{}|
             </svg>
             """
 
-        find_readme_html =
-            Cmd.new("find")
-            |> Cmd.args([examples_dir, "-type", "f", "-name", "README.html", "-exec", "realpath", "{}", ";"])
-            |> Cmd.exec_output!()?
-
-        clean_readme_paths =
-            Str.split_on(find_readme_html.stdout_utf8, "\n")
-            |> List.keep_if(|path| !Str.is_empty(path))
+        clean_readme_paths = list_matching_files!(examples_dir, "/README.html")?
 
         assert(!List.is_empty(clean_readme_paths), CleanReadmePathsWasEmptyList)?
 
@@ -659,18 +643,88 @@ append_to_file_if_missing! = |file_path_str, marker_str, append_str|
     else
         File.write_utf8!(Str.concat(file_content, append_str), file_path_str)
 
-replace_each_in_file! = |file_path_str, replacements|
+list_matching_files! = |root_str, suffix_str|
+    files = list_files_recursive!(Path.from_str(root_str))?
+
+    Ok(
+        files
+        |> List.map(|path| Path.display(path))
+        |> List.keep_if(|path| Str.ends_with(path, suffix_str))
+    )
+
+replace_all = |content, search_str, replace_str|
+    Str.replace_each(content, search_str, replace_str)
+
+replace_all_in_file! = |file_path_str, search_str, replace_str|
     assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
     file_content = File.read_utf8!(file_path_str)?
-    content_after_replace =
-        List.walk(replacements, file_content, |content, replacement|
-            (search_str, replace_str) = replacement
-            Str.replace_each(content, search_str, replace_str)
-        )
+    content_after_replace = replace_all(file_content, search_str, replace_str)
+
     if content_after_replace == file_content then
         Ok({})
     else
         File.write_utf8!(content_after_replace, file_path_str)
+
+patch_builtins_nav_in_file! = |file_path_str, builtins_tip_html|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_bytes = File.read_bytes!(file_path_str)?
+    nav_end = find_bytes_start(file_bytes, Str.to_utf8("</nav>"))
+
+    if nav_end.found then
+        before_nav_bytes = List.take_first(file_bytes, nav_end.start)
+        nav_and_after_bytes = List.drop_first(file_bytes, nav_end.start)
+        tip_marker = find_bytes_start(before_nav_bytes, Str.to_utf8("builtins-tip"))
+
+        if tip_marker.found then
+            Ok({})
+        else
+            with_tip_bytes = List.concat(before_nav_bytes, Str.to_utf8(builtins_tip_html))
+            patched_bytes = List.concat(with_tip_bytes, nav_and_after_bytes)
+            File.write_bytes!(patched_bytes, file_path_str)
+    else
+        Ok({})
+
+find_bytes_start = |bytes, needle|
+    initial = { found: Bool.false, matched: 0u64, start: 0u64 }
+    needle_len = List.len(needle)
+
+    List.walk_with_index_until(bytes, initial, |state, byte, index|
+        when List.get(needle, state.matched) is
+            Ok(expected) ->
+                if byte == expected then
+                    next_matched = state.matched + 1
+
+                    if next_matched == needle_len then
+                        Break({ state & found: Bool.true, matched: next_matched, start: index + 1 - needle_len })
+                    else
+                        Continue({ state & matched: next_matched })
+                else
+                    next_matched =
+                        when List.first(needle) is
+                            Ok(first) -> if byte == first then 1u64 else 0u64
+                            Err(_) -> 0u64
+
+                    Continue({ state & matched: next_matched })
+
+            Err(_) ->
+                Break(state)
+    )
+
+replace_each_in_file_prefix! = |file_path_str, prefix_len, replacements|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_bytes = File.read_bytes!(file_path_str)?
+    prefix_bytes = List.take_first(file_bytes, prefix_len)
+    rest_bytes = List.drop_first(file_bytes, prefix_len)
+    prefix = Str.from_utf8(prefix_bytes)?
+    prefix_after_replace =
+        List.walk(replacements, prefix, |content, replacement|
+            (search_str, replace_str) = replacement
+            replace_all(content, search_str, replace_str)
+        )
+    if prefix_after_replace == prefix then
+        Ok({})
+    else
+        File.write_bytes!(List.concat(Str.to_utf8(prefix_after_replace), rest_bytes), file_path_str)
 
 insert_after_first_if_missing! = |file_path_str, marker_str, search_str, insert_str|
     assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
