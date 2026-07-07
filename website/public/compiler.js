@@ -1,8 +1,9 @@
-// main.js — Roc interactive examples (lazy-loads compiler on first Run click)
+// main.js — Roc interactive examples
 "use strict";
 
 const decode = (bytes) => new TextDecoder().decode(bytes);
 const encode = (str) => new TextEncoder().encode(str);
+const WASM_URL = "/echo.wasm.br";
 
 // All null until the user clicks "Run" for the first time.
 
@@ -10,6 +11,7 @@ let mod = null; // WebAssembly.Module
 let inst = null; // WebAssembly.Instance
 let mem = null; // WebAssembly.Memory
 let loading = null; // Promise | null — guards against concurrent loads
+let preloading = null; // Promise<WebAssembly.Module> | null
 
 // Every run creates a fresh { out, err } object
 // and stashes it here so the import callbacks can write into it.
@@ -35,33 +37,56 @@ function imports() {
   };
 }
 
+async function instantiateCompiler(module) {
+  const instance = await WebAssembly.instantiate(module, imports());
+  mod = module;
+  inst = instance;
+  mem = instance.exports.memory;
+  inst.exports.init();
+}
+
+async function compileCompiler() {
+  const response = await fetch(WASM_URL, { priority: "low" });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${WASM_URL}`);
+  }
+  if (WebAssembly.compileStreaming) {
+    return WebAssembly.compileStreaming(response);
+  }
+  return WebAssembly.compile(await response.arrayBuffer());
+}
+
+function preloadCompiler() {
+  if (mod) return Promise.resolve(mod);
+  if (preloading) return preloading;
+
+  preloading = compileCompiler()
+    .then((module) => {
+      mod = module;
+      return module;
+    })
+    .finally(() => {
+      preloading = null;
+    });
+
+  preloading.catch(() => {});
+  return preloading;
+}
+
 async function load() {
   if (inst) return; // already loaded
   if (loading) return loading; // another click is loading it
 
   loading = (async () => {
-    // echo.wasm is shipped zstd-compressed (~3 MB vs ~26 MB decompressed) so it
-    // fits under Cloudflare Workers Assets' 25 MiB per-file limit. Decompress it
-    // here instead of relying on instantiateStreaming, which needs a native wasm
-    // response.
-    const [{ decompress }, response] = await Promise.all([
-      import("/fzstd.mjs"),
-      fetch("/echo.wasm.zst", { priority: "low" }),
-    ]);
-    const compressed = new Uint8Array(await response.arrayBuffer());
-    const wasmBytes = decompress(compressed);
-    const { module, instance } = await WebAssembly.instantiate(
-      wasmBytes,
-      imports(),
-    );
-    mod = module;
-    inst = instance;
-    mem = instance.exports.memory;
-    inst.exports.init();
+    const module = mod || await preloadCompiler();
+    await instantiateCompiler(module);
   })();
 
-  await loading;
-  loading = null;
+  try {
+    await loading;
+  } finally {
+    loading = null;
+  }
 }
 
 async function recover() {
@@ -960,7 +985,35 @@ class RocTokenizer {
   }
 }
 
-function highlightRoc(source) {
+const ROC_HIGHLIGHT_TYPES = "u v n s k p d o e c f".split(" ");
+const rocHighlightRoots = new Map();
+let rocHighlightRootId = 0;
+
+function byteOffsetsForText(text, bytes) {
+  const offsets = new Array(bytes.length + 1);
+  let byteIndex = 0;
+
+  for (let index = 0; index < text.length;) {
+    const codepoint = text.codePointAt(index);
+    const codeUnits = codepoint > 0xffff ? 2 : 1;
+    const bytesForCodepoint =
+      codepoint <= 0x7f ? 1 :
+      codepoint <= 0x7ff ? 2 :
+      codepoint <= 0xffff ? 3 : 4;
+
+    for (let i = 0; i < bytesForCodepoint; i += 1) {
+      offsets[byteIndex + i] = index;
+    }
+
+    byteIndex += bytesForCodepoint;
+    index += codeUnits;
+  }
+
+  offsets[byteIndex] = text.length;
+  return offsets;
+}
+
+function rocTokenRanges(source) {
   const tokenized = new RocTokenizer(source).tokenize();
   const tokens = tokenized.t.filter(
     (token) => token[0] !== CM && token[1] !== token[2],
@@ -983,14 +1036,16 @@ function highlightRoc(source) {
     }
   }
 
-  let html = "";
+  const ranges = [];
+  const offsets = byteOffsetsForText(source, tokenized.b);
   let lastEnd = 0;
 
-  const emit = (start, end, cls) => {
-    html += htmlEscape(decode(tokenized.b.subarray(lastEnd, start)));
-    html += `<span class="${cls}">`;
-    html += htmlEscape(decode(tokenized.b.subarray(start, end)));
-    html += "</span>";
+  const add = (start, end, type) => {
+    const textStart = offsets[start];
+    const textEnd = offsets[end];
+    if (textStart != null && textEnd != null && textStart < textEnd) {
+      ranges.push({ type, start: textStart, end: textEnd });
+    }
     lastEnd = end;
   };
 
@@ -1013,22 +1068,70 @@ function highlightRoc(source) {
     }
 
     if (fieldEnd == null && (tag & B) !== 0 && start + 1 < end) {
-      emit(start, start + 1, "p");
-      emit(start + 1, end, cls);
+      add(start, start + 1, "p");
+      add(start + 1, end, cls);
     } else if (fieldEnd == null && (tag & G) !== 0 && start + 2 < end) {
-      emit(start, start + 2, "p");
-      emit(start + 2, end, cls);
+      add(start, start + 2, "p");
+      add(start + 2, end, cls);
     } else {
-      emit(start, end, cls);
+      add(start, end, cls);
     }
   }
-  html += htmlEscape(decode(tokenized.b.subarray(lastEnd)));
-  return html || " ";
+
+  return ranges;
+}
+
+function syncRocSyntaxHighlights() {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+
+  for (const type of ROC_HIGHLIGHT_TYPES) {
+    const ranges = [];
+    for (const rootHighlights of rocHighlightRoots.values()) {
+      ranges.push(...rootHighlights[type]);
+    }
+
+    const name = `roc-${type}`;
+    if (ranges.length > 0) {
+      CSS.highlights.set(name, new Highlight(...ranges));
+    } else {
+      CSS.highlights.delete(name);
+    }
+  }
+}
+
+function applyRocSyntaxHighlights(container) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+
+  if (!container.dataset.rocHighlightId) {
+    rocHighlightRootId += 1;
+    container.dataset.rocHighlightId = String(rocHighlightRootId);
+  }
+
+  const grouped = {};
+  for (const type of ROC_HIGHLIGHT_TYPES) {
+    grouped[type] = [];
+  }
+
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  let textNode;
+
+  while ((textNode = walker.nextNode())) {
+    for (const token of rocTokenRanges(textNode.nodeValue)) {
+      const range = new Range();
+      range.setStart(textNode, token.start);
+      range.setEnd(textNode, token.end);
+      grouped[token.type].push(range);
+    }
+  }
+
+  rocHighlightRoots.set(container.dataset.rocHighlightId, grouped);
+  syncRocSyntaxHighlights();
 }
 
 function setupHighlight(textarea, highlight) {
   const updateHighlight = () => {
-    highlight.innerHTML = highlightRoc(textarea.value);
+    highlight.textContent = textarea.value || " ";
+    applyRocSyntaxHighlights(highlight);
   };
 
   const syncScroll = () => {
@@ -1066,7 +1169,6 @@ function setup(div) {
   const sourceHighlight = document.createElement("pre");
   sourceHighlight.className = "roc-source-highlight";
   sourceHighlight.setAttribute("aria-hidden", "true");
-  setupHighlight(textarea, sourceHighlight);
 
   // Keep Tab from leaving the textarea
   textarea.addEventListener("keydown", (e) => {
@@ -1143,6 +1245,7 @@ function setup(div) {
   sourceEditor.appendChild(sourceHighlight);
   sourceEditor.appendChild(textarea);
   div.appendChild(sourceEditor);
+  setupHighlight(textarea, sourceHighlight);
   div.appendChild(runButton);
   div.appendChild(outputArea);
 }
@@ -1150,13 +1253,5 @@ function setup(div) {
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".roc-interactive").forEach(setup);
-
-  // Pre-download the compiler in the background at low priority so the first
-  // Run click is instant. Errors are ignored here — the click handler retries.
-  const preload = () => load().catch(() => {});
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(preload);
-  } else {
-    preload();
-  }
+  preloadCompiler();
 });

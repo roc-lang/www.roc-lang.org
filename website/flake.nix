@@ -20,7 +20,8 @@
 
         aliases = ''
           alias buildcmd='roc ./build_website.roc'
-          alias runcmd='npx http-server ./build -c-1 -p 8080'
+          alias buildprodcmd='roc ./build_website.roc --production --minify'
+          alias runcmd='python3 ./serve.py ./build 8080'
         '';
 
         linuxInputs = with pkgs;
@@ -34,7 +35,9 @@
           ]);
 
         sharedInputs = (with pkgs; [
+          go
           nodejs_22
+          python3
           rocPkgs.cli
         ]);
       in {
