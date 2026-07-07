@@ -308,7 +308,11 @@ ensure_builtins_present! = |{}|
         ensure_new_compiler_downloaded!({})?
         download_roc_source_at_compiler_commit!({})?
         Dir.create!("build/builtins/main") ? CreateMainDirFailed
+        _ = Dir.delete_all!("docs/langref")
+        Dir.create_all!("docs/langref") ? CreateLangRefStagingDirFailed
+        Cmd.exec!("cp", ["-R", "roc/docs/langref/.", "docs/langref"])?
         Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main", "--with-lang-ref"])?
+        Dir.delete_all!("docs") ? DeleteLangRefStagingDirFailed
         Dir.delete_all!("roc")?
     else
         {}
@@ -446,26 +450,83 @@ detect_platform! = |{}|
 
 patch_builtins_html! : {} => Result {} _
 patch_builtins_html! = |{}|
-    find_index_output =
-        Cmd.new("find")
-        |> Cmd.args(["build/builtins", "-type", "f", "-name", "index.html"])
-        |> Cmd.exec_output!()?
+    sidebar_chevron_css =
+        """
 
-    index_clean_paths =
-        Str.split_on(find_index_output.stdout_utf8, "\n")
-        |> List.keep_if(|path| !Str.is_empty(path))
+        /* Roc docs sidebar chevrons */
+        .sidebar-module-link > .entry-toggle {
+            align-items: center;
+            color: currentColor;
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: 0;
+            justify-content: center;
+            line-height: 0;
+            pointer-events: none;
+            transition: color 80ms linear;
+        }
 
-    assert(!List.is_empty(index_clean_paths), IndexCleanPathsWasEmpty)?
+        .sidebar-module-link:is(:hover, :focus, :focus-within, :active) > .entry-toggle {
+            transition: color 80ms linear, rotate 80ms linear;
+        }
 
-    List.for_each_try!(
-        index_clean_paths,
-        |index_path|
-            replace_in_file!(
-                index_path,
-                "<\nav>",
-                """<div class="builtins-tip"><b>Tip:</b> <a href="/different-names">Some names</a> differ from other languages.</div></nav>"""
-            )
+        .sidebar-module-link:hover,
+        .sidebar-module-link:hover > span,
+        .sidebar-module-link:hover > .entry-toggle,
+        .sidebar-entry:hover > a.sidebar-module-link > .entry-toggle {
+            color: var(--violet);
+        }
+
+        .sidebar-module-link > .entry-toggle::before {
+            -webkit-mask: none;
+            background: none;
+            border: solid currentColor;
+            border-width: 0 2px 2px 0;
+            content: "";
+            display: block;
+            height: 0.45rem;
+            mask: none;
+            transform: rotate(-45deg);
+            width: 0.45rem;
+        }
+
+        """
+
+    builtins_tip_html =
+        """<div class="builtins-tip"><b>Tip:</b> <a href="/different-names">Some names</a> differ from other languages.</div>"""
+
+    docs_index_replacements = [
+        ("<title>Builtin Docs</title>", "<title>Roc Docs</title>"),
+        ("<title>Documentation Docs</title>", "<title>Roc Docs</title>"),
+        ("<title> - Documentation</title>", "<title>Roc Docs</title>"),
+        (">Builtin</a></h1>", ">Roc Docs</a></h1>"),
+        (">Documentation</a></h1>", ">Roc Docs</a></h1>"),
+    ]
+
+    Cmd.exec!(
+        "find",
+        [
+            "build/builtins/main",
+            "-type",
+            "f",
+            "-name",
+            "index.html",
+            "-exec",
+            "perl",
+            "-0pi",
+            "-e",
+            "s|<button class=\"entry-toggle\"></button>|<span class=\"entry-toggle\"></span>|g; s|${builtins_tip_html}||g; s|</nav>|${builtins_tip_html}</nav>|",
+            "{}",
+            "+",
+        ],
     ) ? BuiltinsDocsReplaceFailed
+
+    replace_each_in_file!("build/builtins/main/index.html", docs_index_replacements) ? BuiltinsDocsReplaceFailed
+
+    append_to_file_if_missing!("build/builtins/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
+
+    remove_between_in_file!("build/builtins/main/search.js", "const toggleSidebarEntryActive = (moduleName) => {", "const setupSearch = () => {") ? BuiltinsDocsJsReplaceFailed
+    remove_between_in_file!("build/builtins/main/search.js", "if (document.querySelector(\".module-name\")) {", "if (document.getElementById(\"module-search\")) {") ? BuiltinsDocsJsReplaceFailed
 
     Ok({})
 
@@ -575,10 +636,11 @@ add_github_links_to_examples! = |{}|
             |readme_path|
                 example_folder_name = Str.split_on(readme_path, "/") |> List.take_last(2) |> List.first()?
                 specific_example_link = Str.join_with([examples_repo_link, example_folder_name], "/")
-                replace_in_file!(
+                insert_after_first_if_missing!(
                     readme_path,
+                    "id=\"gh-example-link\"",
                     "</h1>",
-                    """</h1><a id="gh-example-link" href="${specific_example_link}" aria-label="view on github">${github_logo_svg}</a>"""
+                    """<a id="gh-example-link" href="${specific_example_link}" aria-label="view on github">${github_logo_svg}</a>"""
                 )
         ) ? ExamplesReadmeReplaceFailed
 
@@ -589,11 +651,55 @@ add_github_links_to_examples! = |{}|
 # Replace helper
 # ------------------------------
 
-replace_in_file! = |file_path_str, search_str, replace_str|
+append_to_file_if_missing! = |file_path_str, marker_str, append_str|
     assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
     file_content = File.read_utf8!(file_path_str)?
-    content_after_replace = Str.replace_each(file_content, search_str, replace_str)
-    File.write_utf8!(content_after_replace, file_path_str)
+    if Str.contains(file_content, marker_str) then
+        Ok({})
+    else
+        File.write_utf8!(Str.concat(file_content, append_str), file_path_str)
+
+replace_each_in_file! = |file_path_str, replacements|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_content = File.read_utf8!(file_path_str)?
+    content_after_replace =
+        List.walk(replacements, file_content, |content, replacement|
+            (search_str, replace_str) = replacement
+            Str.replace_each(content, search_str, replace_str)
+        )
+    if content_after_replace == file_content then
+        Ok({})
+    else
+        File.write_utf8!(content_after_replace, file_path_str)
+
+insert_after_first_if_missing! = |file_path_str, marker_str, search_str, insert_str|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_content = File.read_utf8!(file_path_str)?
+    if Str.contains(file_content, marker_str) then
+        Ok({})
+    else
+        when Str.split_first(file_content, search_str) is
+            Ok({ before, after }) ->
+                File.write_utf8!(Str.concat(before, Str.concat(search_str, Str.concat(insert_str, after))), file_path_str)
+
+            Err(_) ->
+                Ok({})
+
+remove_between_in_file! = |file_path_str, start_str, end_str|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_content = File.read_utf8!(file_path_str)?
+
+    when Str.split_first(file_content, start_str) is
+        Ok({ before, after }) ->
+            when Str.split_first(after, end_str) is
+                Ok(after_start) ->
+                    File.write_utf8!(Str.concat(before, Str.concat(end_str, after_start.after)), file_path_str)
+
+                Err(_) ->
+                    Ok({})
+
+        Err(_) ->
+            Ok({})
 
 # ------------------------------
 # Cache timestamp helpers
