@@ -62,6 +62,9 @@ minify_build_assets! = |{}|
     minify_build_asset!("build/site.js")?
     minify_build_asset!("build/site.css")?
 
+    html_paths = list_matching_files!("build", ".html")?
+    List.for_each_try!(html_paths, minify_html_asset!)?
+
     Ok({})
 
 minify_build_asset! : Str => Result {} _
@@ -70,6 +73,18 @@ minify_build_asset! = |path|
 
     _ = File.delete!(tmp_path)
     Cmd.exec!("minify", ["-o", tmp_path, path])?
+    Cmd.exec!("mv", [tmp_path, path])?
+
+    Ok({})
+
+minify_html_asset! : Str => Result {} _
+minify_html_asset! = |path|
+    tmp_path = "${path}.min"
+
+    _ = File.delete!(tmp_path)
+    # Preserve comments because generated docs pages use invisible bang comments
+    # with control bytes as stream markers for soft navigation.
+    Cmd.exec!("minify", ["--html-keep-comments", "-o", tmp_path, path])?
     Cmd.exec!("mv", [tmp_path, path])?
 
     Ok({})
@@ -621,9 +636,6 @@ patch_builtins_html! = |{}|
 
     Cmd.exec!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/builtins/main"]) ? BuiltinsDocsRuntimeHighlightFailed
 
-    remove_between_in_file!("build/builtins/main/search.js", "const toggleSidebarEntryActive = (moduleName) => {", "const setupSearch = () => {") ? BuiltinsDocsJsReplaceFailed
-    remove_between_in_file!("build/builtins/main/search.js", "if (document.querySelector(\".module-name\")) {", "if (document.getElementById(\"module-search\")) {") ? BuiltinsDocsJsReplaceFailed
-
     Ok({})
 
 write_builtins_redirects! : {} => Result {} _
@@ -859,22 +871,6 @@ insert_after_first_if_missing! = |file_path_str, marker_str, search_str, insert_
 
             Err(_) ->
                 Ok({})
-
-remove_between_in_file! = |file_path_str, start_str, end_str|
-    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
-    file_content = File.read_utf8!(file_path_str)?
-
-    when Str.split_first(file_content, start_str) is
-        Ok({ before, after }) ->
-            when Str.split_first(after, end_str) is
-                Ok(after_start) ->
-                    File.write_utf8!(Str.concat(before, Str.concat(end_str, after_start.after)), file_path_str)
-
-                Err(_) ->
-                    Ok({})
-
-        Err(_) ->
-            Ok({})
 
 # ------------------------------
 # Cache timestamp helpers

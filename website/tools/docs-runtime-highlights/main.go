@@ -26,6 +26,8 @@ var generatedTokenClasses = map[string]bool{
 	"upperident": true,
 }
 
+const initialHighlightScript = `window.rocSyntax&&window.rocSyntax.highlightFirst(document.querySelector("main > .main-content"),32)`
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Fprintln(os.Stderr, "usage: docs-runtime-highlights docs-root")
@@ -62,6 +64,9 @@ func processHTML(path string) error {
 	if flattenGeneratedHighlights(doc) {
 		changed = true
 	}
+	if addInitialHighlightScript(doc) {
+		changed = true
+	}
 
 	if !changed {
 		return nil
@@ -72,7 +77,7 @@ func processHTML(path string) error {
 		return fmt.Errorf("%s: %w", path, err)
 	}
 
-	return os.WriteFile(path, out.Bytes(), 0o644)
+	return os.WriteFile(path, restoreDocsStreamMarkers(out.Bytes()), 0o644)
 }
 
 func addCompilerScript(doc *html.Node) bool {
@@ -86,7 +91,6 @@ func addCompilerScript(doc *html.Node) bool {
 		Data: "script",
 		Attr: []html.Attribute{
 			{Key: "src", Val: "/compiler.js"},
-			{Key: "defer", Val: ""},
 		},
 	})
 
@@ -105,6 +109,107 @@ func hasCompilerScript(node *html.Node) bool {
 	}
 
 	return false
+}
+
+func addInitialHighlightScript(doc *html.Node) bool {
+	content := findElementWithClass(doc, "div", "main-content")
+	if content == nil || hasInlineScript(content, initialHighlightScript) {
+		return false
+	}
+
+	highlightRoots := 0
+	for child := content.FirstChild; child != nil; child = child.NextSibling {
+		highlightRoots += countRuntimeHighlightRoots(child)
+		if highlightRoots >= 32 {
+			insertAfter(content, initialHighlightNode(), child)
+			return true
+		}
+	}
+
+	if highlightRoots > 0 {
+		content.AppendChild(initialHighlightNode())
+		return true
+	}
+
+	return false
+}
+
+func initialHighlightNode() *html.Node {
+	script := &html.Node{
+		Type: html.ElementNode,
+		Data: "script",
+	}
+	script.AppendChild(&html.Node{
+		Type: html.TextNode,
+		Data: initialHighlightScript,
+	})
+	return script
+}
+
+func hasInlineScript(node *html.Node, text string) bool {
+	if node.Type == html.ElementNode && node.Data == "script" && attr(node, "src") == "" && textContent(node) == text {
+		return true
+	}
+
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if hasInlineScript(child, text) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func countRuntimeHighlightRoots(node *html.Node) int {
+	count := 0
+	if node.Type == html.ElementNode && hasClass(node, "roc-highlight") {
+		count++
+	}
+
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		count += countRuntimeHighlightRoots(child)
+	}
+
+	return count
+}
+
+func insertAfter(parent *html.Node, newChild *html.Node, oldChild *html.Node) {
+	if oldChild.NextSibling != nil {
+		parent.InsertBefore(newChild, oldChild.NextSibling)
+	} else {
+		parent.AppendChild(newChild)
+	}
+}
+
+func restoreDocsStreamMarkers(out []byte) []byte {
+	placeholder := []byte("<!--!\ufffd-->")
+	count := bytes.Count(out, placeholder)
+	if count == 0 {
+		return out
+	}
+
+	// The Go HTML parser normalizes control bytes in comments to U+FFFD. The
+	// docs generator emits markers in a fixed order: start, zero or more chunks,
+	// end. Reconstruct those exact byte markers after the parse/render pass so
+	// the HTML minifier can preserve them with --html-keep-comments.
+	var restored bytes.Buffer
+	restored.Grow(len(out))
+	remaining := out
+	for index := 0; index < count; index++ {
+		position := bytes.Index(remaining, placeholder)
+		restored.Write(remaining[:position])
+		switch {
+		case index == 0:
+			restored.WriteString("<!--!\x00-->")
+		case index == count-1:
+			restored.WriteString("<!--!\x1e-->")
+		default:
+			restored.WriteString("<!--!\x1f-->")
+		}
+		remaining = remaining[position+len(placeholder):]
+	}
+	restored.Write(remaining)
+	return restored.Bytes()
 }
 
 func flattenGeneratedHighlights(node *html.Node) bool {
@@ -201,6 +306,20 @@ func findElement(node *html.Node, name string) *html.Node {
 
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
 		if found := findElement(child, name); found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
+func findElementWithClass(node *html.Node, name string, class string) *html.Node {
+	if node.Type == html.ElementNode && node.Data == name && hasClass(node, class) {
+		return node
+	}
+
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if found := findElementWithClass(child, name, class); found != nil {
 			return found
 		}
 	}
