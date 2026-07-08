@@ -987,6 +987,7 @@ class RocTokenizer {
 
 const ROC_HIGHLIGHT_TYPES = "u v n s k p d o e c f".split(" ");
 const rocHighlightRoots = new Map();
+const rocHighlightObjects = new Map();
 let rocHighlightRootId = 0;
 
 function byteOffsetsForText(text, bytes) {
@@ -1085,48 +1086,335 @@ function syncRocSyntaxHighlights() {
   if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
 
   for (const type of ROC_HIGHLIGHT_TYPES) {
-    const ranges = [];
-    for (const rootHighlights of rocHighlightRoots.values()) {
-      ranges.push(...rootHighlights[type]);
-    }
+    const highlight = rocHighlightObjectForType(type);
+    highlight.clear();
 
-    const name = `roc-${type}`;
-    if (ranges.length > 0) {
-      CSS.highlights.set(name, new Highlight(...ranges));
-    } else {
-      CSS.highlights.delete(name);
+    for (const rootHighlights of rocHighlightRoots.values()) {
+      for (const range of rootHighlights[type]) {
+        highlight.add(range);
+      }
     }
   }
 }
 
-function applyRocSyntaxHighlights(container) {
-  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+function rocHighlightObjectForType(type) {
+  let highlight = rocHighlightObjects.get(type);
 
-  if (!container.dataset.rocHighlightId) {
-    rocHighlightRootId += 1;
-    container.dataset.rocHighlightId = String(rocHighlightRootId);
+  if (!highlight) {
+    highlight = new Highlight();
+    rocHighlightObjects.set(type, highlight);
+    CSS.highlights.set(`roc-${type}`, highlight);
   }
 
+  return highlight;
+}
+
+function resetRocHighlightObjects() {
+  rocHighlightObjects.clear();
+
+  for (const type of ROC_HIGHLIGHT_TYPES) {
+    const highlight = new Highlight();
+    rocHighlightObjects.set(type, highlight);
+    CSS.highlights.set(`roc-${type}`, highlight);
+  }
+}
+
+function addRocHighlightRoot(id, grouped) {
+  removeRocHighlightRoot(id);
+  rocHighlightRoots.set(id, grouped);
+
+  for (const type of ROC_HIGHLIGHT_TYPES) {
+    const highlight = rocHighlightObjectForType(type);
+    for (const range of grouped[type]) {
+      highlight.add(range);
+    }
+  }
+}
+
+function removeRocHighlightRoot(id) {
+  const grouped = rocHighlightRoots.get(id);
+  if (!grouped) return false;
+
+  for (const type of ROC_HIGHLIGHT_TYPES) {
+    const highlight = rocHighlightObjects.get(type);
+    if (!highlight) continue;
+
+    for (const range of grouped[type]) {
+      highlight.delete(range);
+    }
+  }
+
+  rocHighlightRoots.delete(id);
+  return true;
+}
+
+function emptyRocHighlightGroups() {
   const grouped = {};
   for (const type of ROC_HIGHLIGHT_TYPES) {
     grouped[type] = [];
   }
 
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-  let textNode;
+  return grouped;
+}
 
-  while ((textNode = walker.nextNode())) {
-    for (const token of rocTokenRanges(textNode.nodeValue)) {
-      const range = new Range();
-      range.setStart(textNode, token.start);
-      range.setEnd(textNode, token.end);
-      grouped[token.type].push(range);
-    }
+function rocHighlightContainer(container) {
+  return container?.nodeType === Node.ELEMENT_NODE
+    ? container
+    : container?.documentElement ?? document.documentElement;
+}
+
+function ensureRocHighlightId(container) {
+  const root = rocHighlightContainer(container);
+
+  if (!root.dataset.rocHighlightId) {
+    rocHighlightRootId += 1;
+    root.dataset.rocHighlightId = String(rocHighlightRootId);
   }
 
-  rocHighlightRoots.set(container.dataset.rocHighlightId, grouped);
-  syncRocSyntaxHighlights();
+  return root.dataset.rocHighlightId;
 }
+
+function addRocTextNodeHighlights(textNode, grouped) {
+  for (const token of rocTokenRanges(textNode.nodeValue)) {
+    const range = new Range();
+    range.setStart(textNode, token.start);
+    range.setEnd(textNode, token.end);
+    grouped[token.type].push(range);
+  }
+}
+
+function collectRocSyntaxHighlights(container, grouped) {
+  const includeWholeContainer = container?.matches?.(".roc-highlight") ?? false;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode: (textNode) => {
+      if (textNode.nodeValue.length === 0) return NodeFilter.FILTER_REJECT;
+      if (includeWholeContainer) return NodeFilter.FILTER_ACCEPT;
+      return textNode.parentElement?.closest?.(".roc-highlight")
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_REJECT;
+    },
+  });
+
+  let textNode;
+  let chars = 0;
+  let textNodes = 0;
+
+  while ((textNode = walker.nextNode())) {
+    chars += textNode.nodeValue.length;
+    textNodes += 1;
+    addRocTextNodeHighlights(textNode, grouped);
+  }
+
+  return { chars, textNodes };
+}
+
+function rocHighlightRootCount(container) {
+  let count = container?.matches?.(".roc-highlight") ? 1 : 0;
+  count += container?.querySelectorAll?.(".roc-highlight").length ?? 0;
+  return count;
+}
+
+function buildRocSyntaxHighlights(container) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return { chars: 0, textNodes: 0 };
+
+  const id = ensureRocHighlightId(container);
+  const grouped = emptyRocHighlightGroups();
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  let textNode;
+  let chars = 0;
+  let textNodes = 0;
+
+  while ((textNode = walker.nextNode())) {
+    chars += textNode.nodeValue.length;
+    textNodes += 1;
+    addRocTextNodeHighlights(textNode, grouped);
+  }
+
+  addRocHighlightRoot(id, grouped);
+  return { chars, textNodes };
+}
+
+function applyRocSyntaxHighlights(container) {
+  buildRocSyntaxHighlights(container);
+}
+
+function clearRocSyntaxHighlights(container, sync = true) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+
+  let changed = false;
+  const clearOne = (element) => {
+    const id = element?.dataset?.rocHighlightId;
+    if (!id) return;
+
+    if (sync) {
+      removeRocHighlightRoot(id);
+    } else {
+      rocHighlightRoots.delete(id);
+    }
+    delete element.dataset.rocHighlightId;
+    changed = true;
+  };
+
+  clearOne(rocHighlightContainer(container));
+  container
+    ?.querySelectorAll?.("[data-roc-highlight-id]")
+    .forEach(clearOne);
+
+  if (changed && !sync) {
+    resetRocHighlightObjects();
+
+    for (const rootHighlights of rocHighlightRoots.values()) {
+      for (const type of ROC_HIGHLIGHT_TYPES) {
+        const highlight = rocHighlightObjectForType(type);
+        for (const range of rootHighlights[type]) {
+          highlight.add(range);
+        }
+      }
+    }
+  }
+}
+
+function highlightRocSyntaxIn(container) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+
+  const totalStart = performance.now();
+  const rootElements = [];
+
+  if (container?.matches?.(".roc-highlight")) {
+    rootElements.push(container);
+  }
+
+  container
+    ?.querySelectorAll?.(".roc-highlight")
+    .forEach((root) => rootElements.push(root));
+
+  if (rootElements.length === 0) return;
+
+  const id = ensureRocHighlightId(container);
+  const grouped = emptyRocHighlightGroups();
+  const tokenizeStart = performance.now();
+  const { chars, textNodes } = collectRocSyntaxHighlights(container, grouped);
+
+  const tokenizingMs = performance.now() - tokenizeStart;
+
+  const syncStart = performance.now();
+  addRocHighlightRoot(id, grouped);
+  const syncMs = performance.now() - syncStart;
+  const totalMs = performance.now() - totalStart;
+
+  // console.log(
+  //   `[roc-highlight] roots=${rootElements.length} textNodes=${textNodes} chars=${chars} tokenize=${tokenizingMs.toFixed(1)}ms sync=${syncMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms`,
+  // );
+}
+
+function highlightRocSyntaxNodes(nodes) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+
+  const nodeList = Array.from(nodes ?? []);
+  const containers = nodeList.filter((node) => node.nodeType === Node.ELEMENT_NODE);
+  let rootCount = 0;
+
+  for (const container of containers) {
+    rootCount += rocHighlightRootCount(container);
+  }
+
+  if (rootCount === 0) return;
+
+  const root = containers[0];
+  const id = ensureRocHighlightId(root);
+  const grouped = emptyRocHighlightGroups();
+  const totalStart = performance.now();
+  const tokenizeStart = performance.now();
+  let chars = 0;
+  let textNodes = 0;
+
+  for (const container of containers) {
+    const result = collectRocSyntaxHighlights(container, grouped);
+    chars += result.chars;
+    textNodes += result.textNodes;
+  }
+
+  const tokenizingMs = performance.now() - tokenizeStart;
+
+  const syncStart = performance.now();
+  addRocHighlightRoot(id, grouped);
+  const syncMs = performance.now() - syncStart;
+  const totalMs = performance.now() - totalStart;
+
+  // console.log(
+  //   `[roc-highlight] chunkNodes=${nodeList.length} roots=${rootCount} textNodes=${textNodes} chars=${chars} tokenize=${tokenizingMs.toFixed(1)}ms sync=${syncMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms`,
+  // );
+}
+
+function rocSyntaxRootElements(container) {
+  const rootElements = [];
+
+  if (container?.matches?.(".roc-highlight")) {
+    rootElements.push(container);
+  }
+
+  container
+    ?.querySelectorAll?.(".roc-highlight")
+    .forEach((root) => rootElements.push(root));
+
+  return rootElements;
+}
+
+function unhighlightedRocSyntaxRootElements(container) {
+  return rocSyntaxRootElements(container).filter(
+    (root) => !root.dataset.rocHighlightId,
+  );
+}
+
+function highlightFirstRocSyntaxRoots(container, limit = 32) {
+  const rootElements = unhighlightedRocSyntaxRootElements(container);
+  if (rootElements.length === 0) return;
+
+  highlightRocSyntaxNodes(rootElements.slice(0, limit));
+}
+
+function highlightRocSyntaxProgressively(container, initialLimit = 32, batchSize = 64) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+
+  const root = rocHighlightContainer(container);
+  const rootElements = unhighlightedRocSyntaxRootElements(container);
+  let index = 0;
+
+  const highlightNext = (limit) => {
+    if (!root.isConnected) return false;
+
+    const batch = rootElements.slice(index, index + limit);
+    index += batch.length;
+    highlightRocSyntaxNodes(batch);
+    return index < rootElements.length;
+  };
+
+  if (rootElements.length === 0) return;
+
+  if (initialLimit > 0) {
+    highlightNext(initialLimit);
+  }
+
+  const scheduleNext = () => {
+    requestAnimationFrame(() => {
+      if (highlightNext(batchSize)) {
+        scheduleNext();
+      }
+    });
+  };
+
+  if (index < rootElements.length) {
+    scheduleNext();
+  }
+}
+
+window.rocSyntax = {
+  highlight: highlightRocSyntaxIn,
+  highlightNodes: highlightRocSyntaxNodes,
+  highlightFirst: highlightFirstRocSyntaxRoots,
+  highlightProgressively: highlightRocSyntaxProgressively,
+  clear: clearRocSyntaxHighlights,
+};
 
 function setupHighlight(textarea, highlight) {
   const updateHighlight = () => {
@@ -1252,6 +1540,21 @@ function setup(div) {
 
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".roc-interactive").forEach(setup);
-  preloadCompiler();
+  const interactiveWidgets = document.querySelectorAll(".roc-interactive");
+  interactiveWidgets.forEach(setup);
+
+  const docsContent = document.querySelector("main > .main-content");
+  const docsSearch = document.getElementById("module-search-form");
+  if (docsContent) {
+    highlightRocSyntaxProgressively(docsContent, 32, 64);
+    if (docsSearch) {
+      requestAnimationFrame(() => {
+        highlightRocSyntaxProgressively(docsSearch, 0, 64);
+      });
+    }
+  } else {
+    highlightRocSyntaxProgressively(document, 32, 64);
+  }
+
+  if (interactiveWidgets.length > 0) preloadCompiler();
 });
