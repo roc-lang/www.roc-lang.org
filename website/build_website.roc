@@ -577,7 +577,6 @@ patch_builtins_html! = |{}|
             font-size: 0;
             justify-content: center;
             line-height: 0;
-            padding: 0;
             pointer-events: none;
             transition: color 80ms linear;
         }
