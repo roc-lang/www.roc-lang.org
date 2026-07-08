@@ -577,6 +577,7 @@ patch_builtins_html! = |{}|
             font-size: 0;
             justify-content: center;
             line-height: 0;
+            padding: 0;
             pointer-events: none;
             transition: color 80ms linear;
         }
@@ -634,14 +635,6 @@ patch_builtins_html! = |{}|
     replace_block_or_append_to_file!("build/builtins/main/styles.css", "/* Roc docs runtime syntax highlights */", "/* End Roc docs runtime syntax highlights */", runtime_highlight_css) ? BuiltinsDocsCssReplaceFailed
 
     Cmd.exec!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/builtins/main"]) ? BuiltinsDocsRuntimeHighlightFailed
-
-    # Older compiler nightlies generate JS that toggles sidebar expansion at
-    # runtime. The current docs sidebar is CSS-only; leaving that legacy JS in
-    # place removes the server-rendered active class on load and collapses the
-    # active module in Cloudflare previews until a compiler with the new
-    # search.js has been released.
-    remove_between_in_file!("build/builtins/main/search.js", "const toggleSidebarEntryActive = (moduleName) => {", "const setupSearch = () => {") ? BuiltinsDocsJsReplaceFailed
-    remove_between_in_file!("build/builtins/main/search.js", "if (document.querySelector(\".module-name\")) {", "if (document.getElementById(\"module-search\")) {") ? BuiltinsDocsJsReplaceFailed
 
     Ok({})
 
@@ -878,22 +871,6 @@ insert_after_first_if_missing! = |file_path_str, marker_str, search_str, insert_
 
             Err(_) ->
                 Ok({})
-
-remove_between_in_file! = |file_path_str, start_str, end_str|
-    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
-    file_content = File.read_utf8!(file_path_str)?
-
-    when Str.split_first(file_content, start_str) is
-        Ok({ before, after }) ->
-            when Str.split_first(after, end_str) is
-                Ok(after_start) ->
-                    File.write_utf8!(Str.concat(before, Str.concat(end_str, after_start.after)), file_path_str)
-
-                Err(_) ->
-                    Ok({})
-
-        Err(_) ->
-            Ok({})
 
 # ------------------------------
 # Cache timestamp helpers
