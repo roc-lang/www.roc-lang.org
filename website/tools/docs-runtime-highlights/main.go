@@ -14,7 +14,6 @@ var generatedTokenClasses = map[string]bool{
 	"comment":    true,
 	"constant":   true,
 	"delimiter":  true,
-	"delimeter":  true,
 	"kw":         true,
 	"literal":    true,
 	"lowerident": true,
