@@ -1,0 +1,4 @@
+/echo.wasm.br
+  Content-Type: application/wasm
+  Content-Encoding: br
+  Vary: Accept-Encoding

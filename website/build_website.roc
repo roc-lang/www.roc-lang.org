@@ -14,16 +14,25 @@ import cli.Utc
 #   roc ./build_website.roc           # full, clean build (no cache)
 #   roc ./build_website.roc --cache   # incremental build using cache
 #   roc ./build_website.roc --minify  # minify build assets after building
+#   roc ./build_website.roc --production  # use maximum Brotli compression
+#   roc ./build_website.roc --refresh-compiler  # redownload the compiler asset
 
 latest_stable_tag = "alpha4-rolling"
 cache_marker_path = ".cache/site.millis"
 new_compiler_dir = "roc-new-compiler-nightly"
+compiler_wasm_path = "public/echo.wasm"
+compiler_wasm_br_path = "public/echo.wasm.br"
+compiler_wasm_br_quality_path = "public/echo.wasm.br.quality"
+compiler_wasm_zst_path = ".cache/echo.wasm.zst"
 
 main! : List Arg => Result {} _
 main! = |raw_args|
     args = List.map(raw_args, Arg.display)
     use_cache = List.any(args, |a| a == "--cache")
     use_minify = List.any(args, |a| a == "--minify")
+    use_production = use_minify || List.any(args, |a| a == "--production" || a == "--brotli=max")
+    use_refresh_compiler = List.any(args, |a| a == "--refresh-compiler")
+    brotli_quality = if use_production then "11" else "1"
 
     cwd_path = Env.cwd!({}) ? EncCwdFailed
     cwd_path_str = Path.display(cwd_path)
@@ -36,9 +45,9 @@ main! = |raw_args|
     if use_cache then
         # Create .cache/ if it doesn't exist
         _ = Dir.create!(".cache")
-        build_with_cache!({})?
+        build_with_cache!(brotli_quality, use_refresh_compiler)?
     else
-        full_clean_build!({})?
+        full_clean_build!(brotli_quality, use_refresh_compiler)?
 
     if use_minify then
         minify_build_assets!({})?
@@ -68,8 +77,8 @@ minify_build_asset! = |path|
 # ----------------
 # Full clean build
 # ----------------
-full_clean_build! : {} => Result {} _
-full_clean_build! = |{}|
+full_clean_build! : Str, Bool => Result {} _
+full_clean_build! = |brotli_quality, refresh_compiler|
     # Clean up dirs from previous runs
     _ = Dir.delete_all!("build")
     _ = Dir.delete_all!("content/examples")
@@ -77,18 +86,18 @@ full_clean_build! = |{}|
     _ = Dir.delete_all!("roc")
     _ = Dir.delete_all!(new_compiler_dir)
 
-    # Download latest echo.wasm.zst from nightlies for the interactive compiler
-    _ = File.delete!("public/echo.wasm.zst")
-    ensure_echo_wasm_present!({})?
+    # Ensure the Brotli-compressed compiler asset exists for the interactive compiler
+    ensure_echo_wasm_present!(brotli_quality, refresh_compiler)?
 
     Cmd.exec!("cp", ["-r", "public", "build"])?
+    remove_unpublished_compiler_assets!({})?
 
     # Download latest examples
     Cmd.exec!("curl", ["-fL", "-o", "examples-main.zip", "https://github.com/roc-lang/examples/archive/refs/heads/main.zip"])?
     Cmd.exec!("unzip", ["-o", "-q", "examples-main.zip"])?
     Cmd.exec!("cp", ["-R", "examples-main/examples/", "content/examples/"])?
     # replace links in content/examples/index.md to work on the WIP site
-    Cmd.exec!("perl", ["-pi", "-e", "s|\\]\\(/|\\]\\(/examples/|g", "content/examples/index.md"])?
+    replace_all_in_file!("content/examples/index.md", "](/", "](/examples/")?
     Dir.delete_all!("examples-main") ? DeleteExamplesMainDirFailed
     File.delete!("examples-main.zip") ? DeleteExamplesMainZipFailed
 
@@ -164,8 +173,8 @@ full_clean_build! = |{}|
 # --------------------------------
 # Incremental, cached build
 # --------------------------------
-build_with_cache! : {} => Result {} _
-build_with_cache! = |{}|
+build_with_cache! : Str, Bool => Result {} _
+build_with_cache! = |brotli_quality, refresh_compiler|
     # 1) Ensure build/ exists to copy assets into
     _ = Dir.create!("build")
 
@@ -173,7 +182,7 @@ build_with_cache! = |{}|
     ensure_examples_present!({})?
     ensure_fonts_present!({})?
     ensure_repl_present!({})?
-    ensure_echo_wasm_present!({})?
+    ensure_echo_wasm_present!(brotli_quality, refresh_compiler)?
     ensure_builtins_present!({})?
 
     # 3) Only rebuild site output if content/public changed since last time
@@ -188,6 +197,7 @@ build_with_cache! = |{}|
         # Copy public → build if public changed
         if public_changed then
             Cmd.exec!("cp", ["-r", "public/.", "build/"])?
+            remove_unpublished_compiler_assets!({})?
         else
             {}
 
@@ -224,7 +234,7 @@ ensure_examples_present! = |{}|
         Cmd.exec!("curl", ["-fL", "-o", "examples-main.zip", "https://github.com/roc-lang/examples/archive/refs/heads/main.zip"])?
         Cmd.exec!("unzip", ["-o", "-q", "examples-main.zip"])?
         Cmd.exec!("cp", ["-R", "examples-main/examples/", "content/examples/"])?
-        Cmd.exec!("perl", ["-pi", "-e", "s|\\]\\(/|\\]\\(/examples/|g", "content/examples/index.md"])?
+        replace_all_in_file!("content/examples/index.md", "](/", "](/examples/")?
         _ = Dir.delete_all!("examples-main")
         _ = File.delete!("examples-main.zip")
         Ok({})
@@ -261,20 +271,63 @@ ensure_repl_present! = |{}|
         _ = File.delete!(repl_tarfile)
         Ok({})
 
-ensure_echo_wasm_present! : {} => Result {} _
-ensure_echo_wasm_present! = |{}|
-    wasm_zst_path = "public/echo.wasm.zst"
-    already = File.is_file!(wasm_zst_path) |> Result.with_default(Bool.false)
-    if already then
+ensure_echo_wasm_present! : Str, Bool => Result {} _
+ensure_echo_wasm_present! = |brotli_quality, refresh_compiler|
+    raw_exists = File.is_file!(compiler_wasm_path) |> Result.with_default(Bool.false)
+    br_exists = File.is_file!(compiler_wasm_br_path) |> Result.with_default(Bool.false)
+    br_quality = File.read_utf8!(compiler_wasm_br_quality_path) |> Result.with_default("") |> Str.trim
+    needs_production_quality = brotli_quality == "11" && br_quality != "11"
+
+    if raw_exists then
+        should_compress =
+            if refresh_compiler || !br_exists || needs_production_quality then
+                Bool.true
+            else
+                source_newer!(compiler_wasm_path, compiler_wasm_br_path)?
+
+        if should_compress then
+            compress_compiler_wasm!(brotli_quality, compiler_wasm_path)
+        else
+            Ok({})
+    else if br_exists && !refresh_compiler && !needs_production_quality then
         Ok({})
     else
         # GitHub's /releases/latest/download/ URL redirects to the latest asset.
-        # Ship the .zst as-is (~3 MB vs ~26 MB decompressed): Cloudflare Workers
-        # Assets rejects any single asset over 25 MiB, so the uncompressed wasm
-        # can't be deployed directly. The browser decompresses it on load via
-        # vendored fzstd.mjs (see public/compiler.js).
-        Cmd.exec!("curl", ["-fsSL", "-o", wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
-        Ok({})
+        # Nightlies currently publish echo.wasm.zst, so transcode that to
+        # echo.wasm.br during the website build. Cloudflare Pages rejects any
+        # single asset over 25 MiB, so we do not publish the uncompressed wasm.
+        _ = Dir.create!(".cache")
+        _ = File.delete!(compiler_wasm_zst_path)
+        Cmd.exec!("curl", ["-fsSL", "-o", compiler_wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
+        compress_compiler_wasm!(brotli_quality, compiler_wasm_zst_path)
+
+source_newer! : Str, Str => Result Bool _
+source_newer! = |source_path, target_path|
+    source_millis = File.time_modified!(source_path)? |> Utc.to_millis_since_epoch
+    target_millis = File.time_modified!(target_path)? |> Utc.to_millis_since_epoch
+    Ok(source_millis > target_millis)
+
+compress_compiler_wasm! : Str, Str => Result {} _
+compress_compiler_wasm! = |brotli_quality, input_path|
+    Stdout.line!("Compressing ${input_path} to ${compiler_wasm_br_path} with Brotli quality ${brotli_quality}.")?
+    Cmd.exec!("go", [
+        "-C",
+        "tools/wasm-brotli",
+        "run",
+        ".",
+        "--quality",
+        brotli_quality,
+        "../../${input_path}",
+        "../../${compiler_wasm_br_path}",
+    ])?
+    File.write_utf8!(brotli_quality, compiler_wasm_br_quality_path)
+
+remove_unpublished_compiler_assets! : {} => Result {} _
+remove_unpublished_compiler_assets! = |{}|
+    _ = File.delete!("build/echo.wasm")
+    _ = File.delete!("build/echo.wasm.zst")
+    _ = File.delete!("build/echo.wasm.br.quality")
+    Ok({})
 
 ensure_builtins_present! : {} => Result {} _
 ensure_builtins_present! = |{}|
@@ -308,7 +361,11 @@ ensure_builtins_present! = |{}|
         ensure_new_compiler_downloaded!({})?
         download_roc_source_at_compiler_commit!({})?
         Dir.create!("build/builtins/main") ? CreateMainDirFailed
+        _ = Dir.delete_all!("docs/langref")
+        Dir.create_all!("docs/langref") ? CreateLangRefStagingDirFailed
+        Cmd.exec!("cp", ["-R", "roc/docs/langref/.", "docs/langref"])?
         Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main", "--with-lang-ref"])?
+        Dir.delete_all!("docs") ? DeleteLangRefStagingDirFailed
         Dir.delete_all!("roc")?
     else
         {}
@@ -426,19 +483,14 @@ compiler_commit_sha! = |{}|
 
 detect_platform! : {} => Result Str _
 detect_platform! = |{}|
-    os_out = Cmd.new("uname") |> Cmd.arg("-s") |> Cmd.exec_output!()?
-    arch_out = Cmd.new("uname") |> Cmd.arg("-m") |> Cmd.exec_output!()?
+    platform = Env.platform!({})
 
-    os = Str.trim(os_out.stdout_utf8)
-    arch = Str.trim(arch_out.stdout_utf8)
-    platform_key = "${os}-${arch}"
-
-    when platform_key is
-        "Darwin-arm64" -> Ok("macos_apple_silicon")
-        "Darwin-x86_64" -> Ok("macos_x86_64")
-        "Linux-x86_64" -> Ok("linux_x86_64")
-        "Linux-aarch64" -> Ok("linux_arm64")
-        _ -> Err(UnsupportedPlatform(platform_key))
+    when (platform.os, platform.arch) is
+        (MACOS, AARCH64) -> Ok("macos_apple_silicon")
+        (MACOS, X64) -> Ok("macos_x86_64")
+        (LINUX, X64) -> Ok("linux_x86_64")
+        (LINUX, AARCH64) -> Ok("linux_arm64")
+        _ -> Err(UnsupportedPlatform(Inspect.to_str(platform)))
 
 # ------------------------------
 # Content patching & redirects
@@ -446,26 +498,79 @@ detect_platform! = |{}|
 
 patch_builtins_html! : {} => Result {} _
 patch_builtins_html! = |{}|
-    find_index_output =
-        Cmd.new("find")
-        |> Cmd.args(["build/builtins", "-type", "f", "-name", "index.html"])
-        |> Cmd.exec_output!()?
+    sidebar_chevron_css =
+        """
 
-    index_clean_paths =
-        Str.split_on(find_index_output.stdout_utf8, "\n")
-        |> List.keep_if(|path| !Str.is_empty(path))
+        /* Roc docs sidebar chevrons */
+        .sidebar-module-link > .entry-toggle {
+            align-items: center;
+            appearance: none;
+            background: none;
+            border: 0;
+            color: currentColor;
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: 0;
+            justify-content: center;
+            line-height: 0;
+            padding: 0;
+            pointer-events: none;
+            transition: color 80ms linear;
+        }
 
-    assert(!List.is_empty(index_clean_paths), IndexCleanPathsWasEmpty)?
+        .sidebar-module-link:is(:hover, :focus, :focus-within, :active) > .entry-toggle {
+            transition: color 80ms linear, rotate 80ms linear;
+        }
+
+        .sidebar-module-link:hover,
+        .sidebar-module-link:hover > span,
+        .sidebar-module-link:hover > .entry-toggle,
+        .sidebar-entry:hover > a.sidebar-module-link > .entry-toggle {
+            color: var(--violet);
+        }
+
+        .sidebar-module-link > .entry-toggle::before {
+            -webkit-mask: none;
+            background: none;
+            border: solid currentColor;
+            border-width: 0 2px 2px 0;
+            content: "";
+            display: block;
+            height: 0.45rem;
+            mask: none;
+            transform: rotate(-45deg);
+            width: 0.45rem;
+        }
+
+        """
+
+    builtins_tip_html =
+        """<div class="builtins-tip"><b>Tip:</b> <a href="/different-names">Some names</a> differ from other languages.</div>"""
+
+    docs_index_replacements = [
+        ("<title>Builtin Docs</title>", "<title>Roc Docs</title>"),
+        ("<title>Documentation Docs</title>", "<title>Roc Docs</title>"),
+        ("<title> - Documentation</title>", "<title>Roc Docs</title>"),
+        (">Builtin</a></h1>", ">Roc Docs</a></h1>"),
+        (">Documentation</a></h1>", ">Roc Docs</a></h1>"),
+    ]
+
+    main_index_paths = list_matching_files!("build/builtins/main", "/index.html")?
+
+    assert(!List.is_empty(main_index_paths), IndexCleanPathsWasEmpty)?
 
     List.for_each_try!(
-        index_clean_paths,
+        main_index_paths,
         |index_path|
-            replace_in_file!(
-                index_path,
-                "<\nav>",
-                """<div class="builtins-tip"><b>Tip:</b> <a href="/different-names">Some names</a> differ from other languages.</div></nav>"""
-            )
+            patch_builtins_nav_in_file!(index_path, builtins_tip_html)
     ) ? BuiltinsDocsReplaceFailed
+
+    replace_each_in_file_prefix!("build/builtins/main/index.html", 20000, docs_index_replacements) ? BuiltinsDocsReplaceFailed
+
+    append_to_file_if_missing!("build/builtins/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
+
+    remove_between_in_file!("build/builtins/main/search.js", "const toggleSidebarEntryActive = (moduleName) => {", "const setupSearch = () => {") ? BuiltinsDocsJsReplaceFailed
+    remove_between_in_file!("build/builtins/main/search.js", "if (document.querySelector(\".module-name\")) {", "if (document.getElementById(\"module-search\")) {") ? BuiltinsDocsJsReplaceFailed
 
     Ok({})
 
@@ -559,14 +664,7 @@ add_github_links_to_examples! = |{}|
             </svg>
             """
 
-        find_readme_html =
-            Cmd.new("find")
-            |> Cmd.args([examples_dir, "-type", "f", "-name", "README.html", "-exec", "realpath", "{}", ";"])
-            |> Cmd.exec_output!()?
-
-        clean_readme_paths =
-            Str.split_on(find_readme_html.stdout_utf8, "\n")
-            |> List.keep_if(|path| !Str.is_empty(path))
+        clean_readme_paths = list_matching_files!(examples_dir, "/README.html")?
 
         assert(!List.is_empty(clean_readme_paths), CleanReadmePathsWasEmptyList)?
 
@@ -575,10 +673,11 @@ add_github_links_to_examples! = |{}|
             |readme_path|
                 example_folder_name = Str.split_on(readme_path, "/") |> List.take_last(2) |> List.first()?
                 specific_example_link = Str.join_with([examples_repo_link, example_folder_name], "/")
-                replace_in_file!(
+                insert_after_first_if_missing!(
                     readme_path,
+                    "id=\"gh-example-link\"",
                     "</h1>",
-                    """</h1><a id="gh-example-link" href="${specific_example_link}" aria-label="view on github">${github_logo_svg}</a>"""
+                    """<a id="gh-example-link" href="${specific_example_link}" aria-label="view on github">${github_logo_svg}</a>"""
                 )
         ) ? ExamplesReadmeReplaceFailed
 
@@ -589,11 +688,125 @@ add_github_links_to_examples! = |{}|
 # Replace helper
 # ------------------------------
 
-replace_in_file! = |file_path_str, search_str, replace_str|
+append_to_file_if_missing! = |file_path_str, marker_str, append_str|
     assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
     file_content = File.read_utf8!(file_path_str)?
-    content_after_replace = Str.replace_each(file_content, search_str, replace_str)
-    File.write_utf8!(content_after_replace, file_path_str)
+    if Str.contains(file_content, marker_str) then
+        Ok({})
+    else
+        File.write_utf8!(Str.concat(file_content, append_str), file_path_str)
+
+list_matching_files! = |root_str, suffix_str|
+    files = list_files_recursive!(Path.from_str(root_str))?
+
+    Ok(
+        files
+        |> List.map(|path| Path.display(path))
+        |> List.keep_if(|path| Str.ends_with(path, suffix_str))
+    )
+
+replace_all = |content, search_str, replace_str|
+    Str.replace_each(content, search_str, replace_str)
+
+replace_all_in_file! = |file_path_str, search_str, replace_str|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_content = File.read_utf8!(file_path_str)?
+    content_after_replace = replace_all(file_content, search_str, replace_str)
+
+    if content_after_replace == file_content then
+        Ok({})
+    else
+        File.write_utf8!(content_after_replace, file_path_str)
+
+patch_builtins_nav_in_file! = |file_path_str, builtins_tip_html|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_bytes = File.read_bytes!(file_path_str)?
+    nav_end = find_bytes_start(file_bytes, Str.to_utf8("</nav>"))
+
+    if nav_end.found then
+        before_nav_bytes = List.take_first(file_bytes, nav_end.start)
+        nav_and_after_bytes = List.drop_first(file_bytes, nav_end.start)
+        tip_marker = find_bytes_start(before_nav_bytes, Str.to_utf8("builtins-tip"))
+
+        if tip_marker.found then
+            Ok({})
+        else
+            with_tip_bytes = List.concat(before_nav_bytes, Str.to_utf8(builtins_tip_html))
+            patched_bytes = List.concat(with_tip_bytes, nav_and_after_bytes)
+            File.write_bytes!(patched_bytes, file_path_str)
+    else
+        Ok({})
+
+find_bytes_start = |bytes, needle|
+    initial = { found: Bool.false, matched: 0u64, start: 0u64 }
+    needle_len = List.len(needle)
+
+    List.walk_with_index_until(bytes, initial, |state, byte, index|
+        when List.get(needle, state.matched) is
+            Ok(expected) ->
+                if byte == expected then
+                    next_matched = state.matched + 1
+
+                    if next_matched == needle_len then
+                        Break({ state & found: Bool.true, matched: next_matched, start: index + 1 - needle_len })
+                    else
+                        Continue({ state & matched: next_matched })
+                else
+                    next_matched =
+                        when List.first(needle) is
+                            Ok(first) -> if byte == first then 1u64 else 0u64
+                            Err(_) -> 0u64
+
+                    Continue({ state & matched: next_matched })
+
+            Err(_) ->
+                Break(state)
+    )
+
+replace_each_in_file_prefix! = |file_path_str, prefix_len, replacements|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_bytes = File.read_bytes!(file_path_str)?
+    prefix_bytes = List.take_first(file_bytes, prefix_len)
+    rest_bytes = List.drop_first(file_bytes, prefix_len)
+    prefix = Str.from_utf8(prefix_bytes)?
+    prefix_after_replace =
+        List.walk(replacements, prefix, |content, replacement|
+            (search_str, replace_str) = replacement
+            replace_all(content, search_str, replace_str)
+        )
+    if prefix_after_replace == prefix then
+        Ok({})
+    else
+        File.write_bytes!(List.concat(Str.to_utf8(prefix_after_replace), rest_bytes), file_path_str)
+
+insert_after_first_if_missing! = |file_path_str, marker_str, search_str, insert_str|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_content = File.read_utf8!(file_path_str)?
+    if Str.contains(file_content, marker_str) then
+        Ok({})
+    else
+        when Str.split_first(file_content, search_str) is
+            Ok({ before, after }) ->
+                File.write_utf8!(Str.concat(before, Str.concat(search_str, Str.concat(insert_str, after))), file_path_str)
+
+            Err(_) ->
+                Ok({})
+
+remove_between_in_file! = |file_path_str, start_str, end_str|
+    assert(!Str.is_empty(file_path_str), FilePathWasEmptyStr)?
+    file_content = File.read_utf8!(file_path_str)?
+
+    when Str.split_first(file_content, start_str) is
+        Ok({ before, after }) ->
+            when Str.split_first(after, end_str) is
+                Ok(after_start) ->
+                    File.write_utf8!(Str.concat(before, Str.concat(end_str, after_start.after)), file_path_str)
+
+                Err(_) ->
+                    Ok({})
+
+        Err(_) ->
+            Ok({})
 
 # ------------------------------
 # Cache timestamp helpers

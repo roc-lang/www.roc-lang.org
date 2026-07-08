@@ -925,8 +925,11 @@ details {
 /* Comments `#` and Documentation comments `##` */
 samp .comment,
 code .comment,
-.roc-interactive .roc-output .c,
-.roc-source-highlight .c {
+.roc-interactive .roc-output .c {
+    color: #ccc;
+}
+
+::highlight(roc-c) {
     color: #ccc;
 }
 
@@ -941,11 +944,14 @@ samp .string.end,
 code .string.end,
 samp .constant,
 code .constant,
-.roc-source-highlight .n,
-.roc-source-highlight .s,
 .roc-interactive .roc-output .n,
 samp .literal,
 code .literal {
+    color: var(--dark-cyan);
+}
+
+::highlight(roc-n),
+::highlight(roc-s) {
     color: var(--dark-cyan);
 }
 
@@ -960,8 +966,11 @@ samp .punctuation.terminator,
 code .punctuation.terminator,
 samp .kw,
 code .kw,
-.roc-interactive .roc-output .k,
-.roc-source-highlight .k {
+.roc-interactive .roc-output .k {
+    color: var(--primary-1);
+}
+
+::highlight(roc-k) {
     color: var(--primary-1);
 }
 
@@ -971,20 +980,26 @@ code .op,
 samp .keyword.operator,
 code .keyword.operator,
 samp .colon,
-code .colon,
-.roc-source-highlight .o {
+code .colon {
+    color: var(--primary-1);
+}
+
+::highlight(roc-o) {
     color: var(--primary-1);
 }
 
 /* Delimieters */
 samp .delimiter,
-code .delimiter,
-.roc-source-highlight .d {
+code .delimiter {
     color: var(--primary-1);
 }
 
-.roc-source-highlight .f,
-.roc-source-highlight .p {
+::highlight(roc-d) {
+    color: var(--primary-1);
+}
+
+::highlight(roc-f),
+::highlight(roc-p) {
     color: #aeb4c6;
 }
 
@@ -998,15 +1013,21 @@ code .meta.block,
 samp .lowerident,
 code .lowerident,
 .roc-interactive .roc-output .v,
-.roc-interactive .roc-output pre.roc-terminal,
-.roc-source-highlight .v {
+.roc-interactive .roc-output pre.roc-terminal {
+    color: white;
+}
+
+::highlight(roc-v) {
     color: white;
 }
 
 samp .error,
 code .error,
-.roc-interactive .roc-output .e,
-.roc-source-highlight .e {
+.roc-interactive .roc-output .e {
+    color: hsl(0, 96%, 67%);
+}
+
+::highlight(roc-e) {
     color: hsl(0, 96%, 67%);
 }
 
@@ -1016,8 +1037,11 @@ code .type,
 samp .meta.path,
 code .meta.path,
 samp .upperident,
-code .upperident,
-.roc-source-highlight .u {
+code .upperident {
+    color: var(--dark-cyan);
+}
+
+::highlight(roc-u) {
     color: var(--dark-cyan);
 }
 
@@ -1704,6 +1728,12 @@ code .dim,
     background: transparent;
     color: transparent;
     caret-color: #e0d6f0;
+}
+
+.roc-interactive textarea.roc-source:focus,
+.roc-interactive textarea.roc-source:focus-visible {
+    border-color: var(--light-cyan);
+    outline: 2px solid var(--light-cyan);
 }
 
 .roc-interactive textarea.roc-source::selection {
