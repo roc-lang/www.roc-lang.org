@@ -1,8 +1,6 @@
 /echo.wasm
   Content-Type: application/wasm
-  Content-Encoding: br
-  Vary: Accept-Encoding
-  Cache-Control: public, max-age=0, must-revalidate, no-transform
+  Cache-Control: public, max-age=0, must-revalidate
 
 /builtins/main/*
   Cache-Control: public, max-age=300, stale-while-revalidate=86400

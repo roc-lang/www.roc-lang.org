@@ -20,7 +20,7 @@
 
         aliases = ''
           alias buildcmd='roc ./build_website.roc'
-          alias buildprodcmd='roc ./build_website.roc --production --minify'
+          alias buildprodcmd='roc ./build_website.roc --minify'
           alias runcmd='python3 ./serve.py ./build 8080'
         '';
 
