@@ -50,6 +50,9 @@ async function compileCompiler() {
   if (!response.ok) {
     throw new Error(`Failed to fetch ${WASM_URL}`);
   }
+  if (WebAssembly.compileStreaming) {
+    return WebAssembly.compileStreaming(response);
+  }
   return WebAssembly.compile(await response.arrayBuffer());
 }
 
