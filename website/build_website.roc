@@ -14,25 +14,24 @@ import cli.Utc
 #   roc ./build_website.roc           # full, clean build (no cache)
 #   roc ./build_website.roc --cache   # incremental build using cache
 #   roc ./build_website.roc --minify  # minify build assets after building
-#   roc ./build_website.roc --production  # use maximum Brotli compression
-#   roc ./build_website.roc --refresh-compiler  # redownload the compiler asset
 
 latest_stable_tag = "alpha4-rolling"
 cache_marker_path = ".cache/site.millis"
 new_compiler_dir = "roc-new-compiler-nightly"
-compiler_wasm_path = "public/echo.wasm"
-compiler_wasm_br_path = "public/echo.wasm.br"
-compiler_wasm_br_quality_path = "public/echo.wasm.br.quality"
-compiler_wasm_zst_path = ".cache/echo.wasm.zst"
+compiler_wasm_build_path = "build/echo.wasm"
+compiler_wasm_optimized_path = "build/echo.wasm.optimized"
+cloudflare_max_asset_size = 26214400u64
+binaryen_version = "version_130"
+binaryen_dir = ".cache/binaryen-version_130"
+binaryen_archive_path = ".cache/binaryen-version_130-node.tar.gz"
+binaryen_wasm_opt_path = ".cache/binaryen-version_130/wasm-opt.js"
+binaryen_wasm_opt_module_path = ".cache/binaryen-version_130/wasm-opt.wasm"
 
 main! : List Arg => Result {} _
 main! = |raw_args|
     args = List.map(raw_args, Arg.display)
     use_cache = List.any(args, |a| a == "--cache")
     use_minify = List.any(args, |a| a == "--minify")
-    use_production = use_minify || List.any(args, |a| a == "--production" || a == "--brotli=max")
-    use_refresh_compiler = List.any(args, |a| a == "--refresh-compiler")
-    brotli_quality = if use_production then "11" else "1"
 
     cwd_path = Env.cwd!({}) ? EncCwdFailed
     cwd_path_str = Path.display(cwd_path)
@@ -45,9 +44,9 @@ main! = |raw_args|
     if use_cache then
         # Create .cache/ if it doesn't exist
         _ = Dir.create!(".cache")
-        build_with_cache!(brotli_quality, use_refresh_compiler)?
+        build_with_cache!({})?
     else
-        full_clean_build!(brotli_quality, use_refresh_compiler)?
+        full_clean_build!({})?
 
     if use_minify then
         minify_build_assets!({})?
@@ -92,8 +91,8 @@ minify_html_asset! = |path|
 # ----------------
 # Full clean build
 # ----------------
-full_clean_build! : Str, Bool => Result {} _
-full_clean_build! = |brotli_quality, refresh_compiler|
+full_clean_build! : {} => Result {} _
+full_clean_build! = |{}|
     # Clean up dirs from previous runs
     _ = Dir.delete_all!("build")
     _ = Dir.delete_all!("content/examples")
@@ -101,11 +100,8 @@ full_clean_build! = |brotli_quality, refresh_compiler|
     _ = Dir.delete_all!("roc")
     _ = Dir.delete_all!(new_compiler_dir)
 
-    # Ensure the Brotli-compressed compiler asset exists for the interactive compiler
-    ensure_echo_wasm_present!(brotli_quality, refresh_compiler)?
-
     Cmd.exec!("cp", ["-r", "public", "build"])?
-    remove_unpublished_compiler_assets!({})?
+    optimize_compiler_wasm!({})?
 
     # Download latest examples
     Cmd.exec!("curl", ["-fL", "-o", "examples-main.zip", "https://github.com/roc-lang/examples/archive/refs/heads/main.zip"])?
@@ -188,8 +184,8 @@ full_clean_build! = |brotli_quality, refresh_compiler|
 # --------------------------------
 # Incremental, cached build
 # --------------------------------
-build_with_cache! : Str, Bool => Result {} _
-build_with_cache! = |brotli_quality, refresh_compiler|
+build_with_cache! : {} => Result {} _
+build_with_cache! = |{}|
     # 1) Ensure build/ exists to copy assets into
     _ = Dir.create!("build")
 
@@ -197,7 +193,6 @@ build_with_cache! = |brotli_quality, refresh_compiler|
     ensure_examples_present!({})?
     ensure_fonts_present!({})?
     ensure_repl_present!({})?
-    ensure_echo_wasm_present!(brotli_quality, refresh_compiler)?
     ensure_builtins_present!({})?
     patch_builtins_html!({})?
     write_builtins_redirects!({})?
@@ -214,7 +209,7 @@ build_with_cache! = |brotli_quality, refresh_compiler|
         # Copy public → build if public changed
         if public_changed then
             Cmd.exec!("cp", ["-r", "public/.", "build/"])?
-            remove_unpublished_compiler_assets!({})?
+            optimize_compiler_wasm!({})?
         else
             {}
 
@@ -237,6 +232,49 @@ build_with_cache! = |brotli_quality, refresh_compiler|
 # ------------------------------
 # Cache-aware helpers
 # ------------------------------
+
+ensure_binaryen_present! : {} => Result {} _
+ensure_binaryen_present! = |{}|
+    wasm_opt_js_exists = File.is_file!(binaryen_wasm_opt_path) |> Result.with_default(Bool.false)
+    wasm_opt_module_exists = File.is_file!(binaryen_wasm_opt_module_path) |> Result.with_default(Bool.false)
+    if wasm_opt_js_exists && wasm_opt_module_exists then
+        Ok({})
+    else
+        _ = Dir.create!(".cache")
+        _ = Dir.delete_all!(binaryen_dir)
+        _ = File.delete!(binaryen_archive_path)
+        Cmd.exec!("curl", [
+            "-fsSL",
+            "-o",
+            binaryen_archive_path,
+            "https://github.com/WebAssembly/binaryen/releases/download/${binaryen_version}/binaryen-${binaryen_version}-node.tar.gz",
+        ])?
+        Cmd.exec!("tar", ["-xzf", binaryen_archive_path, "-C", ".cache"])?
+        _ = File.delete!(binaryen_archive_path)
+        Ok({})
+
+optimize_compiler_wasm! : {} => Result {} _
+optimize_compiler_wasm! = |{}|
+    ensure_binaryen_present!({})?
+    _ = File.delete!(compiler_wasm_optimized_path)
+    Cmd.exec!("node", [
+        binaryen_wasm_opt_path,
+        "--enable-bulk-memory",
+        "--enable-nontrapping-float-to-int",
+        "-Oz",
+        compiler_wasm_build_path,
+        "-o",
+        compiler_wasm_optimized_path,
+    ])?
+    File.rename!(compiler_wasm_optimized_path, compiler_wasm_build_path) ? ReplaceCompilerWithOptimizedWasmFailed
+
+    optimized_size = File.size_in_bytes!(compiler_wasm_build_path)?
+    if optimized_size > cloudflare_max_asset_size then
+        Err(Exit(1, "Optimized echo.wasm is ${Num.to_str(optimized_size)} bytes, exceeding Cloudflare's 25 MiB (${Num.to_str(cloudflare_max_asset_size)} byte) static asset limit."))?
+    else
+        {}
+
+    Ok({})
 
 ensure_examples_present! : {} => Result {} _
 ensure_examples_present! = |{}|
@@ -284,64 +322,6 @@ ensure_repl_present! = |{}|
         Cmd.exec!("tar", ["-xzf", repl_tarfile, "-C", "build/repl"])?
         _ = File.delete!(repl_tarfile)
         Ok({})
-
-ensure_echo_wasm_present! : Str, Bool => Result {} _
-ensure_echo_wasm_present! = |brotli_quality, refresh_compiler|
-    raw_exists = File.is_file!(compiler_wasm_path) |> Result.with_default(Bool.false)
-    br_exists = File.is_file!(compiler_wasm_br_path) |> Result.with_default(Bool.false)
-    br_quality = File.read_utf8!(compiler_wasm_br_quality_path) |> Result.with_default("") |> Str.trim
-    needs_production_quality = brotli_quality == "11" && br_quality != "11"
-
-    if raw_exists then
-        should_compress =
-            if refresh_compiler || !br_exists || needs_production_quality then
-                Bool.true
-            else
-                source_newer!(compiler_wasm_path, compiler_wasm_br_path)?
-
-        if should_compress then
-            compress_compiler_wasm!(brotli_quality, compiler_wasm_path)
-        else
-            Ok({})
-    else if br_exists && !refresh_compiler && !needs_production_quality then
-        Ok({})
-    else
-        # GitHub's /releases/latest/download/ URL redirects to the latest asset.
-        # Nightlies currently publish echo.wasm.zst, so transcode that to
-        # echo.wasm.br during the website build. Cloudflare Pages rejects any
-        # single asset over 25 MiB, so we do not publish the uncompressed wasm.
-        _ = Dir.create!(".cache")
-        _ = File.delete!(compiler_wasm_zst_path)
-        Cmd.exec!("curl", ["-fsSL", "-o", compiler_wasm_zst_path, "https://github.com/roc-lang/nightlies/releases/latest/download/echo.wasm.zst"])?
-        compress_compiler_wasm!(brotli_quality, compiler_wasm_zst_path)
-
-source_newer! : Str, Str => Result Bool _
-source_newer! = |source_path, target_path|
-    source_millis = File.time_modified!(source_path)? |> Utc.to_millis_since_epoch
-    target_millis = File.time_modified!(target_path)? |> Utc.to_millis_since_epoch
-    Ok(source_millis > target_millis)
-
-compress_compiler_wasm! : Str, Str => Result {} _
-compress_compiler_wasm! = |brotli_quality, input_path|
-    Stdout.line!("Compressing ${input_path} to ${compiler_wasm_br_path} with Brotli quality ${brotli_quality}.")?
-    Cmd.exec!("go", [
-        "-C",
-        "tools/wasm-brotli",
-        "run",
-        ".",
-        "--quality",
-        brotli_quality,
-        "../../${input_path}",
-        "../../${compiler_wasm_br_path}",
-    ])?
-    File.write_utf8!(brotli_quality, compiler_wasm_br_quality_path)
-
-remove_unpublished_compiler_assets! : {} => Result {} _
-remove_unpublished_compiler_assets! = |{}|
-    _ = File.delete!("build/echo.wasm")
-    _ = File.delete!("build/echo.wasm.zst")
-    _ = File.delete!("build/echo.wasm.br.quality")
-    Ok({})
 
 ensure_builtins_present! : {} => Result {} _
 ensure_builtins_present! = |{}|
