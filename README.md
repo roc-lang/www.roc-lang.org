@@ -4,7 +4,8 @@ Build with:
 ```sh
 cd website
 roc ./build_website.roc
-# For a production build, minify copied assets too. This requires
+# For a production build, minify copied assets too. Building requires
+# Binaryen's wasm-opt, and minifying additionally requires
 # github.com/tdewolff/minify/v2/cmd/minify on PATH.
 roc ./build_website.roc --minify
 # If you want a local deploy for development, do:

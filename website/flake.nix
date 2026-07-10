@@ -35,6 +35,7 @@
           ]);
 
         sharedInputs = (with pkgs; [
+          binaryen
           go
           nodejs_22
           python3

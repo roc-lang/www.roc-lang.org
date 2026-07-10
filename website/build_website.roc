@@ -18,6 +18,9 @@ import cli.Utc
 latest_stable_tag = "alpha4-rolling"
 cache_marker_path = ".cache/site.millis"
 new_compiler_dir = "roc-new-compiler-nightly"
+compiler_wasm_build_path = "build/echo.wasm"
+compiler_wasm_optimized_path = "build/echo.wasm.optimized"
+cloudflare_max_asset_size = 26214400u64
 
 main! : List Arg => Result {} _
 main! = |raw_args|
@@ -93,6 +96,7 @@ full_clean_build! = |{}|
     _ = Dir.delete_all!(new_compiler_dir)
 
     Cmd.exec!("cp", ["-r", "public", "build"])?
+    optimize_compiler_wasm!({})?
 
     # Download latest examples
     Cmd.exec!("curl", ["-fL", "-o", "examples-main.zip", "https://github.com/roc-lang/examples/archive/refs/heads/main.zip"])?
@@ -200,6 +204,7 @@ build_with_cache! = |{}|
         # Copy public → build if public changed
         if public_changed then
             Cmd.exec!("cp", ["-r", "public/.", "build/"])?
+            optimize_compiler_wasm!({})?
         else
             {}
 
@@ -222,6 +227,27 @@ build_with_cache! = |{}|
 # ------------------------------
 # Cache-aware helpers
 # ------------------------------
+
+optimize_compiler_wasm! : {} => Result {} _
+optimize_compiler_wasm! = |{}|
+    _ = File.delete!(compiler_wasm_optimized_path)
+    Cmd.exec!("wasm-opt", [
+        "--enable-bulk-memory",
+        "--enable-nontrapping-float-to-int",
+        "-Oz",
+        compiler_wasm_build_path,
+        "-o",
+        compiler_wasm_optimized_path,
+    ])?
+    File.rename!(compiler_wasm_optimized_path, compiler_wasm_build_path) ? ReplaceCompilerWithOptimizedWasmFailed
+
+    optimized_size = File.size_in_bytes!(compiler_wasm_build_path)?
+    if optimized_size > cloudflare_max_asset_size then
+        Err(Exit(1, "Optimized echo.wasm is ${Num.to_str(optimized_size)} bytes, exceeding Cloudflare's 25 MiB (${Num.to_str(cloudflare_max_asset_size)} byte) static asset limit."))?
+    else
+        {}
+
+    Ok({})
 
 ensure_examples_present! : {} => Result {} _
 ensure_examples_present! = |{}|
