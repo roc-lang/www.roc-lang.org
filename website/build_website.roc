@@ -262,6 +262,7 @@ optimize_compiler_wasm! = |{}|
         "--enable-bulk-memory",
         "--enable-nontrapping-float-to-int",
         "-Oz",
+        "--converge",
         compiler_wasm_build_path,
         "-o",
         compiler_wasm_optimized_path,
