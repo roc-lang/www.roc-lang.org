@@ -21,6 +21,11 @@ new_compiler_dir = "roc-new-compiler-nightly"
 compiler_wasm_build_path = "build/echo.wasm"
 compiler_wasm_optimized_path = "build/echo.wasm.optimized"
 cloudflare_max_asset_size = 26214400u64
+binaryen_version = "version_130"
+binaryen_dir = ".cache/binaryen-version_130"
+binaryen_archive_path = ".cache/binaryen-version_130-node.tar.gz"
+binaryen_wasm_opt_path = ".cache/binaryen-version_130/wasm-opt.js"
+binaryen_wasm_opt_module_path = ".cache/binaryen-version_130/wasm-opt.wasm"
 
 main! : List Arg => Result {} _
 main! = |raw_args|
@@ -228,10 +233,32 @@ build_with_cache! = |{}|
 # Cache-aware helpers
 # ------------------------------
 
+ensure_binaryen_present! : {} => Result {} _
+ensure_binaryen_present! = |{}|
+    wasm_opt_js_exists = File.is_file!(binaryen_wasm_opt_path) |> Result.with_default(Bool.false)
+    wasm_opt_module_exists = File.is_file!(binaryen_wasm_opt_module_path) |> Result.with_default(Bool.false)
+    if wasm_opt_js_exists && wasm_opt_module_exists then
+        Ok({})
+    else
+        _ = Dir.create!(".cache")
+        _ = Dir.delete_all!(binaryen_dir)
+        _ = File.delete!(binaryen_archive_path)
+        Cmd.exec!("curl", [
+            "-fsSL",
+            "-o",
+            binaryen_archive_path,
+            "https://github.com/WebAssembly/binaryen/releases/download/${binaryen_version}/binaryen-${binaryen_version}-node.tar.gz",
+        ])?
+        Cmd.exec!("tar", ["-xzf", binaryen_archive_path, "-C", ".cache"])?
+        _ = File.delete!(binaryen_archive_path)
+        Ok({})
+
 optimize_compiler_wasm! : {} => Result {} _
 optimize_compiler_wasm! = |{}|
+    ensure_binaryen_present!({})?
     _ = File.delete!(compiler_wasm_optimized_path)
-    Cmd.exec!("wasm-opt", [
+    Cmd.exec!("node", [
+        binaryen_wasm_opt_path,
         "--enable-bulk-memory",
         "--enable-nontrapping-float-to-int",
         "-Oz",
