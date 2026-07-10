@@ -3,7 +3,7 @@
 
 const decode = (bytes) => new TextDecoder().decode(bytes);
 const encode = (str) => new TextEncoder().encode(str);
-const WASM_URL = "/echo.wasm.br";
+const WASM_URL = "/echo.wasm";
 
 // All null until the user clicks "Run" for the first time.
 

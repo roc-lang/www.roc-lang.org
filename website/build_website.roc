@@ -339,6 +339,7 @@ compress_compiler_wasm! = |brotli_quality, input_path|
 remove_unpublished_compiler_assets! : {} => Result {} _
 remove_unpublished_compiler_assets! = |{}|
     _ = File.delete!("build/echo.wasm")
+    File.rename!("build/echo.wasm.br", "build/echo.wasm") ? PublishCompilerAssetFailed
     _ = File.delete!("build/echo.wasm.zst")
     _ = File.delete!("build/echo.wasm.br.quality")
     Ok({})
