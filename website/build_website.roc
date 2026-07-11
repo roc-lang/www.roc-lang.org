@@ -547,7 +547,7 @@ patch_builtins_html! = |{}|
         """
 
         /* Roc docs sidebar chevrons */
-        .sidebar-module-link > .entry-toggle {
+        :is(.sidebar-module-link, .sidebar-module-summary) > .entry-toggle {
             align-items: center;
             appearance: none;
             background: none;
@@ -558,22 +558,35 @@ patch_builtins_html! = |{}|
             font-size: 0;
             justify-content: center;
             line-height: 0;
-            pointer-events: none;
             transition: color 80ms linear;
+        }
+
+        .sidebar-module-link > .entry-toggle {
+            pointer-events: none;
+        }
+
+        .sidebar-module-summary > .entry-toggle {
+            cursor: pointer;
+            pointer-events: auto;
         }
 
         .sidebar-module-link:is(:hover, :focus, :focus-within, :active) > .entry-toggle {
             transition: color 80ms linear, rotate 80ms linear;
         }
 
+        .sidebar-module-summary > .entry-toggle:hover,
+        .sidebar-module-summary:focus-visible > .entry-toggle {
+            color: var(--violet);
+            transition: color 80ms linear, rotate 80ms linear;
+        }
+
         .sidebar-module-link:hover,
         .sidebar-module-link:hover > span,
-        .sidebar-module-link:hover > .entry-toggle,
-        .sidebar-entry:hover > a.sidebar-module-link > .entry-toggle {
+        .sidebar-module-link:hover > .entry-toggle {
             color: var(--violet);
         }
 
-        .sidebar-module-link > .entry-toggle::before {
+        :is(.sidebar-module-link, .sidebar-module-summary) > .entry-toggle::before {
             -webkit-mask: none;
             background: none;
             border: solid currentColor;
