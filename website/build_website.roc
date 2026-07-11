@@ -639,6 +639,8 @@ patch_builtins_html! = |{}|
             patch_builtins_nav_in_file!(index_path, builtins_tip_html)
     ) ? BuiltinsDocsReplaceFailed
 
+    List.for_each_try!(main_index_paths, add_module_name_to_type_definition!) ? BuiltinsDocsReplaceFailed
+
     replace_each_in_file_prefix!("build/builtins/main/index.html", 20000, docs_index_replacements) ? BuiltinsDocsReplaceFailed
 
     append_to_file_if_missing!("build/builtins/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
@@ -827,6 +829,67 @@ patch_builtins_nav_in_file! = |file_path_str, builtins_tip_html|
             File.write_bytes!(patched_bytes, file_path_str)
     else
         Ok({})
+
+add_module_name_to_type_definition! = |file_path_str|
+    module_name_start = """<h1 class="module-name">"""
+    module_name_end = "</h1>"
+    type_definition_start = "<code class=\"entry-type-def"
+
+    file_content = File.read_utf8!(file_path_str)?
+
+    when Str.split_first(file_content, module_name_start) is
+        Ok(before_module_name) ->
+            when Str.split_first(before_module_name.after, module_name_end) is
+                Ok(after_module_name) ->
+                    module_name = after_module_name.before
+                    module_name_prefix = "${module_name} "
+
+                    when Str.split_first(after_module_name.after, type_definition_start) is
+                        Ok(before_type_definition) ->
+                            # Only declarations placed directly below a module heading need this
+                            # prefix. Other type definitions already have an entry heading.
+                            if Str.contains(before_type_definition.before, "<article") then
+                                Ok({})
+                            else
+                                when Str.split_first(before_type_definition.after, ">") is
+                                    Ok(after_type_definition_opening_tag) ->
+                                        if Str.starts_with(after_type_definition_opening_tag.after, module_name_prefix) then
+                                            Ok({})
+                                        else
+                                            before_declaration =
+                                                Str.concat(
+                                                    before_module_name.before,
+                                                    Str.concat(
+                                                        module_name_start,
+                                                        Str.concat(
+                                                            module_name,
+                                                            Str.concat(
+                                                                module_name_end,
+                                                                Str.concat(
+                                                                    before_type_definition.before,
+                                                                    Str.concat(
+                                                                        type_definition_start,
+                                                                        Str.concat(after_type_definition_opening_tag.before, ">"),
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                )
+
+                                            File.write_utf8!(Str.concat(before_declaration, Str.concat(module_name_prefix, after_type_definition_opening_tag.after)), file_path_str)
+
+                                    Err(_) ->
+                                        Ok({})
+
+                        Err(_) ->
+                            Ok({})
+
+                Err(_) ->
+                    Ok({})
+
+        Err(_) ->
+            Ok({})
 
 find_bytes_start = |bytes, needle|
     initial = { found: Bool.false, matched: 0u64, start: 0u64 }
