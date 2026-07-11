@@ -500,44 +500,88 @@ patch_builtins_html! = |{}|
         pre:has(> code.roc-highlight),
         .entry-signature:has(.roc-highlight),
         .entry-type-def.roc-highlight {
-            background-color: #202746;
-            color: #e0d6f0;
+            background-color: var(--code-bg);
+            color: #202746;
         }
 
         pre > code.roc-highlight,
         .entry-signature-code.roc-highlight,
         .type-ahead-signature.roc-highlight {
             background: transparent;
-            color: #e0d6f0;
+            color: #202746;
         }
 
         ::highlight(roc-c) {
-            color: #ccc;
+            color: #596078;
         }
 
         ::highlight(roc-n),
         ::highlight(roc-s),
         ::highlight(roc-u) {
-            color: #4eefd9;
+            color: #087f78;
         }
 
         ::highlight(roc-k),
         ::highlight(roc-o),
         ::highlight(roc-d) {
-            color: #9b6bf2;
+            color: #6633bf;
         }
 
         ::highlight(roc-f),
         ::highlight(roc-p) {
-            color: #aeb4c6;
+            color: #3e496d;
         }
 
         ::highlight(roc-v) {
-            color: white;
+            color: #202746;
         }
 
         ::highlight(roc-e) {
-            color: hsl(0, 96%, 67%);
+            color: #b42338;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            pre:has(> code.roc-highlight),
+            .entry-signature:has(.roc-highlight),
+            .entry-type-def.roc-highlight {
+                background-color: #202746;
+                color: #e0d6f0;
+            }
+
+            pre > code.roc-highlight,
+            .entry-signature-code.roc-highlight,
+            .type-ahead-signature.roc-highlight {
+                color: #e0d6f0;
+            }
+
+            ::highlight(roc-c) {
+                color: #ccc;
+            }
+
+            ::highlight(roc-n),
+            ::highlight(roc-s),
+            ::highlight(roc-u) {
+                color: #4eefd9;
+            }
+
+            ::highlight(roc-k),
+            ::highlight(roc-o),
+            ::highlight(roc-d) {
+                color: #9b6bf2;
+            }
+
+            ::highlight(roc-f),
+            ::highlight(roc-p) {
+                color: #aeb4c6;
+            }
+
+            ::highlight(roc-v) {
+                color: white;
+            }
+
+            ::highlight(roc-e) {
+                color: hsl(0, 96%, 67%);
+            }
         }
 
         /* End Roc docs runtime syntax highlights */
@@ -638,6 +682,8 @@ patch_builtins_html! = |{}|
         |index_path|
             patch_builtins_nav_in_file!(index_path, builtins_tip_html)
     ) ? BuiltinsDocsReplaceFailed
+
+    List.for_each_try!(main_index_paths, add_module_name_to_type_definition!) ? BuiltinsDocsReplaceFailed
 
     replace_each_in_file_prefix!("build/builtins/main/index.html", 20000, docs_index_replacements) ? BuiltinsDocsReplaceFailed
 
@@ -827,6 +873,67 @@ patch_builtins_nav_in_file! = |file_path_str, builtins_tip_html|
             File.write_bytes!(patched_bytes, file_path_str)
     else
         Ok({})
+
+add_module_name_to_type_definition! = |file_path_str|
+    module_name_start = """<h1 class="module-name">"""
+    module_name_end = "</h1>"
+    type_definition_start = "<code class=\"entry-type-def"
+
+    file_content = File.read_utf8!(file_path_str)?
+
+    when Str.split_first(file_content, module_name_start) is
+        Ok(before_module_name) ->
+            when Str.split_first(before_module_name.after, module_name_end) is
+                Ok(after_module_name) ->
+                    module_name = after_module_name.before
+                    module_name_prefix = "${module_name} "
+
+                    when Str.split_first(after_module_name.after, type_definition_start) is
+                        Ok(before_type_definition) ->
+                            # Only declarations placed directly below a module heading need this
+                            # prefix. Other type definitions already have an entry heading.
+                            if Str.contains(before_type_definition.before, "<article") then
+                                Ok({})
+                            else
+                                when Str.split_first(before_type_definition.after, ">") is
+                                    Ok(after_type_definition_opening_tag) ->
+                                        if Str.starts_with(after_type_definition_opening_tag.after, module_name_prefix) then
+                                            Ok({})
+                                        else
+                                            before_declaration =
+                                                Str.concat(
+                                                    before_module_name.before,
+                                                    Str.concat(
+                                                        module_name_start,
+                                                        Str.concat(
+                                                            module_name,
+                                                            Str.concat(
+                                                                module_name_end,
+                                                                Str.concat(
+                                                                    before_type_definition.before,
+                                                                    Str.concat(
+                                                                        type_definition_start,
+                                                                        Str.concat(after_type_definition_opening_tag.before, ">"),
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                )
+
+                                            File.write_utf8!(Str.concat(before_declaration, Str.concat(module_name_prefix, after_type_definition_opening_tag.after)), file_path_str)
+
+                                    Err(_) ->
+                                        Ok({})
+
+                        Err(_) ->
+                            Ok({})
+
+                Err(_) ->
+                    Ok({})
+
+        Err(_) ->
+            Ok({})
 
 find_bytes_start = |bytes, needle|
     initial = { found: Bool.false, matched: 0u64, start: 0u64 }
