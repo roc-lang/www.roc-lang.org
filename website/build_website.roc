@@ -500,44 +500,88 @@ patch_builtins_html! = |{}|
         pre:has(> code.roc-highlight),
         .entry-signature:has(.roc-highlight),
         .entry-type-def.roc-highlight {
-            background-color: #202746;
-            color: #e0d6f0;
+            background-color: var(--code-bg);
+            color: #202746;
         }
 
         pre > code.roc-highlight,
         .entry-signature-code.roc-highlight,
         .type-ahead-signature.roc-highlight {
             background: transparent;
-            color: #e0d6f0;
+            color: #202746;
         }
 
         ::highlight(roc-c) {
-            color: #ccc;
+            color: #596078;
         }
 
         ::highlight(roc-n),
         ::highlight(roc-s),
         ::highlight(roc-u) {
-            color: #4eefd9;
+            color: #087f78;
         }
 
         ::highlight(roc-k),
         ::highlight(roc-o),
         ::highlight(roc-d) {
-            color: #9b6bf2;
+            color: #6633bf;
         }
 
         ::highlight(roc-f),
         ::highlight(roc-p) {
-            color: #aeb4c6;
+            color: #3e496d;
         }
 
         ::highlight(roc-v) {
-            color: white;
+            color: #202746;
         }
 
         ::highlight(roc-e) {
-            color: hsl(0, 96%, 67%);
+            color: #b42338;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            pre:has(> code.roc-highlight),
+            .entry-signature:has(.roc-highlight),
+            .entry-type-def.roc-highlight {
+                background-color: #202746;
+                color: #e0d6f0;
+            }
+
+            pre > code.roc-highlight,
+            .entry-signature-code.roc-highlight,
+            .type-ahead-signature.roc-highlight {
+                color: #e0d6f0;
+            }
+
+            ::highlight(roc-c) {
+                color: #ccc;
+            }
+
+            ::highlight(roc-n),
+            ::highlight(roc-s),
+            ::highlight(roc-u) {
+                color: #4eefd9;
+            }
+
+            ::highlight(roc-k),
+            ::highlight(roc-o),
+            ::highlight(roc-d) {
+                color: #9b6bf2;
+            }
+
+            ::highlight(roc-f),
+            ::highlight(roc-p) {
+                color: #aeb4c6;
+            }
+
+            ::highlight(roc-v) {
+                color: white;
+            }
+
+            ::highlight(roc-e) {
+                color: hsl(0, 96%, 67%);
+            }
         }
 
         /* End Roc docs runtime syntax highlights */
