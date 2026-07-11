@@ -601,6 +601,23 @@ patch_builtins_html! = |{}|
 
         """
 
+    top_level_entry_alignment_css =
+        """
+
+        /* Roc docs top-level entry alignment */
+        /* Align a module's outermost entries with its title. Nested entries
+           retain the normal hierarchy indentation, and .entry-doc continues
+           to indent each member's prose and examples. */
+        .main-content > .entry > :is(h2, h3, h4, h5, h6),
+        .main-content > .entry > .entry-type-def,
+        .main-content > .entry > .entry-children-container {
+            margin-left: 0;
+        }
+
+        /* End Roc docs top-level entry alignment */
+
+        """
+
     builtins_tip_html =
         """<div class="builtins-tip"><b>Tip:</b> <a href="/different-names">Some names</a> differ from other languages.</div>"""
 
@@ -626,6 +643,7 @@ patch_builtins_html! = |{}|
 
     append_to_file_if_missing!("build/builtins/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
     replace_block_or_append_to_file!("build/builtins/main/styles.css", "/* Roc docs runtime syntax highlights */", "/* End Roc docs runtime syntax highlights */", runtime_highlight_css) ? BuiltinsDocsCssReplaceFailed
+    replace_block_or_append_to_file!("build/builtins/main/styles.css", "/* Roc docs top-level entry alignment */", "/* End Roc docs top-level entry alignment */", top_level_entry_alignment_css) ? BuiltinsDocsCssReplaceFailed
 
     Cmd.exec!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/builtins/main"]) ? BuiltinsDocsRuntimeHighlightFailed
 
