@@ -46,7 +46,7 @@ You can run the full compiler in the browser without a backend server!
 <pre class="roc-source">print_remaining! = |todos|
     todos
         .keep_if(|todo| todo.status != Done)
-        .for_each!(|todo| echo!("- ${todo.name} \n"))
+        .for_each!(|todo| echo!("- ${todo.name}\n"))
 <!--  -->
 main! = |_args| {
     todos = [
