@@ -51,7 +51,7 @@ done < <(grep -rl 'class="roc-interactive' "$CONTENT_DIR")
 expected_output() {
   case "$1" in
     index_1.roc)
-      printf -- '- Write blog post\n- Call mom\n'
+      printf -- '- Write blog post \n\n- Call mom \n\n'
       ;;
     *)
       return 1
