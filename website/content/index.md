@@ -45,19 +45,20 @@ You can run the full compiler in the browser without a backend server!
 <div class="roc-interactive front-page">
 <pre class="roc-source">print_remaining! = |todos|
     todos
-        .keep_if(|todo| !todo.done)
-        .for_each!(|todo| echo!("- ${todo.name} \n"))
+        .keep_if(|todo| todo.status != Done)
+        .for_each!(|todo| echo!("- ${todo.name}"))
 <!--  -->
 main! = |_args| {
     todos = [
-        { name: "Learn Roc",       done: True },
-        { name: "Buy groceries",   done: True },
-        { name: "Write blog post", done: False },
-        { name: "Call mom",        done: False },
+        { name: "Learn Roc",       status: Done },
+        { name: "Buy groceries",   status: Done },
+        { name: "Write blog post", status: InProgress },
+        { name: "Call mom",        status: NotStarted },
     ]
     print_remaining!(todos)
     Ok({})
-}</pre>
+}
+</pre>
 <button class="roc-run">Enable JS to Run</button>
 </div>
 
