@@ -2,5 +2,5 @@
   Content-Type: application/wasm
   Cache-Control: public, max-age=0, must-revalidate
 
-/builtins/main/*
+/docs/main/*
   Cache-Control: public, max-age=300, stale-while-revalidate=86400

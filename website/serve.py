@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import argparse
+import os
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def translate_path(self, path):
+        fs_path = super().translate_path(path)
+        # Mirror Cloudflare Pages "clean URLs": an extensionless request like
+        # /fast is served from fast.html. SimpleHTTPRequestHandler only serves
+        # exact paths, so without this every extensionless content link 404s
+        # locally even though it works in production.
+        if not os.path.isdir(fs_path) and not os.path.exists(fs_path):
+            _root, ext = os.path.splitext(fs_path)
+            if not ext and os.path.isfile(fs_path + ".html"):
+                return fs_path + ".html"
+        return fs_path
+
     def guess_type(self, path):
         if path.endswith(".wasm.br"):
             return "application/wasm"

@@ -14,6 +14,14 @@ import cli.Utc
 #   roc ./build_website.roc           # full, clean build (no cache)
 #   roc ./build_website.roc --cache   # incremental build using cache
 #   roc ./build_website.roc --minify  # minify build assets after building
+#
+# Compiler source (for generating builtins docs):
+#   By default the latest nightly (zig) compiler and the matching roc source
+#   are downloaded. To use a local build instead, pass:
+#     roc ./build_website.roc --roc=/path/to/roc/zig-out/bin/roc
+#   The roc source dir is derived by stripping "/zig-out/bin/roc" from that
+#   path; override it explicitly with:
+#     --roc-src=/path/to/roc
 
 latest_stable_tag = "alpha4-rolling"
 cache_marker_path = ".cache/site.millis"
@@ -27,11 +35,18 @@ binaryen_archive_path = ".cache/binaryen-version_130-node.tar.gz"
 binaryen_wasm_opt_path = ".cache/binaryen-version_130/wasm-opt.js"
 binaryen_wasm_opt_module_path = ".cache/binaryen-version_130/wasm-opt.wasm"
 
+# Describes which roc compiler + source to use for generating builtins docs.
+# `downloaded` is Bool.true when we fetched the nightly compiler and roc source
+# ourselves (and so should clean them up afterwards), Bool.false when the user
+# pointed us at a local build via `--roc=`.
+CompilerInfo : { bin : Str, src_dir : Str, downloaded : Bool }
+
 main! : List Arg => Result {} _
 main! = |raw_args|
     args = List.map(raw_args, Arg.display)
     use_cache = List.any(args, |a| a == "--cache")
     use_minify = List.any(args, |a| a == "--minify")
+    compiler = resolve_compiler(args)?
 
     cwd_path = Env.cwd!({}) ? EncCwdFailed
     cwd_path_str = Path.display(cwd_path)
@@ -44,9 +59,9 @@ main! = |raw_args|
     if use_cache then
         # Create .cache/ if it doesn't exist
         _ = Dir.create!(".cache")
-        build_with_cache!({})?
+        build_with_cache!(compiler)?
     else
-        full_clean_build!({})?
+        full_clean_build!(compiler)?
 
     if use_minify then
         minify_build_assets!({})?
@@ -91,8 +106,8 @@ minify_html_asset! = |path|
 # ----------------
 # Full clean build
 # ----------------
-full_clean_build! : {} => Result {} _
-full_clean_build! = |{}|
+full_clean_build! : CompilerInfo => Result {} _
+full_clean_build! = |compiler|
     # Clean up dirs from previous runs
     _ = Dir.delete_all!("build")
     _ = Dir.delete_all!("content/examples")
@@ -139,36 +154,20 @@ full_clean_build! = |{}|
 
     # Download alpha3 docs
     Cmd.exec!("curl", ["-fL", "-o", alpha3_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha3-rolling/docs.tar.gz"])?
-    Dir.create!("build/builtins") ? CreateBuiltinsDirFailed
-    Dir.create!("build/builtins/alpha3") ? CreateAlpha3DirFailed
-    Cmd.exec!("tar", ["-xzf", alpha3_docs_tarfile, "-C", "build/builtins/alpha3", "--strip-components=1"])?
+    Dir.create!("build/docs") ? CreateBuiltinsDirFailed
+    Dir.create!("build/docs/alpha3") ? CreateAlpha3DirFailed
+    Cmd.exec!("tar", ["-xzf", alpha3_docs_tarfile, "-C", "build/docs/alpha3", "--strip-components=1"])?
     File.delete!(alpha3_docs_tarfile) ? DeleteAlpha3DocsTarFailed
 
     # Download alpha4 docs
     Cmd.exec!("curl", ["-fL", "-o", alpha4_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha4-rolling/docs.tar.gz"])?
-    Dir.create!("build/builtins/alpha4") ? CreateAlpha4DirFailed
-    Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/builtins/alpha4", "--strip-components=1"])?
+    Dir.create!("build/docs/alpha4") ? CreateAlpha4DirFailed
+    Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/docs/alpha4", "--strip-components=1"])?
     File.delete!(alpha4_docs_tarfile) ? DeleteAlpha4DocsTarFailed
 
-    # Download the new (zig) compiler, then fetch the roc source at the exact
-    # commit that compiler was built from, so Builtin.roc matches the compiler
-    # (rather than tracking main's tip, which can drift ahead of the nightly).
-    ensure_new_compiler_downloaded!({})?
-    download_roc_source_at_compiler_commit!({})?
-
-    # generate docs for builtins using the new (zig) compiler.
-    # `--with-lang-ref` reads the language reference articles from `docs/langref`
-    # relative to the current working directory (hardcoded in roc's src/cli/main.zig).
-    # The downloaded roc source has them at roc/docs/langref, so stage a copy where
-    # the compiler expects it, then clean it up afterwards.
-    Dir.create!("build/builtins/main") ? CreateMainDirFailed
-    _ = Dir.delete_all!("docs/langref")
-    Dir.create_all!("docs/langref") ? CreateLangRefStagingDirFailed
-    Cmd.exec!("cp", ["-R", "roc/docs/langref/.", "docs/langref"])?
-    Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main", "--with-lang-ref"])?
-    Dir.delete_all!("docs") ? DeleteLangRefStagingDirFailed
-    Dir.delete_all!("roc") ? DeleteRocRepoDirFailed
-    Dir.delete_all!(new_compiler_dir) ? DeleteNewCompilerDirFailed
+    # Make the new (zig) compiler and matching roc source available (downloading
+    # them unless the user pointed us at a local build), then generate docs.
+    generate_builtins_docs!(compiler)?
 
     patch_builtins_html!({})?
     write_builtins_redirects!({})?
@@ -184,8 +183,8 @@ full_clean_build! = |{}|
 # --------------------------------
 # Incremental, cached build
 # --------------------------------
-build_with_cache! : {} => Result {} _
-build_with_cache! = |{}|
+build_with_cache! : CompilerInfo => Result {} _
+build_with_cache! = |compiler|
     # 1) Ensure build/ exists to copy assets into
     _ = Dir.create!("build")
 
@@ -193,7 +192,7 @@ build_with_cache! = |{}|
     ensure_examples_present!({})?
     ensure_fonts_present!({})?
     ensure_repl_present!({})?
-    ensure_builtins_present!({})?
+    ensure_builtins_present!(compiler)?
     patch_builtins_html!({})?
     write_builtins_redirects!({})?
 
@@ -324,20 +323,20 @@ ensure_repl_present! = |{}|
         _ = File.delete!(repl_tarfile)
         Ok({})
 
-ensure_builtins_present! : {} => Result {} _
-ensure_builtins_present! = |{}|
-    alpha3_ok = File.is_dir!("build/builtins/alpha3") |> Result.with_default(Bool.false)
-    alpha4_ok = File.is_dir!("build/builtins/alpha4") |> Result.with_default(Bool.false)
-    main_ok  = File.is_dir!("build/builtins/main")  |> Result.with_default(Bool.false)
+ensure_builtins_present! : CompilerInfo => Result {} _
+ensure_builtins_present! = |compiler|
+    alpha3_ok = File.is_dir!("build/docs/alpha3") |> Result.with_default(Bool.false)
+    alpha4_ok = File.is_dir!("build/docs/alpha4") |> Result.with_default(Bool.false)
+    main_ok  = File.is_dir!("build/docs/main")  |> Result.with_default(Bool.false)
 
-    Dir.create!("build/builtins") |> Result.with_default({})
+    Dir.create!("build/docs") |> Result.with_default({})
 
     if !alpha3_ok then
         alpha3_docs_tarfile = "alpha3-docs.tar.gz"
         _ = File.delete!(alpha3_docs_tarfile)
         Cmd.exec!("curl", ["-fL", "-o", alpha3_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha3-rolling/docs.tar.gz"])?
-        Dir.create!("build/builtins/alpha3") ? CreateAlpha3DirFailed
-        Cmd.exec!("tar", ["-xzf", alpha3_docs_tarfile, "-C", "build/builtins/alpha3", "--strip-components=1"])?
+        Dir.create!("build/docs/alpha3") ? CreateAlpha3DirFailed
+        Cmd.exec!("tar", ["-xzf", alpha3_docs_tarfile, "-C", "build/docs/alpha3", "--strip-components=1"])?
         File.delete!(alpha3_docs_tarfile)?
     else
         {}
@@ -346,22 +345,94 @@ ensure_builtins_present! = |{}|
         alpha4_docs_tarfile = "alpha4-docs.tar.gz"
         _ = File.delete!(alpha4_docs_tarfile)
         Cmd.exec!("curl", ["-fL", "-o", alpha4_docs_tarfile, "https://github.com/roc-lang/roc/releases/download/alpha4-rolling/docs.tar.gz"])?
-        Dir.create!("build/builtins/alpha4") ? CreateAlpha4DirFailed
-        Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/builtins/alpha4", "--strip-components=1"])?
+        Dir.create!("build/docs/alpha4") ? CreateAlpha4DirFailed
+        Cmd.exec!("tar", ["-xzf", alpha4_docs_tarfile, "-C", "build/docs/alpha4", "--strip-components=1"])?
         File.delete!(alpha4_docs_tarfile)?
     else
         {}
 
     if !main_ok then
+        generate_builtins_docs!(compiler)?
+    else
+        {}
+
+    Ok({})
+
+# ------------------------------
+# Compiler resolution & builtins docs
+# ------------------------------
+
+# Decide whether to download the nightly compiler + source or use a local build.
+# `--roc=<path>` selects a local roc binary; the source dir is derived by
+# stripping "/zig-out/bin/roc" from it, or set explicitly with `--roc-src=<path>`.
+resolve_compiler : List Str -> Result CompilerInfo _
+resolve_compiler = |args|
+    when get_flag_value(args, "--roc=") is
+        Err(NotFound) ->
+            Ok({ bin: "./${new_compiler_dir}/roc", src_dir: "roc", downloaded: Bool.true })
+
+        Ok(bin) ->
+            src_dir =
+                when get_flag_value(args, "--roc-src=") is
+                    Ok(dir) -> Ok(dir)
+                    Err(NotFound) ->
+                        when Str.split_first(bin, "/zig-out/bin/roc") is
+                            Ok({ before }) -> Ok(before)
+                            Err(_) -> Err(Exit(1, "Could not derive the roc source directory from --roc=${bin}. Pass --roc-src=<path to roc repo> explicitly."))
+
+            Ok({ bin, src_dir: src_dir?, downloaded: Bool.false })
+
+# Return the value of the first `<prefix>value` arg (e.g. `--roc=/x` -> `/x`).
+get_flag_value : List Str, Str -> Result Str [NotFound]
+get_flag_value = |args, prefix|
+    List.walk(args, Err(NotFound), |state, a|
+        when state is
+            Ok(_) -> state
+            Err(_) ->
+                if Str.starts_with(a, prefix) then
+                    when Str.split_first(a, prefix) is
+                        Ok({ after }) -> Ok(after)
+                        Err(_) -> state
+                else
+                    state)
+
+# Ensure the compiler binary and roc source are available. When downloaded, fetch
+# them; when local, just verify the binary and Builtin.roc actually exist so we
+# fail early with a clear message instead of deep inside `roc docs`.
+ensure_compiler_ready! : CompilerInfo => Result {} _
+ensure_compiler_ready! = |compiler|
+    if compiler.downloaded then
         ensure_new_compiler_downloaded!({})?
         download_roc_source_at_compiler_commit!({})?
-        Dir.create!("build/builtins/main") ? CreateMainDirFailed
-        _ = Dir.delete_all!("docs/langref")
-        Dir.create_all!("docs/langref") ? CreateLangRefStagingDirFailed
-        Cmd.exec!("cp", ["-R", "roc/docs/langref/.", "docs/langref"])?
-        Cmd.exec!("./${new_compiler_dir}/roc", ["docs", "--no-cache", "roc/src/build/roc/Builtin.roc", "--output=build/builtins/main", "--with-lang-ref"])?
-        Dir.delete_all!("docs") ? DeleteLangRefStagingDirFailed
-        Dir.delete_all!("roc")?
+        Ok({})
+    else
+        bin_exists = File.is_file!(compiler.bin) |> Result.with_default(Bool.false)
+        assert(bin_exists, LocalRocBinaryNotFound(compiler.bin))?
+        builtin_path = "${compiler.src_dir}/src/build/roc/Builtin.roc"
+        builtin_exists = File.is_file!(builtin_path) |> Result.with_default(Bool.false)
+        assert(builtin_exists, LocalRocSourceNotFound(builtin_path))?
+        Ok({})
+
+# Generate builtins docs into build/docs/main using the resolved compiler.
+# `--with-lang-ref` reads the language reference articles from `docs/langref`
+# relative to the current working directory (hardcoded in roc's src/cli/main.zig),
+# so stage a copy of the source's docs/langref where the compiler expects it, then
+# clean it up afterwards. Downloaded compiler + source are removed when done; a
+# local build is left untouched.
+generate_builtins_docs! : CompilerInfo => Result {} _
+generate_builtins_docs! = |compiler|
+    ensure_compiler_ready!(compiler)?
+
+    Dir.create!("build/docs/main") ? CreateMainDirFailed
+    _ = Dir.delete_all!("docs/langref")
+    Dir.create_all!("docs/langref") ? CreateLangRefStagingDirFailed
+    Cmd.exec!("cp", ["-R", "${compiler.src_dir}/docs/langref/.", "docs/langref"])?
+    Cmd.exec!(compiler.bin, ["docs", "--no-cache", "${compiler.src_dir}/src/build/roc/Builtin.roc", "--output=build/docs/main", "--with-lang-ref"])?
+    Dir.delete_all!("docs") ? DeleteLangRefStagingDirFailed
+
+    if compiler.downloaded then
+        Dir.delete_all!(compiler.src_dir) ? DeleteRocRepoDirFailed
+        Dir.delete_all!(new_compiler_dir) ? DeleteNewCompilerDirFailed
     else
         {}
 
@@ -612,7 +683,7 @@ patch_builtins_html! = |{}|
         (">Documentation</a></h1>", ">Roc Docs</a></h1>"),
     ]
 
-    main_index_paths = list_matching_files!("build/builtins/main", "/index.html")?
+    main_index_paths = list_matching_files!("build/docs/main", "/index.html")?
 
     assert(!List.is_empty(main_index_paths), IndexCleanPathsWasEmpty)?
 
@@ -622,83 +693,60 @@ patch_builtins_html! = |{}|
             patch_builtins_nav_in_file!(index_path, builtins_tip_html)
     ) ? BuiltinsDocsReplaceFailed
 
-    replace_each_in_file_prefix!("build/builtins/main/index.html", 20000, docs_index_replacements) ? BuiltinsDocsReplaceFailed
+    replace_each_in_file_prefix!("build/docs/main/index.html", 20000, docs_index_replacements) ? BuiltinsDocsReplaceFailed
 
-    append_to_file_if_missing!("build/builtins/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
-    replace_block_or_append_to_file!("build/builtins/main/styles.css", "/* Roc docs runtime syntax highlights */", "/* End Roc docs runtime syntax highlights */", runtime_highlight_css) ? BuiltinsDocsCssReplaceFailed
+    append_to_file_if_missing!("build/docs/main/styles.css", "/* Roc docs sidebar chevrons */", sidebar_chevron_css) ? BuiltinsDocsCssReplaceFailed
+    replace_block_or_append_to_file!("build/docs/main/styles.css", "/* Roc docs runtime syntax highlights */", "/* End Roc docs runtime syntax highlights */", runtime_highlight_css) ? BuiltinsDocsCssReplaceFailed
 
-    Cmd.exec!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/builtins/main"]) ? BuiltinsDocsRuntimeHighlightFailed
+    Cmd.exec!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/docs/main"]) ? BuiltinsDocsRuntimeHighlightFailed
 
     Ok({})
 
 write_builtins_redirects! : {} => Result {} _
 write_builtins_redirects! = |{}|
-    redirect_version = latest_stable_tag |> Str.split_on("-") |> List.first()?
-
-    # Create redirect index.html in builtins folder
+    # Create redirect index.html in the docs folder, pointing at the default
+    # (main) version. Cloudflare uses the _redirects rules below; this static
+    # page is the fallback that makes `/docs/` work in local `serve.py` previews.
     redirect_html_content =
         """
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
-            <meta http-equiv="refresh" content="0; url=${redirect_version}/index.html">
-            <title>Redirecting to Roc Builtins Documentation</title>
+            <meta http-equiv="refresh" content="0; url=main/index.html">
+            <title>Redirecting to Roc Documentation</title>
         </head>
         <body>
-            <p>Redirecting to <a href="${redirect_version}/index.html">Roc Builtins Documentation</a>...</p>
+            <p>Redirecting to <a href="main/index.html">Roc Documentation</a>...</p>
         </body>
         </html>
         """
-    File.write_utf8!(redirect_html_content, "build/builtins/index.html") ? CreateRedirectIndexFailed
+    File.write_utf8!(redirect_html_content, "build/docs/index.html") ? CreateRedirectIndexFailed
 
+    # The docs used to live under /builtins/; they now live under /docs/.
+    # Version-prefixed URLs (e.g. /builtins/alpha4/Str) map to the same version
+    # under /docs. Everything else — bare /builtins, /docs, and un-versioned
+    # module links like /builtins/Dict (still used by some example READMEs) —
+    # resolves to the default `main` version. First match wins, so the specific
+    # version rules precede the catch-all. This stays module-list-free: any
+    # module, present or future, is handled without editing this file.
     redirects_content =
         """
-        /builtins           /builtins/${redirect_version}/ 301
-        /builtins/          /builtins/${redirect_version}/ 301
-        /builtins/stable    /builtins/${redirect_version}/ 301
-        /builtins/stable/   /builtins/${redirect_version}/ 301
-        /builtins/stable/*  /builtins/${redirect_version}/:splat 301
-        /builtins/llms.txt  /builtins/${redirect_version}/llms.txt 301
-        /builtins/search.js /builtins/${redirect_version}/search.js 301
-        /builtins/Str       /builtins/${redirect_version}/Str 301
-        /builtins/Str/      /builtins/${redirect_version}/Str/ 301
-        /builtins/Str/*     /builtins/${redirect_version}/Str/:splat 301
-        /builtins/Bool      /builtins/${redirect_version}/Bool 301
-        /builtins/Bool/     /builtins/${redirect_version}/Bool/ 301
-        /builtins/Bool/*    /builtins/${redirect_version}/Bool/:splat 301
-        /builtins/List      /builtins/${redirect_version}/List 301
-        /builtins/List/     /builtins/${redirect_version}/List/ 301
-        /builtins/List/*    /builtins/${redirect_version}/List/:splat
-        /builtins/Result    /builtins/${redirect_version}/Result 301
-        /builtins/Result/   /builtins/${redirect_version}/Result/ 301
-        /builtins/Result/*  /builtins/${redirect_version}/Result/:splat
-        /builtins/Num       /builtins/${redirect_version}/Num 301
-        /builtins/Num/      /builtins/${redirect_version}/Num/ 301
-        /builtins/Num/*     /builtins/${redirect_version}/Num/:splat 301
-        /builtins/Dict      /builtins/${redirect_version}/Dict 301
-        /builtins/Dict/     /builtins/${redirect_version}/Dict/ 301
-        /builtins/Dict/*    /builtins/${redirect_version}/Dict/:splat 301
-        /builtins/Set       /builtins/${redirect_version}/Set 301
-        /builtins/Set/      /builtins/${redirect_version}/Set/ 301
-        /builtins/Set/*     /builtins/${redirect_version}/Set/:splat
-        /builtins/Decode    /builtins/${redirect_version}/Decode 301
-        /builtins/Decode/   /builtins/${redirect_version}/Decode/ 301
-        /builtins/Decode/*  /builtins/${redirect_version}/Decode/:splat
-        /builtins/Encode    /builtins/${redirect_version}/Encode 301
-        /builtins/Encode/   /builtins/${redirect_version}/Encode/ 301
-        /builtins/Encode/*  /builtins/${redirect_version}/Encode/:splat
-        /builtins/Hash      /builtins/${redirect_version}/Hash 301
-        /builtins/Hash/     /builtins/${redirect_version}/Hash/ 301
-        /builtins/Hash/*    /builtins/${redirect_version}/Hash/:splat
-        /builtins/Box       /builtins/${redirect_version}/Box 301
-        /builtins/Box/      /builtins/${redirect_version}/Box/ 301
-        /builtins/Box/*     /builtins/${redirect_version}/
-        /builtins/Inspect   /builtins/${redirect_version}/Inspect 301
-        /builtins/Inspect/  /builtins/${redirect_version}/Inspect/ 301
-        /builtins/Inspect/* /builtins/${redirect_version}/Inspect/:splat
-        /tutorial           https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md 301
-        /examples           https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc 301
+        /docs                /docs/main/ 301
+        /docs/               /docs/main/ 301
+        /builtins            /docs/main/ 301
+        /builtins/           /docs/main/ 301
+        /builtins/main       /docs/main/ 301
+        /builtins/alpha3     /docs/alpha3/ 301
+        /builtins/alpha4     /docs/alpha4/ 301
+        /builtins/main/*     /docs/main/:splat 301
+        /builtins/alpha3/*   /docs/alpha3/:splat 301
+        /builtins/alpha4/*   /docs/alpha4/:splat 301
+        /builtins/*          /docs/main/:splat 301
+        /platforms           /docs/main/langref/platforms 301
+        /platforms/          /docs/main/langref/platforms 301
+        /tutorial            https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md 301
+        /examples            https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc 301
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? CreateRedirectsFileFailed
 

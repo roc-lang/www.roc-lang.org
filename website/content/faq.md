@@ -33,7 +33,7 @@ Fun fact: "roc" translates to 鹏 in Chinese, [which means](https://www.mdbg.net
 ## [Why does Roc not handle strings like most languages?](#strings-in-roc) {#strings-in-roc}
 
 We want to help you make reliable software, so we aim to make sure that you're aware of all the pitfalls when handing strings.
-For (professional) software that needs to be reliable, check out the explainer [here](https://www.roc-lang.org/builtins/Str) and the [unicode package](https://github.com/roc-lang/unicode) (still on Roc alpha 4).
+For (professional) software that needs to be reliable, check out the explainer [here](https://www.roc-lang.org/docs/main/Str) and the [unicode package](https://github.com/roc-lang/unicode) (still on Roc alpha 4).
 For personal scripts or things like advent of code, the [roc-ascii package](https://github.com/Hasnep/roc-ascii) (still on Roc alpha 4) can cover your needs.
 
 
@@ -318,7 +318,7 @@ Similarly, platforms can share code for common Roc logic using normal Roc packag
 
 Putting all this together, applications have exactly one platform, which enables platform authors to create a cohesive experience optimized for a particular domain, and both application authors and platform authors can share code as much as they like.
 
-## [Will Roc ever compile to JavaScript, JVM/CLR/BEAM bytecode, or other higher-level targets?](#other-compilation-targets)
+## [Will Roc ever compile to JavaScript, JVM/CLR/BEAM bytecode, or other higher-level targets?](#other-compilation-targets) {#other-compilation-targets}
 
 The plan is for Roc to compile only to very low-level targets like machine code and WebAssembly.
 
