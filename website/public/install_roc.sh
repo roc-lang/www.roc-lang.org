@@ -6,15 +6,15 @@
 set -eu
 
 # ---- Configuration ----
-VERSION_DATE="2026-07-10"
-BUILD_ID="3203b90"
-BASE_URL="https://github.com/roc-lang/nightlies/releases/download/nightly-2026-July-10-3203b90"
+VERSION_DATE="2026-07-11"
+BUILD_ID="252a59a"
+BASE_URL="https://github.com/roc-lang/nightlies/releases/download/nightly-2026-July-11-252a59a"
 
 # Known SHA256 checksums for file verification
-SHA_LINUX_ARM64="aad55d1f6691daa723780c26456fb713939dc355c8793e9fe0cbd50547318706"
-SHA_LINUX_X86_64="3681cdeb1523128eb0a34abe7950cbdd110a5f592f5cba2f070be6b9d2f84508"
-SHA_MACOS_ARM64="d6a5944c84a81911c5f3bfe42d0a1634ffe77ac5baf8c7e257173b41642850b8"
-SHA_MACOS_X86_64="77aa2d69dc279c7b5c5f47ec1b09b96f0e7f3ae6668742105d15866aad3ddecf"
+SHA_LINUX_ARM64="2e694fd29dfe9a9a6ec300212be8f717c48a194ee88162c4f538e4193b0146f7"
+SHA_LINUX_X86_64="a7dec3c15d519637e224d424b4f1e5b1ff74506551178dff0978670b0ccb6882"
+SHA_MACOS_ARM64="8e66f18209bd1c9d4407bf403d369f05722100a3d97c4908367699b2e0dc9c14"
+SHA_MACOS_X86_64="0c486a7e9acac1c6d8226ee343c1e5b9d678298e6fe0607a4821e1cb5369107d"
 
 # ---- Warn if this installer is stale ----
 # The release above is hardcoded into this script. If it is more than two weeks
