@@ -154,8 +154,13 @@ seen_p = set()
 seen_f = set()
 seen_x = set()
 out = []
-for m in re.finditer(r'href="([^"]*)"', html):
-    link = m.group(1)
+# Match href values that are double-quoted, single-quoted, or unquoted. The
+# production/preview site is built with `--minify`, which strips attribute
+# quotes (`href=../pattern-matching`), so a quotes-only pattern finds zero links
+# and the crawl never recurses past the entry page.
+for m in re.finditer(r'''href\s*=\s*("[^"]*"|'[^']*'|[^\s"'>]+)''', html):
+    raw = m.group(1)
+    link = raw[1:-1] if raw[:1] in ('"', "'") else raw
     if (not link or link.startswith(('mailto:', 'tel:', 'javascript:'))
             or '/cdn-cgi/l/email-protection' in link):
         continue
@@ -284,8 +289,23 @@ is_ignored() {
 
 # Extract the element ids (and legacy name anchors) declared on a page, one per
 # line. Used to validate that "#fragment" links actually point at something.
+# Handles both quoted (`id="foo"`) and minified unquoted (`id=foo`) attributes;
+# without the unquoted case every anchor on the minified build looks broken.
 extract_ids() {
-    echo "$1" | grep -oE '(id|name)="[^"]*"' | sed -E 's/^(id|name)="//; s/"$//'
+    printf '%s' "$1" | grep -oE "(id|name)=(\"[^\"]*\"|'[^']*'|[^ \"'>]+)" \
+        | sed -E "s/^(id|name)=//; s/^[\"']//; s/[\"']\$//"
+}
+
+# True if a response body looks like an HTML document. Matches both the
+# pretty-printed output (`<!DOCTYPE html>`, `<html>`) and the minified
+# production/preview build (`<!doctype html><html lang=en>`) — the site is built
+# with `--minify`, so the opening tags carry attributes and use lowercase. The
+# case-insensitive character classes (`[Hh]`...) keep this from being fooled by
+# either, so the crawler recurses into pages instead of stopping at the entry
+# page. Substring `<html` (rather than requiring the closing `>`) is what the
+# old link-extraction gate got wrong.
+content_is_html() {
+    [[ "$1" =~ \<[Hh][Tt][Mm][Ll] ]] || [[ "$1" =~ \<![Dd][Oo][Cc][Tt][Yy][Pp][Ee] ]]
 }
 
 # Function to check a single URL
@@ -364,7 +384,7 @@ check_url() {
             # Record this internal page's ids so "#fragment" links to it can be
             # validated once the whole crawl is done.
             if [[ "$CHECK_ANCHORS" == true && "$is_external" == "false" && "$is_internal_effective" == true ]]; then
-                if [[ "$content" =~ \<html ]] || [[ "$content" =~ \<HTML ]] || [[ "$content" =~ \<!DOCTYPE ]]; then
+                if content_is_html "$content"; then
                     while IFS= read -r _id; do
                         [[ -n "$_id" ]] && printf '%s\t%s\n' "$normalized_url" "$_id" >> "$IDS_FILE"
                     done < <(extract_ids "$content")
@@ -374,7 +394,7 @@ check_url() {
             # Extract links for internal HTML pages until we hit max depth. Skip
             # if the URL redirected off-site (e.g. /examples -> github.com).
             if [[ "$is_external" == "false" && "$depth" -lt "$MAX_DEPTH" && "$is_internal_effective" == true ]]; then
-                if [[ "$content" =~ \<html\> ]] || [[ "$content" =~ \<HTML\> ]] || [[ "$content" =~ \<!DOCTYPE\ html\> ]]; then
+                if content_is_html "$content"; then
                     echo "Extracting links from HTML content..."
 
                     local internal_links_found=0
