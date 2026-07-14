@@ -14,7 +14,7 @@ colors
     .insert("Blue")
 ```
 
-The [`Set.insert`](https://www.roc-lang.org/builtins/Set#insert) function takes a `Set` and returns a `Set` with the given value inserted. It might seem like these three `Set.insert` calls would result in the creation of three brand-new sets, but Roc's *opportunistic mutation* optimizations mean this will be much more efficient.
+The [`Set.insert`](https://www.roc-lang.org/docs/main/Set#insert) function takes a `Set` and returns a `Set` with the given value inserted. It might seem like these three `Set.insert` calls would result in the creation of three brand-new sets, but Roc's *opportunistic mutation* optimizations mean this will be much more efficient.
 
 Opportunistic mutation works by detecting when a semantically immutable value can be safely mutated in-place without changing the behavior of the program. If `colors` is *unique* here—that is, nothing else is currently referencing it—then `Set.insert` will mutate it and then return it. Cloning it first would have no benefit, because nothing in the program could possibly tell the difference!
 

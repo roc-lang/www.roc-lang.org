@@ -32,7 +32,6 @@ page_data =
     Dict.empty({})
     |> Dict.insert("/bdfn.html", { title: "Governance | Roc", description: "Learn about the governance model of the Roc programming language." })
     |> Dict.insert("/community.html", { title: "Community | Roc", description: "Connect with the community of the Roc programming language." })
-    |> Dict.insert("/docs.html", { title: "Docs | Roc", description: "Documentation for the Roc programming language, including builtins." })
     |> Dict.insert("/donate.html", { title: "Donate | Roc", description: "Support the Roc programming language by donating or sponsoring." })
     |> Dict.insert("/faq.html", { title: "FAQ | Roc", description: "Frequently asked questions about the Roc programming language." })
     |> Dict.insert("/fast.html", { title: "Fast | Roc", description: "What does it mean that the Roc programming language is fast?" })
@@ -40,7 +39,6 @@ page_data =
     |> Dict.insert("/functional.html", { title: "Functional | Roc", description: "What does it mean that the Roc programming language is functional?" })
     |> Dict.insert("/index.html", { title: "The Roc Programming Language", description: "A fast, friendly, functional language." })
     |> Dict.insert("/foundation.html", { title: "Foundation | Roc", description: "Learn about the Roc Programming Language Foundation." })
-    |> Dict.insert("/platforms.html", { title: "Platforms and Apps | Roc", description: "Learn about the platforms and applications architecture in the Roc programming language." })
     #|> Dict.insert("/tutorial.html", { title: "Tutorial | Roc", description: "Learn the Roc programming language." })
     |> Dict.insert("/different-names.html", { title: "Different Names | Roc", description: "Names of things in Roc that differ from other languages." })
     |> Dict.insert("/repl/index.html", { title: "REPL | Roc", description: "Try the Roc programming language in an online REPL." })
@@ -164,7 +162,7 @@ view_navbar = |page_path_str|
                 a([href("/install")], [text("Install")]),
                 a([href("https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc")], [text("Examples")]),
                 a([href("/community")], [text("Community")]),
-                a([href("/docs")], [text("Docs")]),
+                a([href("/docs/main/")], [text("Docs")]),
                 a([href("/donate")], [text("Donate")]),
             ]),
         ]),

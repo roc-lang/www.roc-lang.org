@@ -15,10 +15,9 @@ To help with this, here are some Roc operations along with some names found in o
     </thead>
     <tbody id="different-names-body">
         <tr>
-            <td><a href="/builtins/List#walk">List.walk</a></td>
+            <td><a href="/docs/main/List#fold">List.fold</a></td>
             <td>
                 <ul>
-                    <li>fold</li>
                     <li>foldl</li>
                     <li>foldLeft</li>
                     <li>fold_left</li>
@@ -29,11 +28,12 @@ To help with this, here are some Roc operations along with some names found in o
                     <li>inject</li>
                     <li>accumulate</li>
                     <li>Aggregate</li>
+                    <li>walk</li>
                 </ul>
             </td>
         </tr>
         <tr>
-            <td><a href="/builtins/List#walk_backwards">List.walk_backwards</a></td>
+            <td><a href="/docs/main/List#fold_rev">List.fold_rev</a></td>
             <td>
                 <ul>
                     <li>foldr</li>
@@ -42,11 +42,12 @@ To help with this, here are some Roc operations along with some names found in o
                     <li>fold-right</li>
                     <li>reduceRight</li>
                     <li>rreduce</li>
+                    <li>walk_backwards</li>
                 </ul>
             </td>
         </tr>
         <tr>
-            <td><a href="/builtins/List#first">List.first</a></td>
+            <td><a href="/docs/main/List#first">List.first</a></td>
             <td>
                 <ul>
                     <li>head</li>
@@ -56,7 +57,7 @@ To help with this, here are some Roc operations along with some names found in o
             </td>
         </tr>
         <tr>
-            <td><a href="/builtins/List#keep_if">List.keep_if</a></td>
+            <td><a href="/docs/main/List#keep_if">List.keep_if</a></td>
             <td>
                 <ul>
                     <li>filter</li>
@@ -67,7 +68,7 @@ To help with this, here are some Roc operations along with some names found in o
             </td>
         </tr>
         <tr>
-            <td><a href="/builtins/List#drop_if">List.drop_if</a></td>
+            <td><a href="/docs/main/List#drop_if">List.drop_if</a></td>
             <td>
                 <ul>
                     <li>reject</li>
@@ -77,48 +78,19 @@ To help with this, here are some Roc operations along with some names found in o
             </td>
         </tr>
         <tr>
-            <td><a href="/builtins/List#join">List.join</a></td>
-            <td>
-                <ul>
-                    <li>flatten</li>
-                    <li>flat</li>
-                    <li>concat</li>
-                    <li>smoosh</li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td><a href="/builtins/List#join_map">List.join_map</a></td>
-            <td>
-                <ul>
-                    <li>concatMap</li>
-                    <li>filterMap</li>
-                    <li>filter_map</li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td><a href="/builtins/List#keep_oks">List.keep_oks</a></td>
-            <td>
-                <ul>
-                    <li>compact</li>
-                    <li>filterMap(identity)</li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td><a href="/builtins/Result#try">Result.try</a></td>
+            <td><a href="/docs/main/langref/operators#-unwrap-if-ok-early-return-if-err">?</a></td>
             <td>
                 <ul>
                     <li>bind</li>
                     <li>flatMap</li>
                     <li>andThen</li>
                     <li>(&gt;&gt;=)</li>
+                    <li>Result.try</li>
                 </ul>
             </td>
         </tr>
         <tr>
-            <td><a href="/builtins/List#map2">List.map2 x y Pair</a></td>
+            <td><a href="/docs/main/List#map2">List.map2(x, y, |a, b| (a, b))</a></td>
             <td>
                 <ul>
                     <li>zip</li>
