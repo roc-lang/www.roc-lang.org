@@ -26,6 +26,11 @@ binaryen_dir = ".cache/binaryen-version_130"
 binaryen_archive_path = ".cache/binaryen-version_130-node.tar.gz"
 binaryen_wasm_opt_path = ".cache/binaryen-version_130/wasm-opt.js"
 binaryen_wasm_opt_module_path = ".cache/binaryen-version_130/wasm-opt.wasm"
+# Keep the complete font because interactive editors accept arbitrary source text,
+# and compiler diagnostics use Unicode box-drawing glyphs.
+source_code_pro_commit = "803b7e23ec97ae58b6232ea76519a76d428ba268"
+source_code_pro_font_path = "build/fonts/source-code-pro/SourceCodePro-Regular.ttf.woff2"
+source_code_pro_font_url = "https://raw.githubusercontent.com/adobe-fonts/source-code-pro/${source_code_pro_commit}/WOFF2/TTF/SourceCodePro-Regular.ttf.woff2"
 
 main! : List Arg => Result {} _
 main! = |raw_args|
@@ -112,16 +117,8 @@ full_clean_build! = |{}|
     Dir.delete_all!("examples-main") ? DeleteExamplesMainDirFailed
     File.delete!("examples-main.zip") ? DeleteExamplesMainZipFailed
 
-    # download fonts just-in-time so we don't have to bloat the repo with them.
-    design_assets_commit = "4d949642ebc56ca455cf270b288382788bce5873"
-    design_assets_tarfile = "roc-lang-design-assets-4d94964.tar.gz"
-    design_assets_dir = "roc-lang-design-assets-4d94964"
-
-    Cmd.exec!("curl", ["-fLJO", "https://github.com/roc-lang/design-assets/tarball/${design_assets_commit}"])?
-    Cmd.exec!("tar", ["-xzf", design_assets_tarfile])?
-    Cmd.exec!("mv", ["${design_assets_dir}/fonts", "build/fonts"])?
-    Dir.delete_all!(design_assets_dir) ? DeleteDesignAssetsDirFailed
-    File.delete!(design_assets_tarfile) ? DeleteDesignAssetsTarFailed
+    # Download fonts just-in-time so we don't have to bloat the repo with them.
+    ensure_fonts_present!({})?
 
     repl_tarfile = "roc_repl_wasm.tar.gz"
     _ = File.delete!(repl_tarfile)
@@ -297,7 +294,7 @@ ensure_fonts_present! : {} => Result {} _
 ensure_fonts_present! = |{}|
     fonts_dir_exists = File.is_dir!("build/fonts") |> Result.with_default(Bool.false)
     if fonts_dir_exists then
-        Ok({})
+        {}
     else
         design_assets_commit = "4d949642ebc56ca455cf270b288382788bce5873"
         design_assets_tarfile = "roc-lang-design-assets-4d94964.tar.gz"
@@ -308,6 +305,19 @@ ensure_fonts_present! = |{}|
         Cmd.exec!("mv", ["${design_assets_dir}/fonts", "build/fonts"])?
         _ = Dir.delete_all!(design_assets_dir)
         _ = File.delete!(design_assets_tarfile)
+        {}
+
+    full_source_code_pro_exists = File.exists!(source_code_pro_font_path)?
+    if full_source_code_pro_exists then
+        Ok({})
+    else
+        source_code_pro_font_tmp_path = "${source_code_pro_font_path}.download"
+
+        Dir.create_all!("build/fonts/source-code-pro")?
+        _ = File.delete!(source_code_pro_font_tmp_path)
+        Cmd.exec!("curl", ["-fL", "-o", source_code_pro_font_tmp_path, source_code_pro_font_url])?
+        File.rename!(source_code_pro_font_tmp_path, source_code_pro_font_path)?
+
         Ok({})
 
 ensure_repl_present! : {} => Result {} _
