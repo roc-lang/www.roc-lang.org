@@ -1,0 +1,55 @@
+name: Preview Link Check
+
+# Runs a full internal-link check against the Cloudflare preview deployment that
+# is created for every pull request. Broken links (a common failure mode of the
+# generated docs, e.g. a langref article pointing at a page that doesn't exist)
+# are then caught before they reach production, on the exact build the PR
+# produced rather than on a nightly crawl of the live site.
+#
+# Cloudflare's GitHub integration reports every finished deployment as a
+# `deployment_status` event whose `environment_url` is the freshly-deployed
+# preview URL, so we simply crawl that. This needs no Cloudflare API token: the
+# URL comes straight from the event payload.
+#
+# Note: because this is a `deployment_status` workflow, GitHub only runs the copy
+# of this file that is on the default branch — so it starts working once merged,
+# not on the PR that introduces it.
+
+on:
+  deployment_status:
+
+# No permissions needed: we only read the event payload and make outbound HTTP
+# requests to the preview URL.
+permissions: {}
+
+concurrency:
+  # Supersede an in-flight check when a newer deployment for the same ref lands.
+  group: preview-link-check-${{ github.event.deployment.ref }}
+  cancel-in-progress: true
+
+jobs:
+  link-check:
+    # Only successful deployments expose a usable URL. Skip production (the
+    # scheduled daily-link-check.yml already covers the live site) and any
+    # deployment that reported no environment_url (e.g. a failed build).
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.environment_url != '' &&
+      !contains(github.event.deployment_status.environment_url, 'www.roc-lang.org')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check internal links on the preview deployment
+        env:
+          # The URL Cloudflare just deployed this PR's build to.
+          PREVIEW_URL: ${{ github.event.deployment_status.environment_url }}
+        run: |
+          echo "Checking internal links on preview deployment: $PREVIEW_URL"
+          # --internal-only: don't check third-party links (that's the daily
+          #   job's concern; here we only care that the build's own links work).
+          # This also turns on anchor checking, validating every internal
+          #   "#fragment" link against the target page's element ids.
+          ./ci_scripts/check-links.sh --internal-only --base-url "$PREVIEW_URL"
