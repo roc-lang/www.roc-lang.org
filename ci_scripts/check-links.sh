@@ -430,12 +430,15 @@ check_url() {
                 fi
             fi
         else
-            # Special handling: ignore HTTP 429 (Too Many Requests) for every.org links
-            if [[ "$status_code" == "429" && "$url" =~ every\.org ]]; then
+            # Special handling: ignore HTTP 429 (Too Many Requests) and 403
+            # (Forbidden) for every.org links. every.org rate-limits/blocks
+            # automated requests like this checker's, so these codes there
+            # don't indicate an actually broken link.
+            if [[ ("$status_code" == "429" || "$status_code" == "403") && "$url" =~ every\.org ]]; then
                 if [[ "$is_external" == "true" ]]; then
-                    echo -e "${YELLOW}⚠${NC} $url ($status_code - rate limited, ignoring) ${BLUE}[external]${NC}"
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for every.org) ${BLUE}[external]${NC}"
                 else
-                    echo -e "${YELLOW}⚠${NC} $url ($status_code - rate limited, ignoring)"
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for every.org)"
                 fi
             else
                 if [[ "$is_external" == "true" ]]; then
