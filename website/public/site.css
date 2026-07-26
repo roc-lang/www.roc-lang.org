@@ -141,6 +141,7 @@ hr {
     list-style-type: none;
     padding: 24px 40px;
     max-width: 720px;
+    overflow-y: auto;
 }
 
 #individual-sponsors li {
