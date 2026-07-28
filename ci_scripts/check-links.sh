@@ -433,12 +433,20 @@ check_url() {
             # Special handling: ignore HTTP 429 (Too Many Requests) and 403
             # (Forbidden) for every.org links. every.org rate-limits/blocks
             # automated requests like this checker's, so these codes there
-            # don't indicate an actually broken link.
+            # don't indicate an actually broken link. Also ignore HTTP 429 for
+            # youtube.com/youtu.be links, which rate-limits automated requests
+            # the same way.
             if [[ ("$status_code" == "429" || "$status_code" == "403") && "$url" =~ every\.org ]]; then
                 if [[ "$is_external" == "true" ]]; then
                     echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for every.org) ${BLUE}[external]${NC}"
                 else
                     echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for every.org)"
+                fi
+            elif [[ "$status_code" == "429" && "$url" =~ (youtube\.com|youtu\.be) ]]; then
+                if [[ "$is_external" == "true" ]]; then
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for youtube) ${BLUE}[external]${NC}"
+                else
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for youtube)"
                 fi
             else
                 if [[ "$is_external" == "true" ]]; then
