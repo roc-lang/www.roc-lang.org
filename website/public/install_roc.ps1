@@ -5,15 +5,15 @@
 $ErrorActionPreference = "Stop"
 
 # ---- Configuration ----
-$VersionDate = "2026-08-03"
-$BuildId     = "94cbed3"
-$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-August-03-94cbed3"
+$VersionDate = "2026-08-05"
+$BuildId     = "24f0b47"
+$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-August-05-24f0b47"
 
 # Known SHA256 checksums for Windows
 # The arm64 build is temporarily unavailable, so $Sha_Windows_arm64 is currently
 # unused (the arm64 branch below exits early). Both are refreshed automatically by
 # ci_scripts/update_roc_release.py once the arm64 build is restored.
-$Sha_Windows_x86_64 = "f7d3f51e103952daeb664cf8f27541c953338a8adeaf579a39e8bded1ca1082b"
+$Sha_Windows_x86_64 = "43bb8bf0e267979a51f69481123e10dc4964e2f469462b38c457af838909a43c"
 $Sha_Windows_arm64  = "0e80fee64f9480b2256541e9900389789db6492617dbfb79ee3f7b434a636c92"
 
 # ---- Warn if this installer is stale ----
