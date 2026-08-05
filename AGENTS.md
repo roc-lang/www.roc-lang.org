@@ -397,7 +397,7 @@ Inspect.inspect : val -> f where val implements Inspect, f implements InspectFor
 Inspect.to_str : val -> Str where val implements Inspect
 ```
 
-The Docs website is: https://www.roc-lang.org/builtins/alpha4/
+The Docs website is: https://www.roc-lang.org/docs/alpha4/
 Examples are at: https://github.com/roc-lang/examples/tree/main/examples
 
 - Do not "hide failures" with `Result.with_default`, prefer `?` for error handling.
