@@ -801,9 +801,25 @@ write_builtins_redirects! = |{}|
     # Version-prefixed URLs (e.g. /builtins/alpha4/Str) map to the same version
     # under /docs. Everything else — bare /builtins, /docs, and un-versioned
     # module links like /builtins/Dict (still used by some example READMEs) —
-    # resolves to the default `main` version. First match wins, so the specific
-    # version rules precede the catch-all. This stays module-list-free: any
+    # resolves to the default `main` version. This stays module-list-free: any
     # module, present or future, is handled without editing this file.
+    #
+    # Two Cloudflare details drive the shape of these rules:
+    #
+    # 1. Rules without a splat/placeholder are "static" and are matched by exact
+    #    path lookup, ahead of every dynamic rule. There is no trailing-slash
+    #    fallback, so each static path needs both spellings spelled out.
+    # 2. Despite what the docs imply, file order is NOT honored between two
+    #    dynamic rules that both match a path. A catch-all `/builtins/*` placed
+    #    last still won over the earlier `/builtins/main/*`, which is what sent
+    #    /builtins/main/Str to the non-existent /docs/main/main/Str.
+    #
+    # So the dynamic rules below must not overlap each other. The version rules
+    # consume a version segment via a splat; un-versioned module links use a
+    # `:module` placeholder, which matches a single segment only (never across a
+    # `/`) and therefore cannot collide with them. The one remaining overlap —
+    # `/builtins/main/` matching both `/builtins/:module/` and `/builtins/main/*`
+    # — is settled by the static rule for that exact path.
     redirects_content =
         """
         /docs                /docs/main/ 301
@@ -811,16 +827,20 @@ write_builtins_redirects! = |{}|
         /builtins            /docs/main/ 301
         /builtins/           /docs/main/ 301
         /builtins/main       /docs/main/ 301
+        /builtins/main/      /docs/main/ 301
         /builtins/alpha3     /docs/alpha3/ 301
+        /builtins/alpha3/    /docs/alpha3/ 301
         /builtins/alpha4     /docs/alpha4/ 301
-        /builtins/main/*     /docs/main/:splat 301
-        /builtins/alpha3/*   /docs/alpha3/:splat 301
-        /builtins/alpha4/*   /docs/alpha4/:splat 301
-        /builtins/*          /docs/main/:splat 301
+        /builtins/alpha4/    /docs/alpha4/ 301
         /platforms           /docs/main/langref/platforms 301
         /platforms/          /docs/main/langref/platforms 301
         /tutorial            https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md 301
         /examples            https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc 301
+        /builtins/main/*     /docs/main/:splat 301
+        /builtins/alpha3/*   /docs/alpha3/:splat 301
+        /builtins/alpha4/*   /docs/alpha4/:splat 301
+        /builtins/:module    /docs/main/:module 301
+        /builtins/:module/   /docs/main/:module/ 301
         """
     File.write_utf8!(redirects_content, "build/_redirects") ? CreateRedirectsFileFailed
 
