@@ -2,10 +2,10 @@
 
 ## How to install Roc
 
-1. Download the roc install script and execute it:
+1. Download and run the cross-platform Roc installer (requires Python 3):
 
     ```sh
-    curl --proto '=https' --tlsv1.2 -sSf https://roc-lang.org/install_roc.sh | sh 
+    curl --proto '=https' --tlsv1.2 -sSf https://roc-lang.org/install_roc.py | python3 -
     ```
 
 1. In a new terminal, download and run hello world:

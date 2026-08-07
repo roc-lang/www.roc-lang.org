@@ -1,0 +1,109 @@
+/* Roc website docs patches */
+
+/* Runtime syntax highlights */
+pre:has(> code.roc-highlight),
+.entry-signature:has(.roc-highlight),
+.entry-type-def.roc-highlight {
+    background-color: var(--code-bg);
+    color: #202746;
+}
+
+pre > code.roc-highlight,
+.entry-signature-code.roc-highlight,
+.type-ahead-signature.roc-highlight {
+    background: transparent;
+    color: #202746;
+}
+
+::highlight(roc-c) { color: #596078; }
+::highlight(roc-n),
+::highlight(roc-s),
+::highlight(roc-u) { color: #087f78; }
+::highlight(roc-k),
+::highlight(roc-o),
+::highlight(roc-d) { color: #6633bf; }
+::highlight(roc-f),
+::highlight(roc-p) { color: #3e496d; }
+::highlight(roc-v) { color: #202746; }
+::highlight(roc-e) { color: #b42338; }
+
+@media (prefers-color-scheme: dark) {
+    pre:has(> code.roc-highlight),
+    .entry-signature:has(.roc-highlight),
+    .entry-type-def.roc-highlight {
+        background-color: #202746;
+        color: #e0d6f0;
+    }
+
+    pre > code.roc-highlight,
+    .entry-signature-code.roc-highlight,
+    .type-ahead-signature.roc-highlight { color: #e0d6f0; }
+    ::highlight(roc-c) { color: #ccc; }
+    ::highlight(roc-n),
+    ::highlight(roc-s),
+    ::highlight(roc-u) { color: #4eefd9; }
+    ::highlight(roc-k),
+    ::highlight(roc-o),
+    ::highlight(roc-d) { color: #9b6bf2; }
+    ::highlight(roc-f),
+    ::highlight(roc-p) { color: #aeb4c6; }
+    ::highlight(roc-v) { color: white; }
+    ::highlight(roc-e) { color: hsl(0, 96%, 67%); }
+}
+
+/* Sidebar chevrons */
+:is(.sidebar-module-link, .sidebar-module-summary) > .entry-toggle {
+    align-items: center;
+    appearance: none;
+    background: none;
+    border: 0;
+    color: currentColor;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 0;
+    justify-content: center;
+    line-height: 0;
+    transition: color 80ms linear;
+}
+
+.sidebar-module-link > .entry-toggle { pointer-events: none; }
+.sidebar-module-summary > .entry-toggle {
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.sidebar-module-link:is(:hover, :focus, :focus-within, :active) > .entry-toggle {
+    transition: color 80ms linear, rotate 80ms linear;
+}
+
+.sidebar-module-summary > .entry-toggle:hover,
+.sidebar-module-summary:focus-visible > .entry-toggle {
+    color: var(--violet);
+    transition: color 80ms linear, rotate 80ms linear;
+}
+
+.sidebar-module-link:hover,
+.sidebar-module-link:hover > span,
+.sidebar-module-link:hover > .entry-toggle { color: var(--violet); }
+
+:is(.sidebar-module-link, .sidebar-module-summary) > .entry-toggle::before {
+    -webkit-mask: none;
+    background: none;
+    border: solid currentColor;
+    border-width: 0 2px 2px 0;
+    content: "";
+    display: block;
+    height: 0.45rem;
+    mask: none;
+    transform: rotate(-45deg);
+    width: 0.45rem;
+}
+
+/* Top-level entry alignment */
+.main-content > .entry > :is(h2, h3, h4, h5, h6),
+.main-content > .entry > .entry-type-def,
+.main-content > .entry > .entry-children-container {
+    margin-left: 0;
+}
+
+/* End Roc website docs patches */

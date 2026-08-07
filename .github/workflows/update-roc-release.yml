@@ -18,7 +18,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
-    - name: Update install scripts to the latest nightly
+    - name: Update the installer to the latest nightly
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: python3 ci_scripts/update_roc_release.py
@@ -27,8 +27,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if git diff --quiet -- website/public/install_roc.sh website/public/install_roc.ps1; then
-          echo "Install scripts already point at the latest nightly. Nothing to do."
+        if git diff --quiet -- .roc-version website/public/install_roc.py; then
+          echo "The repository and installer already point at the latest nightly. Nothing to do."
           exit 0
         fi
 
@@ -38,15 +38,15 @@ jobs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
         git switch -C "$BRANCH"
-        git add website/public/install_roc.sh website/public/install_roc.ps1
-        git commit -m "Update Roc release in install scripts"
+        git add .roc-version website/public/install_roc.py
+        git commit -m "Update Roc release in installer"
         git push --force origin "$BRANCH"
 
         # Open a PR only if one isn't already open for this branch; otherwise the
         # force-push above has already refreshed the existing PR.
         if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
           gh pr create \
-            --title "Update Roc release in install scripts" \
-            --body "Automated update of the pinned Roc nightly in \`install_roc.sh\` and \`install_roc.ps1\` to the latest release from \`roc-lang/nightlies\`." \
+            --title "Update Roc release in installer" \
+            --body "Automated update of \`.roc-version\` and \`install_roc.py\` to the latest immutable release from \`roc-lang/nightlies\`." \
             --head "$BRANCH"
         fi
