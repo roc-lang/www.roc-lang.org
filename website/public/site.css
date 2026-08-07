@@ -1820,7 +1820,7 @@ code .dim,
     }
 }
 
-/* ---- legacy compiler diagnostics ---- */
+/* ---- structured compiler diagnostics ---- */
 
 .report {
     border-left: 3px solid #555;

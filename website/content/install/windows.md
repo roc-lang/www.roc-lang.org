@@ -4,17 +4,14 @@
 
 1. Open a  **PowerShell Terminal** (you can press **Win + X → Terminal**).
 
-2. Download and run the Roc installer script:
+2. Download and run the cross-platform Roc installer (requires Python 3):
 
     ```powershell
-    irm https://roc-lang.org/install_roc.ps1 | iex
+    irm https://roc-lang.org/install_roc.py -OutFile install_roc.py
+    python install_roc.py
     ```
 
-    > If your PowerShell says scripts are blocked, run PowerShell **as Administrator** just for the install, or start it like this:
-    >
-    > ```powershell
-    > powershell -ExecutionPolicy Bypass
-    > ```
+    > If `python` is not available, install Python 3 from [python.org](https://www.python.org/downloads/windows/) and try again.
 
 3. Close that PowerShell window and open a **new** one so the updated PATH is picked up.
 
@@ -32,4 +29,3 @@
 - [Examples](https://www.roc-lang.org/examples)
 - [Frequently Asked Questions](https://www.roc-lang.org/faq)
 - [Roc Exercism Track](https://exercism.org/tracks/roc) (still on Roc alpha 4)
-

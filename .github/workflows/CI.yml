@@ -20,30 +20,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: cargo install typos-cli --version 1.34.0
+      - run: cargo install typos-cli --version 1.34.0 --locked
 
       - name: do spell check with typos-cli 1.34.0
         run: typos
 
-      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
-        with:
-          # Note: nightly hashes are not verified because they are updated regularly.
-          version: nightly
+      - name: Read pinned Roc nightly
+        id: roc-version
+        shell: bash
+        run: |
+          nightly_tag="$(sed 's/\r$//' .roc-version)"
+          printf 'nightly-tag=%s\n' "$nightly_tag" >> "$GITHUB_OUTPUT"
 
-      - run: roc version
-
-      - run: |
-          cd website
-          roc check build_website.roc
-
-      - name: Remove previous Roc install to avoid dir-name collision
-        run: rm -rf roc_nightly-*
-
-      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+      - name: Install pinned Roc compiler
+        uses: roc-lang/setup-roc@e81ba5825caa1544545c783d4a02ae3155b5ab02
         with:
           version: nightly-new-compiler
+          nightly-tag: ${{ steps.roc-version.outputs.nightly-tag }}
 
       - run: roc version
+
+      - name: Check and build the website applications
+        run: |
+          cd website
+          roc check build_website.roc
+          roc check static_site_gen.roc
+          roc build build_website.roc
+          roc build static_site_gen.roc
+          ./static_site_gen content "$RUNNER_TEMP/roc-website"
 
       - name: Test interactive Roc widgets
         run: ci_scripts/test_interactive_roc.sh
@@ -78,14 +82,13 @@ jobs:
 
       - name: Extract ROC_NIGHTLY_VERSION from install script
         run: |
-          VERSION_DATE=$(grep '^VERSION_DATE=' website/public/install_roc.sh | cut -d'"' -f2)
-          BUILD_ID=$(grep '^BUILD_ID=' website/public/install_roc.sh | cut -d'"' -f2)
-          echo "ROC_NIGHTLY_VERSION=${VERSION_DATE}-${BUILD_ID}" >> "$GITHUB_ENV"
+          ROC_NIGHTLY_VERSION=$(python3 -c 'import runpy; c = runpy.run_path("website/public/install_roc.py"); print(c["VERSION_DATE"] + "-" + c["BUILD_ID"])')
+          echo "ROC_NIGHTLY_VERSION=${ROC_NIGHTLY_VERSION}" >> "$GITHUB_ENV"
 
       - name: Test install script (answer no to PATH)
         run: |
           cd website/public
-          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=n bash install_roc.sh
+          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=n python3 install_roc.py
 
       - name: Verify installation (no PATH)
         run: |
@@ -110,7 +113,7 @@ jobs:
       - name: Test install script (answer yes to PATH)
         run: |
           cd website/public
-          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=y bash install_roc.sh
+          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=y python3 install_roc.py
 
       - name: Verify PATH was updated
         run: |
@@ -139,13 +142,10 @@ jobs:
         include:
           - os: windows-2022
             arch: x86_64
-            proc_arch: AMD64
           - os: windows-2025
             arch: x86_64
-            proc_arch: AMD64
           #- os: windows-11-arm
           #  arch: arm64
-          #  proc_arch: ARM64
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -156,19 +156,17 @@ jobs:
       - name: Extract ROC_NIGHTLY_VERSION from install script
         shell: pwsh
         run: |
-          $content = Get-Content website/public/install_roc.sh -Raw
-          $versionDate = [regex]::Match($content, 'VERSION_DATE="([^"]+)"').Groups[1].Value
-          $buildId = [regex]::Match($content, 'BUILD_ID="([^"]+)"').Groups[1].Value
-          echo "ROC_NIGHTLY_VERSION=${versionDate}-${buildId}" >> $env:GITHUB_ENV
+          $version = python -c "import runpy; c = runpy.run_path(r'website/public/install_roc.py'); print(c['VERSION_DATE'] + '-' + c['BUILD_ID'])"
+          echo "ROC_NIGHTLY_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Test install script (answer no to PATH)
         shell: pwsh
         env:
-          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
           ROC_CONTINUE_IF_STALE: y
+          ROC_ADD_TO_PATH: n
         run: |
           Set-Location website/public
-          "n" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
+          python .\install_roc.py
 
       - name: Verify installation (no PATH)
         shell: pwsh
@@ -208,16 +206,14 @@ jobs:
       - name: Test install script (answer yes to PATH)
         shell: pwsh
         env:
-          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
           ROC_CONTINUE_IF_STALE: y
+          ROC_ADD_TO_PATH: y
         run: |
           Set-Location website/public
-          "y" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
+          python .\install_roc.py
 
       - name: Verify PATH was updated
         shell: pwsh
-        env:
-          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
           $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
 

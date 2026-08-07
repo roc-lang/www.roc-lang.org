@@ -15,7 +15,7 @@ website/build
 website/content/examples
 website/.cache/
 
-# the roc wasm compiler and echo platform gets downloaded during build
+# Compiler, source, and generated platform dependencies are downloaded during build.
 
 __pycache__/
 
