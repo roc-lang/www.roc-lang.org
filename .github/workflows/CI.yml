@@ -82,13 +82,14 @@ jobs:
 
       - name: Extract ROC_NIGHTLY_VERSION from install script
         run: |
-          ROC_NIGHTLY_VERSION=$(python3 -c 'import runpy; c = runpy.run_path("website/public/install_roc.py"); print(c["VERSION_DATE"] + "-" + c["BUILD_ID"])')
-          echo "ROC_NIGHTLY_VERSION=${ROC_NIGHTLY_VERSION}" >> "$GITHUB_ENV"
+          VERSION_DATE=$(grep '^VERSION_DATE=' website/public/install_roc.sh | cut -d'"' -f2)
+          BUILD_ID=$(grep '^BUILD_ID=' website/public/install_roc.sh | cut -d'"' -f2)
+          echo "ROC_NIGHTLY_VERSION=${VERSION_DATE}-${BUILD_ID}" >> "$GITHUB_ENV"
 
       - name: Test install script (answer no to PATH)
         run: |
           cd website/public
-          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=n python3 install_roc.py
+          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=n bash install_roc.sh
 
       - name: Verify installation (no PATH)
         run: |
@@ -113,7 +114,7 @@ jobs:
       - name: Test install script (answer yes to PATH)
         run: |
           cd website/public
-          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=y python3 install_roc.py
+          ROC_CONTINUE_IF_STALE=y ROC_ADD_TO_PATH=y bash install_roc.sh
 
       - name: Verify PATH was updated
         run: |
@@ -142,10 +143,13 @@ jobs:
         include:
           - os: windows-2022
             arch: x86_64
+            proc_arch: AMD64
           - os: windows-2025
             arch: x86_64
+            proc_arch: AMD64
           #- os: windows-11-arm
           #  arch: arm64
+          #  proc_arch: ARM64
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -156,17 +160,19 @@ jobs:
       - name: Extract ROC_NIGHTLY_VERSION from install script
         shell: pwsh
         run: |
-          $version = python -c "import runpy; c = runpy.run_path(r'website/public/install_roc.py'); print(c['VERSION_DATE'] + '-' + c['BUILD_ID'])"
-          echo "ROC_NIGHTLY_VERSION=$version" >> $env:GITHUB_ENV
+          $content = Get-Content website/public/install_roc.sh -Raw
+          $versionDate = [regex]::Match($content, 'VERSION_DATE="([^"]+)"').Groups[1].Value
+          $buildId = [regex]::Match($content, 'BUILD_ID="([^"]+)"').Groups[1].Value
+          echo "ROC_NIGHTLY_VERSION=${versionDate}-${buildId}" >> $env:GITHUB_ENV
 
       - name: Test install script (answer no to PATH)
         shell: pwsh
         env:
+          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
           ROC_CONTINUE_IF_STALE: y
-          ROC_ADD_TO_PATH: n
         run: |
           Set-Location website/public
-          python .\install_roc.py
+          "n" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
 
       - name: Verify installation (no PATH)
         shell: pwsh
@@ -206,14 +212,16 @@ jobs:
       - name: Test install script (answer yes to PATH)
         shell: pwsh
         env:
+          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
           ROC_CONTINUE_IF_STALE: y
-          ROC_ADD_TO_PATH: y
         run: |
           Set-Location website/public
-          python .\install_roc.py
+          "y" | pwsh -ExecutionPolicy Bypass -File .\install_roc.ps1
 
       - name: Verify PATH was updated
         shell: pwsh
+        env:
+          PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
           $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
 
