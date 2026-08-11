@@ -435,12 +435,20 @@ check_url() {
             # automated requests like this checker's, so these codes there
             # don't indicate an actually broken link. Also ignore HTTP 429 for
             # youtube.com/youtu.be links, which rate-limits automated requests
-            # the same way.
+            # the same way, and HTTP 403 for exercism.org (e.g.
+            # https://exercism.org/tracks/roc), which blocks this checker's
+            # requests even though the page loads fine in a browser.
             if [[ ("$status_code" == "429" || "$status_code" == "403") && "$url" =~ every\.org ]]; then
                 if [[ "$is_external" == "true" ]]; then
                     echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for every.org) ${BLUE}[external]${NC}"
                 else
                     echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for every.org)"
+                fi
+            elif [[ "$status_code" == "403" && "$url" =~ exercism\.org ]]; then
+                if [[ "$is_external" == "true" ]]; then
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for exercism.org) ${BLUE}[external]${NC}"
+                else
+                    echo -e "${YELLOW}⚠${NC} $url ($status_code - ignoring for exercism.org)"
                 fi
             elif [[ "$status_code" == "429" && "$url" =~ (youtube\.com|youtu\.be) ]]; then
                 if [[ "$is_external" == "true" ]]; then
