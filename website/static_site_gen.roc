@@ -56,6 +56,7 @@ page_data = Dict.empty()
 	.insert("/foundation.html", { title: "Foundation | Roc", description: "Learn about the Roc Programming Language Foundation." })
 	.insert("/different-names.html", { title: "Different Names | Roc", description: "Names of things in Roc that differ from other languages." })
 	.insert("/repl/index.html", { title: "REPL | Roc", description: "Try the Roc programming language in an online REPL." })
+	.insert("/examples/index.html", { title: "Examples | Roc", description: "Examples built and tested with the Roc compiler used by this website." })
 	.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
 	.insert("/install/other.html", { title: "Getting started on other systems | Roc", description: "Roc installation guide for other systems" })
 	.insert("/install/unix.html", { title: "Getting started on Unix-based OS | Roc", description: "Roc installation guide for Unix-based OS" })
@@ -197,7 +198,7 @@ view_navbar = |page_path_str| {
 						[
 							Html.a([href("https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md")], [Html.text("Tutorial")]),
 							Html.a([href("/install")], [Html.text("Install")]),
-							Html.a([href("https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc")], [Html.text("Examples")]),
+							Html.a([href("/examples")], [Html.text("Examples")]),
 							Html.a([href("/community")], [Html.text("Community")]),
 							Html.a([href("/docs/main/")], [Html.text("Docs")]),
 							Html.a([href("/donate")], [Html.text("Donate")]),
