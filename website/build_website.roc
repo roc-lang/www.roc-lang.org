@@ -158,7 +158,6 @@ generate_site! = |roc_bin| {
 minify_build_assets! : () => Try({}, _)
 minify_build_assets! = || {
 	minify_build_asset!("build/compiler.js")?
-	minify_build_asset!("build/site.js")?
 	minify_build_asset!("build/site.css")?
 	minify_html_assets!(list_matching_files!("build", ".html")?)
 }
