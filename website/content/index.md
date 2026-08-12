@@ -37,8 +37,7 @@
 
 ## [Examples](#examples) {#examples}
 
-In its current state, the new compiler is only suited for things like programming puzzles.
-In any case, the [all syntax example](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc) offers a great overview of the language.
+Browse [examples built and tested with the same Roc compiler as this website](/examples).
 
 You can run the full compiler in the browser without a backend server!
 <div class="roc-interactive front-page">
@@ -59,6 +58,8 @@ main! = |_args| {
 }</pre>
 <button class="roc-run">Enable JS to Run</button>
 </div>
+
+<a class="btn-small" href="/examples">Examples</a>
 
 To get started with the language, try the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
 

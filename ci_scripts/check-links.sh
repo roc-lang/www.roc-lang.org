@@ -392,7 +392,7 @@ check_url() {
             fi
 
             # Extract links for internal HTML pages until we hit max depth. Skip
-            # if the URL redirected off-site (e.g. /examples -> github.com).
+            # if the URL redirected off-site.
             if [[ "$is_external" == "false" && "$depth" -lt "$MAX_DEPTH" && "$is_internal_effective" == true ]]; then
                 if content_is_html "$content"; then
                     echo "Extracting links from HTML content..."

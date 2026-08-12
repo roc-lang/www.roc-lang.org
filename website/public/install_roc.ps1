@@ -5,15 +5,15 @@
 $ErrorActionPreference = "Stop"
 
 # ---- Configuration ----
-$VersionDate = "2026-08-08"
-$BuildId     = "195c9e7"
-$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-08-08-195c9e7"
+$VersionDate = "2026-08-12"
+$BuildId     = "606470f"
+$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-08-12-606470f"
 
 # Known SHA256 checksums for Windows
 # The arm64 build is temporarily unavailable, so $Sha_Windows_arm64 is currently
 # unused (the arm64 branch below exits early). Both are refreshed automatically by
 # ci_scripts/update_roc_release.py once the arm64 build is restored.
-$Sha_Windows_x86_64 = "9febf176fcbec57bb5bc391cb2ae972ce951d52dff411c0b59909a2c6605ea7a"
+$Sha_Windows_x86_64 = "72be2c28d5bf45400b2183343e65f6e1089672bdf0de780c1f97ea4cb44bb12b"
 $Sha_Windows_arm64  = "0e80fee64f9480b2256541e9900389789db6492617dbfb79ee3f7b434a636c92"
 
 # ---- Warn if this installer is stale ----
@@ -96,7 +96,7 @@ Write-Host "Roc was extracted to: $extractDir"
 if ($env:ROC_INSTALL_DIR) {
     $targetDir = New-Item -ItemType Directory -Path $env:ROC_INSTALL_DIR -Force
     $rocExePath = Join-Path $extractDir "roc.exe"
-    Copy-Item -Path $rocExePath -Destination $env:ROC_INSTALL_DIR -Force    
+    Copy-Item -Path $rocExePath -Destination $env:ROC_INSTALL_DIR -Force
     Write-Host "Roc executable was copied to: $($env:ROC_INSTALL_DIR)"
     $installDir = $targetDir.FullName
 }

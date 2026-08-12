@@ -20,30 +20,49 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: cargo install typos-cli --version 1.34.0
+      - run: cargo install typos-cli --version 1.34.0 --locked
 
       - name: do spell check with typos-cli 1.34.0
         run: typos
 
-      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
-        with:
-          # Note: nightly hashes are not verified because they are updated regularly.
-          version: nightly
+      - name: Read pinned Roc nightly
+        id: roc-version
+        shell: bash
+        run: |
+          nightly_tag="$(sed -n 's/^[[:space:]]*roc: "\([^"]*\)",$/\1/p' website/build_website.roc)"
+          printf 'nightly-tag=%s\n' "$nightly_tag" >> "$GITHUB_OUTPUT"
 
-      - run: roc version
-
-      - run: |
-          cd website
-          roc check build_website.roc
-
-      - name: Remove previous Roc install to avoid dir-name collision
-        run: rm -rf roc_nightly-*
-
-      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+      - name: Install pinned Roc compiler
+        uses: roc-lang/setup-roc@e81ba5825caa1544545c783d4a02ae3155b5ab02
         with:
           version: nightly-new-compiler
+          nightly-tag: ${{ steps.roc-version.outputs.nightly-tag }}
 
       - run: roc version
+
+      - name: Check and build the website applications
+        run: |
+          cd website
+          roc check build_website.roc
+          roc check static_site_gen.roc
+          roc build build_website.roc
+          roc build static_site_gen.roc
+          ./static_site_gen content "$RUNNER_TEMP/roc-website"
+
+      - name: Build and validate pinned examples
+        run: |
+          cd website
+          ./build_website --roc="$(command -v roc)" --examples-only
+          test -f build/examples/index.html
+          test -f build/examples/HelloWorld/README.html
+          grep -q 'Hello, World!' build/examples/index.html
+          grep -q 'Hello, World!' build/examples/HelloWorld/README.html
+          examples_sha="$(<content/examples/.source-revision)"
+          grep -q "github.com/roc-lang/examples/tree/$examples_sha/examples/HelloWorld" build/examples/HelloWorld/README.html
+          if grep -R -q 'file:main.roc' build/examples; then
+            echo "An example source placeholder was not expanded"
+            exit 1
+          fi
 
       - name: Test interactive Roc widgets
         run: ci_scripts/test_interactive_roc.sh

@@ -32,4 +32,3 @@
 - [Examples](https://www.roc-lang.org/examples)
 - [Frequently Asked Questions](https://www.roc-lang.org/faq)
 - [Roc Exercism Track](https://exercism.org/tracks/roc) (still on Roc alpha 4)
-

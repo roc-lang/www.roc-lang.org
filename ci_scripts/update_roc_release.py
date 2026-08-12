@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Update the pinned Roc nightly release in the install scripts.
+"""Update the pinned Roc nightly release used by the website and installers.
 
 Fetches the latest release from roc-lang/nightlies and rewrites the hardcoded
 version date, build id, base URL and SHA256 checksums in:
+  - website/build_website.roc
   - website/public/install_roc.sh
   - website/public/install_roc.ps1
 
@@ -20,6 +21,7 @@ import urllib.request
 RELEASES_API = "https://api.github.com/repos/roc-lang/nightlies/releases/latest"
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BUILD_WEBSITE_ROC_PATH = os.path.join(REPO_ROOT, "website", "build_website.roc")
 SH_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.sh")
 PS1_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.ps1")
 
@@ -178,6 +180,18 @@ def update_ps1(info):
         f.write(text)
 
 
+def update_build_website_roc(info):
+    with open(BUILD_WEBSITE_ROC_PATH, "r") as f:
+        text = f.read()
+
+    text = replace_assignment(
+        text, r'roc: "[^"]*"', f'roc: "{info["tag"]}"', BUILD_WEBSITE_ROC_PATH
+    )
+
+    with open(BUILD_WEBSITE_ROC_PATH, "w") as f:
+        f.write(text)
+
+
 def main():
     release = fetch_latest_release()
     info = parse_release(release)
@@ -187,9 +201,10 @@ def main():
     unavailable = [k for k in TEMPORARILY_UNAVAILABLE if k not in info["shas"]]
     if unavailable:
         print(f"  temporarily unavailable (skipped): {', '.join(unavailable)}")
+    update_build_website_roc(info)
     update_sh(info)
     update_ps1(info)
-    print("Updated install_roc.sh and install_roc.ps1")
+    print("Updated build_website.roc, install_roc.sh, and install_roc.ps1")
 
 
 if __name__ == "__main__":
