@@ -29,7 +29,7 @@ jobs:
         id: roc-version
         shell: bash
         run: |
-          nightly_tag="$(sed 's/\r$//' .roc-version)"
+          nightly_tag="$(sed -n 's/^[[:space:]]*roc: "\([^"]*\)",$/\1/p' website/build_website.roc)"
           printf 'nightly-tag=%s\n' "$nightly_tag" >> "$GITHUB_OUTPUT"
 
       - name: Install pinned Roc compiler

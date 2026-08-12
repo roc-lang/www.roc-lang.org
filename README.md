@@ -2,9 +2,10 @@
 
 Contains everything needed to build [www.roc-lang.org](https://www.roc-lang.org/).
 
-The build uses the new Zig-based Roc compiler pinned in `.roc-version` and the
-basic-ssg platform. It also downloads the `roc-lang/examples` commit configured
-in `website/examples.json`; the dependency must declare the same `.roc-version`.
+The build uses the new Zig-based Roc compiler pinned in `website/build_website.roc`
+and the basic-ssg platform. It also downloads the `roc-lang/examples` commit
+configured in `website/examples.json`; the dependency must declare a matching
+`.roc-version`.
 
 The build requires `bash`, `curl`, `python3`, `tar`, `unzip`, and standard Unix
 file tools.
@@ -17,7 +18,7 @@ roc build build_website.roc
 ./build_website --roc="$(command -v roc)"
 ```
 
-Omit `--roc` to let the build download the compiler pinned by `.roc-version`
+Omit `--roc` to let the build download the compiler pinned in `build_website.roc`
 and its matching source. Use `--roc-src=/path/to/roc` if a local compiler is not
 inside its source checkout. Additional options are:
 

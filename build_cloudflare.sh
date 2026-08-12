@@ -3,7 +3,7 @@
 set -euxo pipefail
 
 repo_root="$(pwd)"
-roc_tag="$(sed 's/\r$//' .roc-version)"
+roc_tag="$(sed -n 's/^[[:space:]]*roc: "\([^"]*\)",$/\1/p' website/build_website.roc)"
 roc_version="${roc_tag#nightly-}"
 roc_asset="roc_nightly-linux_x86_64-${roc_version}.tar.gz"
 roc_dir="$repo_root/.cache/cloudflare-roc"

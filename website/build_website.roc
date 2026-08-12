@@ -1,4 +1,7 @@
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst" }
+app [main!] {
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
+	roc: "nightly-2026-08-12-606470f",
+}
 
 import pf.Cmd
 import pf.Env
@@ -6,9 +9,11 @@ import pf.OsStr exposing [OsStr]
 import pf.Path
 import pf.Stdout
 import pf.Utc
+import "./build_website.roc" as script : Str
 
 # Run from website/ with `roc build_website.roc`.
-# The compiler is pinned by ../.roc-version. Pass --roc=/path/to/roc to use a
+# The compiler is pinned by the `roc:` field in the app header above, which
+# is read back out of `script` at runtime. Pass --roc=/path/to/roc to use a
 # local build and --roc-src=/path/to/roc/source when it cannot be derived.
 
 cache_marker_path = ".cache/site.millis"
@@ -107,7 +112,7 @@ build_with_cache! = |compiler| {
 	path("build").create_all!() ?? {}
 
 	last_build_millis = read_cache_millis!(cache_marker_path) ?? 0
-	latest_compiler_pin_millis = max_mtime_in_dirs_millis!(["../.roc-version"]) ?? 0
+	latest_compiler_pin_millis = max_mtime_in_dirs_millis!(["build_website.roc"]) ?? 0
 	compiler_changed = latest_compiler_pin_millis > last_build_millis
 
 	if compiler_changed {
@@ -323,7 +328,9 @@ ensure_release_docs! = |directory, release_tag| {
 }
 
 resolve_compiler! : List(Str) => Try(CompilerInfo, _)
-resolve_compiler! = |args|
+resolve_compiler! = |args| {
+	version = extract_roc_version(script)?
+
 	match get_flag_value(args, "--roc=") {
 		Ok(bin) => {
 			resolved_source =
@@ -333,19 +340,16 @@ resolve_compiler! = |args|
 						match bin.split_first("/zig-out/bin/roc") {
 							Ok({ before, after: _ }) => Ok({ dir: before, managed: Bool.False })
 							Err(_) => {
-								version = path("../.roc-version").read_utf8!()?.trim()
 								Ok({ dir: ".cache/${version}/source", managed: Bool.True })
 							}
 						}
 					}
 
 			resolved = resolved_source?
-			version = path("../.roc-version").read_utf8!()?.trim()
 			Ok({ bin, src_dir: resolved.dir, managed: resolved.managed, version })
 		}
 
 		Err(_) => {
-			version = path("../.roc-version").read_utf8!()?.trim()
 			compiler_dir = ".cache/${version}"
 			Ok({
 				bin: "${compiler_dir}/roc",
@@ -355,6 +359,14 @@ resolve_compiler! = |args|
 			})
 		}
 	}
+}
+
+extract_roc_version : Str -> Try(Str, _)
+extract_roc_version = |source| {
+	after_prefix = source.split_first("roc: \"")?
+	before_quote = after_prefix.after.split_first("\"")?
+	Ok(before_quote.before)
+}
 
 get_flag_value : List(Str), Str -> Try(Str, [NotFound])
 get_flag_value = |args, prefix|

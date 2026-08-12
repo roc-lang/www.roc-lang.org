@@ -3,7 +3,7 @@
 
 Fetches the latest release from roc-lang/nightlies and rewrites the hardcoded
 version date, build id, base URL and SHA256 checksums in:
-  - .roc-version
+  - website/build_website.roc
   - website/public/install_roc.sh
   - website/public/install_roc.ps1
 
@@ -21,7 +21,7 @@ import urllib.request
 RELEASES_API = "https://api.github.com/repos/roc-lang/nightlies/releases/latest"
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ROC_VERSION_PATH = os.path.join(REPO_ROOT, ".roc-version")
+BUILD_WEBSITE_ROC_PATH = os.path.join(REPO_ROOT, "website", "build_website.roc")
 SH_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.sh")
 PS1_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.ps1")
 
@@ -180,9 +180,16 @@ def update_ps1(info):
         f.write(text)
 
 
-def update_roc_version(info):
-    with open(ROC_VERSION_PATH, "w", encoding="utf-8") as f:
-        f.write(f'{info["tag"]}\n')
+def update_build_website_roc(info):
+    with open(BUILD_WEBSITE_ROC_PATH, "r") as f:
+        text = f.read()
+
+    text = replace_assignment(
+        text, r'roc: "[^"]*"', f'roc: "{info["tag"]}"', BUILD_WEBSITE_ROC_PATH
+    )
+
+    with open(BUILD_WEBSITE_ROC_PATH, "w") as f:
+        f.write(text)
 
 
 def main():
@@ -194,10 +201,10 @@ def main():
     unavailable = [k for k in TEMPORARILY_UNAVAILABLE if k not in info["shas"]]
     if unavailable:
         print(f"  temporarily unavailable (skipped): {', '.join(unavailable)}")
-    update_roc_version(info)
+    update_build_website_roc(info)
     update_sh(info)
     update_ps1(info)
-    print("Updated .roc-version, install_roc.sh, and install_roc.ps1")
+    print("Updated build_website.roc, install_roc.sh, and install_roc.ps1")
 
 
 if __name__ == "__main__":

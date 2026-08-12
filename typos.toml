@@ -3,7 +3,8 @@ EIN = "EIN"
 
 [files]
 extend-exclude = [
-    "website/public/install_roc.py",
+    "website/public/install_roc.ps1",
+    "website/public/install_roc.sh",
     "website/public/fzstd.mjs",
     ".github/workflows/CI.yml",
 ]

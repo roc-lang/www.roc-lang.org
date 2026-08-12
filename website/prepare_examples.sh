@@ -13,7 +13,7 @@ if [[ "$roc_arg" == /* ]]; then
 else
     readonly roc_bin="$(cd "$(dirname "$roc_arg")" && pwd)/$(basename "$roc_arg")"
 fi
-readonly website_roc_version="$(tr -d '\r\n' < ../.roc-version)"
+readonly website_roc_version="$(sed -n 's/^[[:space:]]*roc: "\([^"]*\)",$/\1/p' build_website.roc)"
 readonly manifest="examples.json"
 readonly manifest_records=".cache/examples-manifest.tsv"
 readonly content_dir="content/examples"
