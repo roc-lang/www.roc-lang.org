@@ -17,4 +17,4 @@ Note: if your system is in this "other" category, that means we did not test Roc
 - [Tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)
 - [Examples](https://www.roc-lang.org/examples)
 - [Frequently Asked Questions](https://www.roc-lang.org/faq)
-- [Roc Exercism Track](https://exercism.org/tracks/roc) (still on Roc alpha 4)
+- [Roc Exercism Track](https://exercism.org/tracks/roc)

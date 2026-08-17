@@ -57,4 +57,4 @@ nix flake init --template github:roc-lang/roc#simple --refresh
 - [Tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)
 - [Examples](https://www.roc-lang.org/examples)
 - [Frequently Asked Questions](https://www.roc-lang.org/faq)
-- [Roc Exercism Track](https://exercism.org/tracks/roc) (still on Roc alpha 4)
+- [Roc Exercism Track](https://exercism.org/tracks/roc)
