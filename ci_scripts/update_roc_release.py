@@ -7,6 +7,9 @@ version date, build id, base URL and SHA256 checksums in:
   - website/public/install_roc.sh
   - website/public/install_roc.ps1
 
+It also repins `website/examples.json` to the latest commit of the examples
+repository it references.
+
 The script edits only the specific variable assignments, so unrelated changes to
 the installers are preserved. It exits 0 whether or not anything changed; the CI
 workflow inspects `git status` to decide if a commit is needed.
@@ -24,6 +27,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD_WEBSITE_ROC_PATH = os.path.join(REPO_ROOT, "website", "build_website.roc")
 SH_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.sh")
 PS1_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.ps1")
+EXAMPLES_JSON_PATH = os.path.join(REPO_ROOT, "website", "examples.json")
 
 # Maps the "<platform>_<arch>" found in an asset name to its checksum.
 # These keys are the strings that appear in the nightly asset filenames.
@@ -44,9 +48,9 @@ TEMPORARILY_UNAVAILABLE = (
 )
 
 
-def fetch_latest_release():
+def fetch_json(url):
     req = urllib.request.Request(
-        RELEASES_API,
+        url,
         headers={
             "Accept": "application/vnd.github+json",
             "User-Agent": "roc-lang-installer-updater",
@@ -57,6 +61,10 @@ def fetch_latest_release():
         req.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(req) as resp:
         return json.load(resp)
+
+
+def fetch_latest_release():
+    return fetch_json(RELEASES_API)
 
 
 def parse_release(release):
@@ -192,6 +200,36 @@ def update_build_website_roc(info):
         f.write(text)
 
 
+def update_examples_json():
+    """Repin examples.json to the latest commit of the examples repository.
+
+    The revision is rewritten in place (rather than re-serializing the JSON) so
+    the hand-maintained formatting of the examples list is preserved.
+    """
+    with open(EXAMPLES_JSON_PATH, "r") as f:
+        text = f.read()
+
+    config = json.loads(text)
+    repo_url = config["repository"].rstrip("/")
+    m = re.match(r"^https://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?$", repo_url)
+    if not m:
+        sys.exit(f"Unsupported repository URL in {EXAMPLES_JSON_PATH}: {repo_url}")
+
+    commits_api = (
+        f"https://api.github.com/repos/{m.group('owner')}/{m.group('repo')}/commits/HEAD"
+    )
+    revision = fetch_json(commits_api)["sha"]
+
+    text = replace_assignment(
+        text, r'"revision": "[^"]*"', f'"revision": "{revision}"', EXAMPLES_JSON_PATH
+    )
+
+    with open(EXAMPLES_JSON_PATH, "w") as f:
+        f.write(text)
+
+    return revision
+
+
 def main():
     release = fetch_latest_release()
     info = parse_release(release)
@@ -204,7 +242,11 @@ def main():
     update_build_website_roc(info)
     update_sh(info)
     update_ps1(info)
-    print("Updated build_website.roc, install_roc.sh, and install_roc.ps1")
+    revision = update_examples_json()
+    print(f"Latest examples commit: {revision}")
+    print(
+        "Updated build_website.roc, install_roc.sh, install_roc.ps1, and examples.json"
+    )
 
 
 if __name__ == "__main__":

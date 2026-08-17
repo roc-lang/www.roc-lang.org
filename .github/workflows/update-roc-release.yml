@@ -18,17 +18,17 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
-    - name: Update Roc and install scripts to the latest nightly
+    - name: Update Roc, install scripts and examples to the latest commits
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: python3 ci_scripts/update_roc_release.py
 
-    - name: Open a pull request if the release changed
+    - name: Open a pull request if the release or examples changed
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if git diff --quiet -- website/build_website.roc website/public/install_roc.sh website/public/install_roc.ps1; then
-          echo "The repository and install scripts already point at the latest nightly. Nothing to do."
+        if git diff --quiet -- website/build_website.roc website/public/install_roc.sh website/public/install_roc.ps1 website/examples.json; then
+          echo "The repository, install scripts and examples already point at the latest commits. Nothing to do."
           exit 0
         fi
 
@@ -38,15 +38,15 @@ jobs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
         git switch -C "$BRANCH"
-        git add website/build_website.roc website/public/install_roc.sh website/public/install_roc.ps1
-        git commit -m "Update Roc release and install scripts"
+        git add website/build_website.roc website/public/install_roc.sh website/public/install_roc.ps1 website/examples.json
+        git commit -m "Update Roc release, install scripts and examples commit"
         git push --force origin "$BRANCH"
 
         # Open a PR only if one isn't already open for this branch; otherwise the
         # force-push above has already refreshed the existing PR.
         if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
           gh pr create \
-            --title "Update Roc release in install scripts" \
-            --body "Automated update of \`website/build_website.roc\`, \`install_roc.sh\`, and \`install_roc.ps1\` to the latest release from \`roc-lang/nightlies\`." \
+            --title "Update Roc release in install scripts and examples commit" \
+            --body "Automated update of \`website/build_website.roc\`, \`install_roc.sh\`, and \`install_roc.ps1\` to the latest release from \`roc-lang/nightlies\`, and of \`website/examples.json\` to the latest commit of \`roc-lang/examples\`." \
             --head "$BRANCH"
         fi
