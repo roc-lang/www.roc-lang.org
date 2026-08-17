@@ -1538,8 +1538,32 @@ function setup(div) {
   div.appendChild(outputArea);
 }
 
+function setupCopyButtons() {
+  if (!navigator.clipboard?.writeText) return;
+
+  document.querySelectorAll("#example-main pre > samp").forEach((snippet) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "button-container copy-button";
+    button.textContent = "Copy";
+    button.setAttribute("aria-live", "polite");
+
+    button.addEventListener("click", () => {
+      navigator.clipboard.writeText(snippet.textContent);
+      button.textContent = "Copied!";
+    });
+    button.addEventListener("mouseleave", () => {
+      button.textContent = "Copy";
+    });
+
+    snippet.before(button);
+  });
+}
+
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
+  setupCopyButtons();
+
   const interactiveWidgets = document.querySelectorAll(".roc-interactive");
   interactiveWidgets.forEach(setup);
 
