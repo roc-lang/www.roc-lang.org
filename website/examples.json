@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/roc-lang/examples",
-  "revision": "54ed685b7294c6af00ce48fd2f42710faef04809",
+  "revision": "49ed2f43366035f4e68e20e6ebb40ea8753a0f04",
   "examples": [
     { "directory": "HelloWorld", "title": "Hello, World!", "validation": ["build:main.roc"] },
     { "directory": "FizzBuzz", "title": "FizzBuzz", "validation": ["build:main.roc", "test:main.roc"] },
