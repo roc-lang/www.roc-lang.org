@@ -54,7 +54,7 @@ If the test fails, `roc test` shows its source location and source code. If you 
 
 ## [Inline expectations](#inline-expect) {#inline-expect}
 
-You can also use `expect` inside functions. This lets you verify assumptions that can't reasonably be encoded in types but can be checked while running tests or development builds. If an executed inline `expect` fails, the failure is reported and execution continues.
+You can also use `expect` inside functions. This lets you verify assumptions that can't reasonably be encoded in types but can be checked at runtime. If an executed inline `expect` fails, the failure is reported and execution continues.
 
 All `expect` statements are removed in optimized builds (using `--opt=speed`), so inline expectations will have no runtime cost. It's important to note that inline expectations are development checks, not a substitute for handling errors that can occur in production.
 
