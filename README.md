@@ -49,3 +49,29 @@ Preview the result with:
 ```sh
 python3 serve.py build 8080
 ```
+
+## Redirects
+
+Old URLs that must not 404 (they are still linked from elsewhere, e.g. the
+READMEs in `roc-lang/examples`, and anything pointing at the old
+`/builtins/<Module>` docs) are redirected via `website/public/_redirects`, which
+Cloudflare applies to both `roc-lang.org` and `www.roc-lang.org`. Add one rule
+per line as `/old-path /new-path 301`; `/old/* /new/:splat 301` redirects a whole
+subtree, and the first matching rule wins, so exact paths go above the wildcard
+they are exceptions to.
+
+Nothing on the site links to these old URLs, so the link checker can't reach
+them. `ci_scripts/check-redirects.sh` checks them instead — it runs daily and on
+every preview deployment, and fails if a rule in `_redirects` has no test case,
+so add one there alongside any new rule:
+
+```sh
+./ci_scripts/check-redirects.sh                             # production
+./ci_scripts/check-redirects.sh --base-url http://localhost:8080
+```
+
+These rules used to be written by `write_builtins_redirects!` in
+`build_website.roc`; they are a checked-in file now because nothing in them is
+derived from the build any more.
+
+`serve.py` applies `_redirects` too, so a local preview behaves like production.
