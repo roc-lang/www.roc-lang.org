@@ -9,6 +9,7 @@
 # Specifically keep these files with no extension
 !LICENSE*
 !website/public/_headers
+!website/public/_redirects
 
 website/dist
 website/build
