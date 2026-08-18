@@ -38,8 +38,7 @@ sufficient (it has `concat`, `contains`, `starts_with` and many more functions).
 convert a `Str` to a `List(U8)`, perform some operations, then convert back to `Str` using `Str.from_utf8`. However,
 Unicode is a complex and evolving topic, so it is usually best handled by a dedicated library, such as
 [roc-lang/unicode](https://github.com/roc-lang/unicode): check it out! For pure ASCII text, you may prefer to use a
-dedicated library such as [Hasnep/roc-ascii](https://github.com/Hasnep/roc-ascii) (currently being ported to the new
-Roc syntax).
+dedicated library such as [Hasnep/roc-ascii](https://github.com/Hasnep/roc-ascii).
 
 ## [Why can't `exposing` import everything?](#import-everything) {#import-everything}
 
