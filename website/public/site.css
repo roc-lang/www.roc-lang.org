@@ -387,6 +387,7 @@ pre {
     margin-bottom: 16px;
     padding: 0 0.35rem;
     box-sizing: border-box;
+    tab-size: 4;
     background-color: var(--gray-bg);
     overflow-x: hidden;
     word-wrap: normal;
