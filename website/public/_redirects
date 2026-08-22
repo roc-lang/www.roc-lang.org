@@ -1,7 +1,6 @@
 # Cloudflare Workers static-asset redirects (same format as _headers).
 # Applies to both roc-lang.org and www.roc-lang.org, since both are served by
-# the same Worker. Rules are matched top to bottom and the first match wins, so
-# exact paths must come before the wildcard rules they are exceptions to.
+# the same Worker.
 #
 # These paths existed on the old website and are still linked from elsewhere
 # (e.g. the READMEs in roc-lang/examples), so they must not 404. Until the
@@ -9,8 +8,27 @@
 # write_builtins_redirects! in build_website.roc; they are a plain file now
 # because nothing in them is derived from the build any more.
 #
+# Two Cloudflare details drive the shape of these rules:
+#
+# 1. Rules without a splat/placeholder are "static" and are matched by exact
+#    path lookup, ahead of every dynamic rule. There is no trailing-slash
+#    fallback, so each static path needs both spellings spelled out.
+# 2. Despite what the docs imply, file order is NOT honored between two dynamic
+#    rules that both match a path. A catch-all `/builtins/*` placed last still
+#    won over the earlier `/builtins/main/*`, which is what sent
+#    /builtins/main/Str to the non-existent /docs/main/main/Str.
+#
+# So the dynamic rules below must not overlap each other. The version rules
+# consume a version segment via a splat; un-versioned module links use a
+# `:module` placeholder, which matches a single segment only (never across a
+# `/`) and therefore cannot collide with them. The one remaining overlap --
+# `/builtins/main/` matching both `/builtins/:module/` and `/builtins/main/*` --
+# is settled by the static rule for that exact path.
+#
 # ci_scripts/check-redirects.sh verifies every rule here still works, and fails
 # if a rule has no test case, so add one there when adding a rule here.
+
+# --- Static rules (exact paths; these win over the dynamic rules below) ---
 
 # The tutorial currently lives in the roc repo; 302 because it is expected to
 # move back onto this site.
@@ -18,27 +36,34 @@
 
 # The builtin docs moved from /builtins/<Module> to /docs/main/<Module>. Inspect
 # is the exception: main no longer has a module of its own, and its contents
-# moved into Str. Both slash variants are listed so neither falls through to the
-# wildcard rule below (which would send them to a nonexistent /docs/main/Inspect).
+# moved into Str. The released versions still have their own Inspect module, so
+# only the un-versioned spellings need this exception.
 /builtins/Inspect /docs/main/Str/#inspect 301
 /builtins/Inspect/ /docs/main/Str/#inspect 301
 
-# Version-prefixed URLs keep their version: /builtins/alpha4/Str is the alpha4
-# docs, not main's. These must precede the catch-all, which would otherwise turn
-# them into /docs/main/alpha4/Str. The released versions still have their own
-# Inspect module, so they need no exception above.
-/builtins/main/* /docs/main/:splat 301
-/builtins/alpha3/* /docs/alpha3/:splat 301
-/builtins/alpha4/* /docs/alpha4/:splat 301
-/builtins/main /docs/main/ 301
-/builtins/alpha3 /docs/alpha3/ 301
-/builtins/alpha4 /docs/alpha4/ 301
-
-# Everything else under /builtins is an un-versioned module link (e.g.
-# /builtins/Dict, still used by some example READMEs) and resolves to main.
-/builtins/* /docs/main/:splat 301
+# The roots of the moved docs, per version.
 /builtins /docs/main/ 301
+/builtins/ /docs/main/ 301
+/builtins/main /docs/main/ 301
+/builtins/main/ /docs/main/ 301
+/builtins/alpha3 /docs/alpha3/ 301
+/builtins/alpha3/ /docs/alpha3/ 301
+/builtins/alpha4 /docs/alpha4/ 301
+/builtins/alpha4/ /docs/alpha4/ 301
 
 # The platforms page moved into the language reference.
 /platforms /docs/main/langref/platforms/ 301
 /platforms/ /docs/main/langref/platforms/ 301
+
+# --- Dynamic rules (must not overlap each other; see note 2 above) ---
+
+# Version-prefixed URLs keep their version: /builtins/alpha4/Str is the alpha4
+# docs, not main's.
+/builtins/main/* /docs/main/:splat 301
+/builtins/alpha3/* /docs/alpha3/:splat 301
+/builtins/alpha4/* /docs/alpha4/:splat 301
+
+# Everything else under /builtins is an un-versioned module link (e.g.
+# /builtins/Dict, still used by some example READMEs) and resolves to main.
+/builtins/:module /docs/main/:module 301
+/builtins/:module/ /docs/main/:module/ 301
