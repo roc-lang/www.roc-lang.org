@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import argparse
+import functools
 import os
+import re
 
 
 def load_redirects(directory):
     """Read the "_redirects" file Cloudflare uses, as an ordered rule list.
 
-    Each rule is (source, target, status); a source ending in "*" is a wildcard
-    whose matched suffix replaces ":splat" in the target. Rules are kept in file
-    order because, as on Cloudflare, the first match wins. Without this, paths
-    that redirect in production (e.g. /tutorial) 404 here, so a local
-    `check-links.sh --local` run reports failures that aren't real.
+    Each rule is (source, target, status). A source ending in "*" is a wildcard
+    whose matched suffix replaces ":splat" in the target, and a ":name" segment
+    is a placeholder whose matched segment replaces ":name" there. Rules are kept
+    in file order because that is the order Cloudflare tries the dynamic ones in.
+    Without this, paths that redirect in production (e.g. /tutorial) 404 here, so
+    a local `check-links.sh --local` run reports failures that aren't real.
     """
     rules = []
     try:
@@ -34,18 +37,51 @@ def load_redirects(directory):
     return rules
 
 
+PLACEHOLDER = re.compile(r":([A-Za-z][A-Za-z0-9_]*)")
+
+
+def is_dynamic(source):
+    """A rule is dynamic when it can match more than one path."""
+    return "*" in source or PLACEHOLDER.search(source) is not None
+
+
+@functools.lru_cache(maxsize=None)
+def source_pattern(source):
+    """The rule source as a regex: ":name" matches one path segment, "*" the rest."""
+    pattern = ""
+    for part in re.split(r"(\*|:[A-Za-z][A-Za-z0-9_]*)", source):
+        if part == "*":
+            pattern += "(?P<splat>.*)"
+        elif part.startswith(":"):
+            pattern += "(?P<%s>[^/]+)" % part[1:]
+        else:
+            pattern += re.escape(part)
+    return re.compile("^" + pattern + "$")
+
+
 def match_redirect(rules, path):
-    """Resolve `path` against the rules, returning (target, status) or None."""
+    """Resolve `path` against the rules, returning (target, status) or None.
+
+    Cloudflare looks up the static rules (no splat, no placeholder) by exact path
+    first and only then tries the dynamic ones in file order, so a rule like
+    /builtins/:module never swallows a path that an exact rule names.
+    """
     # Trailing slashes are insignificant when matching, so /builtins and
     # /builtins/ hit the same rule.
     normalized = path.rstrip("/") or "/"
     for source, target, status in rules:
-        if source.endswith("*"):
-            prefix = source[:-1]
-            if path.startswith(prefix):
-                return target.replace(":splat", path[len(prefix):]), status
-        elif (source.rstrip("/") or "/") == normalized:
+        if not is_dynamic(source) and (source.rstrip("/") or "/") == normalized:
             return target, status
+    for source, target, status in rules:
+        if not is_dynamic(source):
+            continue
+        match = source_pattern(source).match(path)
+        if match:
+            captured = match.groupdict()
+            resolved = PLACEHOLDER.sub(
+                lambda m: captured.get(m.group(1), m.group(0)), target
+            )
+            return resolved, status
     return None
 
 

@@ -53,18 +53,21 @@ EXPECTED=(
     "/tutorial https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md"
     "/builtins/Inspect /docs/main/Str/#inspect"
     "/builtins/Inspect/ /docs/main/Str/#inspect"
+    "/builtins /docs/main/"
+    "/builtins/ /docs/main/"
+    "/builtins/main /docs/main/"
+    "/builtins/main/ /docs/main/"
+    "/builtins/alpha3 /docs/alpha3/"
+    "/builtins/alpha3/ /docs/alpha3/"
+    "/builtins/alpha4 /docs/alpha4/"
+    "/builtins/alpha4/ /docs/alpha4/"
+    "/platforms /docs/main/langref/platforms/"
+    "/platforms/ /docs/main/langref/platforms/"
     "/builtins/main/Str/ /docs/main/Str/"
     "/builtins/alpha3/Str/ /docs/alpha3/Str/"
     "/builtins/alpha4/Str/ /docs/alpha4/Str/"
-    "/builtins/main /docs/main/"
-    "/builtins/alpha3 /docs/alpha3/"
-    "/builtins/alpha4 /docs/alpha4/"
-    "/builtins/Str/ /docs/main/Str/"
     "/builtins/Num /docs/main/Num"
-    "/builtins/ /docs/main/"
-    "/builtins /docs/main/"
-    "/platforms /docs/main/langref/platforms/"
-    "/platforms/ /docs/main/langref/platforms/"
+    "/builtins/Str/ /docs/main/Str/"
 )
 
 RED='\033[0;31m'
@@ -132,10 +135,11 @@ for case_line in "${EXPECTED[@]}"; do
     echo -e "${GREEN}✓${NC} $url ($status) -> $location"
 done
 
-# Every rule in _redirects must have a case above. This walks the rules in file
-# order for each requested path and marks the first one that matches -- the same
-# way Cloudflare picks a rule -- so a case shadowed by an earlier rule doesn't
-# count as covering the later one.
+# Every rule in _redirects must have a case above. For each requested path this
+# picks the rule Cloudflare would pick -- exact ("static") rules first, then the
+# rules with a splat or placeholder ("dynamic") in file order -- and marks it, so
+# a case that some other rule swallows doesn't count as covering the rule it was
+# written for.
 echo ""
 echo "=== Checking that every rule in _redirects is covered ==="
 
@@ -152,21 +156,36 @@ while IFS= read -r line; do
     rule_sources+=("${line%% *}")
 done < "$REDIRECTS_FILE"
 
-# Index (into rule_sources) of the first rule matching a path, or -1. Paths are
+# A rule is "static" when it matches one exact path: no splat, no placeholder.
+is_static_rule() {
+    [[ "$1" != *"*"* && ! "$1" =~ :[A-Za-z] ]]
+}
+
+# The rule source as an anchored regex: `:name` matches a single path segment,
+# `*` matches the rest of the path.
+rule_regex() {
+    local source="${1//./\\.}"
+    source=$(echo "$source" | sed -E 's|:[A-Za-z][A-Za-z0-9_]*|[^/]+|g')
+    echo "^${source//\*/.*}$"
+}
+
+# Index (into rule_sources) of the rule that handles a path, or -1. Paths are
 # compared exactly, without normalizing trailing slashes, because that is how
 # Cloudflare matches -- which is why _redirects lists both /builtins/Inspect and
 # /builtins/Inspect/, and why each needs its own case here.
 first_matching_rule() {
-    local path="$1" i source prefix
+    local path="$1" i source regex
     for i in "${!rule_sources[@]}"; do
         source="${rule_sources[$i]}"
-        if [[ "$source" == *"*" ]]; then
-            prefix="${source%\*}"
-            if [[ "$path" == "$prefix"* ]]; then
-                echo "$i"
-                return
-            fi
-        elif [[ "$source" == "$path" ]]; then
+        if is_static_rule "$source" && [[ "$source" == "$path" ]]; then
+            echo "$i"
+            return
+        fi
+    done
+    for i in "${!rule_sources[@]}"; do
+        source="${rule_sources[$i]}"
+        regex=$(rule_regex "$source")
+        if ! is_static_rule "$source" && [[ "$path" =~ $regex ]]; then
             echo "$i"
             return
         fi
