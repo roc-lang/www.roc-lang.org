@@ -1,6 +1,8 @@
 # Functional
 
-Roc is designed to have a small number of simple language primitives. This goal leads Roc to be a [functional](https://en.wikipedia.org/wiki/Functional_programming) language, while its [performance goals](/fast) lead to some design choices that are uncommon in functional languages.
+Roc is best described as a pure [functional programming](https://en.wikipedia.org/wiki/Functional_programming) language. Most Roc code is written with immutable values and pure functions, while effects are kept explicit and separate.
+
+Roc also offers locally mutable variables and imperative control flow—including `for`, `while`, `break`, and `return`. These features make Roc more approachable for people coming from imperative languages and can make a few algorithms clearer even for experienced Roc developers. They do not introduce shared mutable state or sacrifice function-level purity: a variable can only be reassigned inside the function where it was declared.
 
 <!-- TODO uncomment once opportunistic mutation is implemented
 ## [Opportunistic mutation](#opportunistic-mutation) {#opportunistic-mutation}
@@ -25,115 +27,112 @@ Roc has ways of detecting uniqueness at compile time, so this optimization will 
 
 ## [Immutable by default](#immutable-by-default) {#immutable-by-default}
 
-By default, Roc values are semantically immutable. In many languages, everything is mutable by default, and it's up to the programmer to "defensively" clone to avoid undesirable modification. Roc's approach means that cloning happens automatically, which can be less error-prone than defensive cloning (which might be forgotten), but <span class="nowrap">which—to be fair—can</span> also increase unintentional cloning. It's a different default with different tradeoffs.
+Roc values are semantically immutable. Passing a list, record, or other value to a function cannot let that function modify the value seen by its caller. In languages with shared mutable values, programmers often need to clone defensively to prevent unexpected changes. Roc makes that protection the default.
 
-A reliability benefit of semantic immutability is that it rules out [data races](https://en.wikipedia.org/wiki/Race_condition#Data_race). These concurrency bugs can be difficult to reproduce and time-consuming to debug, and they are only possible through direct mutation.
+A reliability benefit of semantic immutability is that it rules out [data races](https://en.wikipedia.org/wiki/Race_condition#Data_race). These concurrency bugs can be difficult to reproduce and time-consuming to debug, and they require shared mutation that Roc does not expose.
 
-Direct mutation primitives have benefits too. Some algorithms are more concise or otherwise easier to read when written with direct mutation, and direct mutation can make the performance characteristics of some operations clearer. To address this, Roc provides opt-in mutable variables (described in the next section), while keeping immutability as the default.
+Ordinary definitions are immutable too. Once `greeting = "Hello"` has introduced `greeting` in a scope, it is not intended to be reassigned or shadowed in that scope. Experienced Roc developers will generally use this functional style, with operations such as `map`, `fold`, pattern matching, and recursion.
 
-As such, Roc's design means that data races and reference cycles can be ruled out for the vast majority of code, and that functions will tend to be more amenable for chaining, while mutable variables provide an escape hatch for algorithms where direct mutation leads to clearer code.
+When local mutation makes an algorithm easier to learn or clearer to read, Roc provides an explicit alternative.
 
-## [No reassignment or shadowing by default](#no-reassignment) {#no-reassignment}
+## [Explicit local mutation](#no-reassignment) {#no-reassignment}
 
-In some languages, the following is allowed.
+Writing the same ordinary definition twice is not how Roc expresses reassignment. The compiler reports a shadowing warning for code like this:
 
-<pre><samp class="code-snippet"><span class="literal">x <span class="kw">=</span> <span class="literal">1</span>
-x <span class="kw">=</span> <span class="literal">2</span></samp></pre>
+```roc
+x = 1
+x = 2
+```
 
-In Roc, you can only execute that code when using the `--allow-errors` flag.
-That flag is intended to give you the freedom to quickly debug something or try something out even though some parts of the code contain errors.
+For intentional reassignment, declare a variable with `var` and use its `$` prefix at every subsequent reference:
 
-For cases where reassignment is the most natural way to express something, Roc provides mutable variables. These are declared with `var` and marked with a `$` prefix. For example, `var $count = 0` declares a mutable variable that can later be reassigned with `$count = $count + 1`. The `$` prefix makes it immediately clear at every use site that a value might change, preserving the readability benefits of immutability by default while providing a convenient way to express algorithms that are more natural with mutation.
+```roc
+var $count = 0
+$count = $count + 1
+```
+
+The `$` makes possible reassignment visible at every use site. A variable can only be reassigned within the same function that declared it; a nested function cannot reassign a variable captured from an outer function. This restriction keeps mutation local and preserves the containing function's purity.
+
+The same principle applies to imperative control flow. Using `for`, `while`, `break`, or `return` does not by itself make a function effectful. These constructs only control evaluation inside the current function.
+
+### [Functional and imperative styles](#functional-and-imperative) {#functional-and-imperative}
+
+For example, a list can be summed in a functional style with `fold`:
+
+```roc
+sum : List(I64) -> I64
+sum = |numbers| numbers.fold(0, |total, number| total + number)
+```
+
+The same function can use a local variable and a `for` loop:
+
+```roc
+sum : List(I64) -> I64
+sum = |numbers| {
+    var $total = 0
+    for number in numbers {
+        $total = $total + number
+    }
+    $total
+}
+```
+
+Both versions are pure: given the same list, they always return the same result and have no externally visible side effects. The first is the style experienced Roc developers will generally prefer; the second can be more familiar to beginners and useful when direct control flow makes an algorithm easier to follow.
 
 ### [Avoiding regressions](#avoiding-regressions) {#avoiding-regressions}
 
 A benefit of this design is that it makes Roc code easier to rearrange without causing regressions. Consider this code:
 
-<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">|</span>arg<span class="kw">|</span>
-    greeting <span class="kw">=</span> <span class="string">"Hello"</span>
-    welcome <span class="kw">=</span> <span class="kw">|</span>name<span class="kw">|</span> <span class="string">"</span><span class="kw">${</span>greeting<span class="kw">}</span><span class="string">, </span><span class="kw">${</span>name<span class="kw">}</span><span class="string">!"</span>
-
-    <span class="comment"># …</span>
-
-    message <span class="kw">=</span> welcome<span class="kw">(</span><span class="string">"friend"</span><span class="kw">)</span>
-
-    <span class="comment"># …</span></samp></pre>
-
-Suppose I decide to extract the `welcome` function to the top level, so I can reuse it elsewhere:
-
-<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">|</span>arg<span class="kw">|</span>
-    <span class="comment"># …</span>
-
-    message <span class="kw">=</span> welcome<span class="kw">(</span><span class="string">"Hello"</span><span class="punctuation section">,</span> <span class="string">"friend"</span><span class="kw">)</span>
-
-    <span class="comment"># …</span>
-
-welcome <span class="kw">=</span> <span class="kw">|</span>prefix<span class="punctuation section">,</span> name<span class="kw">|</span> <span class="string">"</span><span class="kw">${</span>prefix<span class="kw">}</span><span class="string">, </span><span class="kw">${</span>name<span class="kw">}</span><span class="string">!"</span></samp></pre>
-
-Even without knowing the rest of `func`, we can be confident this change will not alter the code's behavior.
-
-In contrast, suppose Roc allowed reassignment. Then it's possible something in the `# …` parts of the code could have modified `greeting` before it was used in the `message =` declaration. For example:
-
-<pre><samp class="code-snippet">func <span class="kw">=</span> <span class="kw">|</span>arg<span class="kw">|</span>
-    greeting <span class="kw">=</span> <span class="string">"Hello"</span>
-    welcome <span class="kw">=</span> <span class="kw">|</span>name<span class="kw">|</span> <span class="string">"</span><span class="kw">${</span>greeting<span class="kw">}</span><span class="string">, </span><span class="kw">${</span>name<span class="kw">}</span><span class="string">!"</span>
-
-    <span class="comment"># …</span>
-
-    <span class="kw">if</span> someCondition
-        greeting <span class="kw">=</span> <span class="string">"Hi"</span>
-        <span class="comment"># …</span>
-    <span class="kw">else</span>
-        <span class="comment"># …</span>
-
-    <span class="comment"># …</span>
-    message <span class="kw">=</span> welcome<span class="kw">(</span><span class="string">"friend"</span><span class="kw">)</span>
-    <span class="comment"># …</span></samp></pre>
-
-If we didn't read the whole function and notice that `greeting` was sometimes (but not always) reassigned from `"Hello"` to `"Hi"`, we might not have known that changing it to `message = welcome("Hello", "friend")` would cause a regression due to having the greeting always be `"Hello"`.
-
-Even if Roc disallowed reassignment but allowed shadowing, a similar regression could happen if the `welcome` function were shadowed between when it was defined here and when `message` later called it in the same scope. Because Roc allows neither shadowing nor reassignment for regular bindings, these regressions can't happen, and rearranging code can be done with more confidence. (Mutable variables, with their `$` prefix, make it obvious which names can change.)
-
-Mutable variables work naturally with Roc's `for` loop syntax. For example, here's a function that sums a list of numbers:
-
 ```roc
-sum = |num_list| {
-    var $total = 0
+make_message = |name| {
+    greeting = "Hello"
+    welcome = |recipient| "${greeting}, ${recipient}!"
 
-    for num in num_list {
-        $total = $total + num
-    }
-
-    $total
+    welcome(name)
 }
 ```
 
-Looping can also be done with convenience functions like `List.walk` or with recursion (Roc implements [tail-call optimization](https://en.wikipedia.org/wiki/Tail_call)).
+Suppose I decide to extract the `welcome` function to the top level, so I can reuse it elsewhere:
 
-## [Managed effects over side effects](#managed-effects) {#managed-effects}
+```roc
+make_message = |name| welcome("Hello", name)
 
-Many languages support first-class [asynchronous](https://en.wikipedia.org/wiki/Asynchronous_I/O) effects, which can improve a system's throughput (usually at the cost of some latency) especially in the presence of long-running I/O operations like network requests.
+welcome = |greeting, name| "${greeting}, ${name}!"
+```
 
-Asynchronous effects are commonly represented by a value such as a [Promise or Future](https://en.wikipedia.org/wiki/Futures_and_promises) (Roc calls these Tasks), which represent an effect to be performed. Tasks can be composed together, potentially while customizing concurrency properties and supporting I/O interruptions like cancellation and timeouts.
+In warning-free Roc code, neither `greeting` nor the local `welcome` can be silently reassigned between their definitions and uses. Names that can change carry the visible `$` prefix, so refactoring immutable code requires less searching for hidden mutation.
 
-Most languages also have a separate system for synchronous effects, namely [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science)). Having two different ways to perform every I/O operation—one synchronous and one asynchronous—can lead to a lot of duplication across a language's ecosystem.
+Looping can also be expressed with `List.fold` or recursion. Roc performs tail-call optimization for eligible recursive functions.
 
-Instead of having [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science)), Roc functions exclusively use *managed effects* in which they return descriptions of effects to run, in the form of Tasks. Tasks can be composed and chained together, until they are ultimately handed off (usually via a `main` function or something similar) to an effect runner outside the program, which actually performs the effects the tasks describe.
+## [Pure and effectful functions](#managed-effects) {#managed-effects}
 
-Having only (potentially asynchronous) *managed effects* and no (synchronous) *side effects* both simplifies the language's ecosystem and makes certain guarantees possible. For example, the combination of managed effects and semantically immutable values means all Roc functions are [pure](https://en.wikipedia.org/wiki/Pure_function)—that is, they have no side effects and always return the same answer when called with the same arguments.
+Roc makes a first-class distinction between pure and effectful functions. A pure function always returns the same answer for the same arguments and has no externally visible side effects. An effectful function may perform I/O or call another effectful function.
+
+Pure function types use `->`. Effectful function types use `=>`, and effectful function names end in `!`:
+
+```roc
+format_name : Str -> Str
+format_name = |name| "Hello, ${name.trim()}!"
+
+announce! : Str => {}
+announce! = |name| echo!(format_name(name))
+```
+
+Unlike the former `Task`-based design, current Roc code calls effectful functions directly. Pure functions cannot call effectful functions, while effectful functions can call both. The compiler infers effectfulness and checks annotations, making the effectful boundary visible in names and types.
+
+Roc's standard library contains no effectful functions. They come from the application's platform, which decides how each effect is implemented. A platform can use synchronous blocking I/O, asynchronous I/O, or another strategy appropriate to its domain.
+
+This explicit separation is another reason Roc is a pure functional language: application logic can remain pure by construction, while the smaller effectful boundary is easy to identify.
 
 ## [Pure functions](#pure-functions) {#pure-functions}
 
-Pure functions have some valuable properties, such as [referential transparency](https://en.wikipedia.org/wiki/Referential_transparency) and being trivial to [memoize](https://en.wikipedia.org/wiki/Memoization). They also have testing benefits; for example, all Roc tests which either use simulated effects (or which do not involve Tasks at all) can never flake. They either consistently pass or consistently fail. Because of this, their results can be cached, so `roc test` can skip re-running them unless their source code (including dependencies) changed. (This caching has not yet been implemented, but is planned.)
+Pure functions have valuable properties such as [referential transparency](https://en.wikipedia.org/wiki/Referential_transparency): a call can be replaced with its result without changing program behavior. They are straightforward to test because their results depend only on their arguments, and they are amenable to optimizations such as memoization and compile-time evaluation.
 
-Roc does support [tracing](https://en.wikipedia.org/wiki/Tracing_(software)) via the `dbg` keyword, an essential [debugging](https://en.wikipedia.org/wiki/Debugging) tool which is unusual among side effects in that using it should not affect the behavior of the program. As such, it typically does not impact the guarantees of pure functions in practice.
+Local variables do not change these properties. A pure function may reassign its own `$` variables internally, but callers cannot observe those intermediate states. They can only observe the function's return value.
 
-Pure functions are notably amenable to compiler optimizations, and Roc already takes advantage of them to implement [function-level dead code elimination](https://elm-lang.org/news/small-assets-without-the-headache). Here are some other examples of optimizations that will benefit from this in the future; these are planned, but not yet implemented:
+Roc permits `dbg` and `expect` inside pure functions as special development tools. Their output is for the programmer and is not part of the program's semantics, so program behavior must not depend on it.
 
-- [Loop fusion](https://en.wikipedia.org/wiki/Loop_fission_and_fusion), which can do things like combining consecutive `List.map` calls (potentially intermingled with other operations that traverse the list) into one pass over the list.
-- [Hoisting](https://en.wikipedia.org/wiki/Loop-invariant_code_motion), which moves certain operations outside loops to prevent them from being re-evaluated unnecessarily on each step of the loop. It's always safe to hoist calls to pure functions, and in some cases they can be hoisted all the way to the top level, at which point they become eligible for compile-time evaluation.
-
-There are other optimizations (some of which have yet to be considered) that pure functions enable; this is just a sample!
+Roc evaluates top-level values at compile time because they can only call pure functions. Purity can also enable optimizations such as dead-code elimination, loop fusion, and hoisting work out of loops.
 
 ## Get started
 
