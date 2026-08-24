@@ -53,3 +53,12 @@ jobs:
           # This also turns on anchor checking, validating every internal
           #   "#fragment" link against the target page's element ids.
           ./ci_scripts/check-links.sh --internal-only --base-url "$PREVIEW_URL"
+
+      # The redirects in website/public/_redirects are unreachable by crawling
+      # (nothing links to the old URLs), so they get their own check -- here
+      # against the PR's own build, before it can reach production.
+      - name: Check redirects on the preview deployment
+        if: always() # report broken redirects even when the crawl above failed
+        env:
+          PREVIEW_URL: ${{ github.event.deployment_status.environment_url }}
+        run: ./ci_scripts/check-redirects.sh --base-url "$PREVIEW_URL"

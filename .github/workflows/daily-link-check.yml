@@ -19,3 +19,10 @@ jobs:
       run: |
         ./ci_scripts/check-links.sh 4
         # 4 is the recursion depth for checking links
+
+    # Old URLs kept alive by website/public/_redirects. Nothing on the site
+    # links to them, so the crawl above can never reach them; they need their
+    # own check to notice when a redirect stops working.
+    - name: Check redirects
+      if: always() # report broken redirects even when the crawl above failed
+      run: ./ci_scripts/check-redirects.sh
