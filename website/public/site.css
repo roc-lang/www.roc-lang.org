@@ -1035,6 +1035,25 @@ code .dim,
     right: 0;
 }
 
+/* The button overlays the first line of the snippet, so on devices that can
+   hover, only reveal it while the snippet is hovered or the button is focused.
+   Touch devices can't hover, so there it stays visible. */
+@media (hover: hover) {
+    .button-container {
+        display: none;
+    }
+
+    pre:hover > .button-container,
+    .button-container:focus-within {
+        display: block;
+    }
+}
+
+/* The copy buttons are created by JS, so this is belt and braces. */
+.no-js .button-container {
+    display: none !important;
+}
+
 .copy-button {
     background: var(--dark-code-bg);
     border: 1px solid var(--dark-cyan);

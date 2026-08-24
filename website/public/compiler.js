@@ -1542,21 +1542,40 @@ function setupCopyButtons() {
   if (!navigator.clipboard?.writeText) return;
 
   document.querySelectorAll("#example-main pre > samp").forEach((snippet) => {
+    // The "Output" sections are terminal transcripts, so their shell prompts and
+    // program output would never be pasteable. Only offer to copy source code.
+    if (snippet.textContent.trimStart().startsWith("$ ")) return;
+
+    const container = document.createElement("div");
+    container.className = "button-container";
+
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "button-container copy-button";
+    button.className = "copy-button";
     button.textContent = "Copy";
     button.setAttribute("aria-live", "polite");
 
+    // Touch devices don't reliably fire mouseleave, so reset on a timer instead.
+    let resetTimeout;
+    const flash = (text) => {
+      button.textContent = text;
+      clearTimeout(resetTimeout);
+      resetTimeout = setTimeout(() => {
+        button.textContent = "Copy";
+      }, 2000);
+    };
+
     button.addEventListener("click", () => {
-      navigator.clipboard.writeText(snippet.textContent);
-      button.textContent = "Copied!";
-    });
-    button.addEventListener("mouseleave", () => {
-      button.textContent = "Copy";
+      // Clipboard writes reject when the document isn't focused, when permission
+      // is denied, etc. Only claim success once the write actually resolved.
+      navigator.clipboard.writeText(snippet.textContent).then(
+        () => flash("Copied!"),
+        () => flash("Copy failed"),
+      );
     });
 
-    snippet.before(button);
+    container.appendChild(button);
+    snippet.before(container);
   });
 }
 
