@@ -1,6 +1,6 @@
 app [main!] {
 	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
-	roc: "nightly-2026-08-22-db56022",
+	roc: "nightly-2026-08-23-fb208ba",
 }
 
 import pf.Cmd
