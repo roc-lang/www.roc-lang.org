@@ -120,7 +120,7 @@ announce! = |name| echo!(format_name(name))
 
 Unlike the former `Task`-based design, current Roc code calls effectful functions directly. Pure functions cannot call effectful functions, while effectful functions can call both. The compiler infers effectfulness and checks annotations, making the effectful boundary visible in names and types.
 
-Roc's standard library contains no effectful functions. They come from the application's platform, which decides how each effect is implemented. A platform can use synchronous blocking I/O, asynchronous I/O, or another strategy appropriate to its domain.
+The application's [platform](https://roc-lang.org/docs/main/langref/platforms/) provides effectful functions and decides how each effect is implemented. A platform can use synchronous blocking I/O, asynchronous I/O, or another strategy appropriate to its domain.
 
 This explicit separation is another reason Roc is a pure functional language: application logic can remain pure by construction, while the smaller effectful boundary is easy to identify.
 
