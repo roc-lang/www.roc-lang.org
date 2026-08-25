@@ -32,21 +32,25 @@ Fun fact: "roc" translates to 鹏 in Chinese, [which means](https://www.mdbg.net
 
 ## [Why does Roc not handle strings like most languages?](#strings-in-roc) {#strings-in-roc}
 
-We want to help you make reliable software, so we aim to make sure that you're aware of all the pitfalls when handing strings.
-For (professional) software that needs to be reliable, check out the explainer [here](https://www.roc-lang.org/docs/main/Str) and the [unicode package](https://github.com/roc-lang/unicode) (still on Roc alpha 4).
-For personal scripts or things like advent of code, the [roc-ascii package](https://github.com/Hasnep/roc-ascii) (still on Roc alpha 4) can cover your needs.
+We want to help you make reliable software, so we aim to make sure that you're aware of all the pitfalls when handling
+strings. In many cases, the functions available in the built-in [`Str`](https://www.roc-lang.org/docs/main/Str) type are
+sufficient (it has `concat`, `contains`, `starts_with` and many more functions). You can also use `Str.to_utf8` to
+convert a `Str` to a `List(U8)`, perform some operations, then convert back to `Str` using `Str.from_utf8`. However,
+Unicode is a complex and evolving topic, so it is usually best handled by a dedicated library, such as
+[roc-lang/unicode](https://github.com/roc-lang/unicode): check it out! For pure ASCII text, you may prefer to use a
+dedicated library such as [Hasnep/roc-ascii](https://github.com/Hasnep/roc-ascii).
 
+## [Why can't `exposing` import everything?](#import-everything) {#import-everything}
 
-## [Why is there no way to specify "import everything this module exposes" in `imports`?](#import-everything) {#import-everything}
+Roc can bring specific public definitions into scope with an import such as `import Http exposing [Request, Response]`.
+You can also import the type itself using `import Http`, then use `Http.Request` and `Http.Response`.
+There is intentionally no wildcard form that brings every public definition into scope. Some languages provide one
+because it can be convenient, but it also has downsides.
 
-In [Elm](https://elm-lang.org), it's possible to import a module in a way that brings everything that module
-exposes into scope. It can be convenient, but like all programming language features, it has downsides.
-
-A minor reason Roc doesn't have this feature is that exposing everything can make it more difficult
-outside the editor (e.g. on a website) to tell where something comes from, especially if multiple imports are
-using this. ("I don't see `blah` defined in this module, so it must be coming from an import...but which of
-these several import-exposing-everything modules could it be? I'll have to check all of them, or
-download this code base and open it up in the editor so I can jump to definition!")
+A minor reason Roc doesn't have wildcard imports is that they can make it more difficult outside the editor (e.g. on a
+website) to tell where something comes from, especially if multiple imports are using them. ("I don't see `blah` defined
+in this file, so it must be coming from an import...but which of these several wildcard imports could it be? I'll have
+to check all of them, or download this code base and open it up in the editor so I can jump to definition!")
 
 The main reason for this design, though, is compiler performance.
 
@@ -56,10 +60,9 @@ allowed, then it's no longer clear whether anything is a naming error or not, un
 modules have been processed, so we know exactly which names they expose. Because that feature doesn't exist in Roc,
 all modules can do name resolution in parallel.
 
-Of note, allowing this feature would only slow down modules that used it; modules that didn't use it would still be
-parallelizable. However, when people find out ways to speed up their builds (in any language), advice starts to
-circulate about how to unlock those speed boosts. If Roc had this feature, it's predictable that a commonly-accepted
-piece of advice would eventually circulate: "don't use this feature because it slows down your builds."
+Allowing wildcard imports would only impose that cost on files that used them. However, when people discover ways
+to speed up builds, advice starts to circulate about avoiding slower features. If Roc had wildcard imports, a
+predictable recommendation would eventually be: "don't use this feature because it slows down your builds."
 
 If a feature exists in a language, but the common recommendation is never to use it, that's cause for reconsidering
 whether the feature should be in the language at all. In the case of this feature, it's simpler if the
@@ -82,7 +85,7 @@ By design, Roc does not have one of these. There are several reasons for this.
 First, if a function returns a potential error, Roc has the convention to use `Try` with an error type that
 has a single tag describing what went wrong. (For example, `List.first : List(item) -> Try(item, [ListWasEmpty, ..])`
 instead of `List.first : List(item) -> Maybe(item)`.) This is not only more self-descriptive, it also composes better with
-other operations that can fail; there's no need to have functions like `Try.toMaybe` or `Maybe.toTry`,
+other operations that can fail; there's no need to have functions like `Try.to_maybe` or `Maybe.to_try`,
 because in Roc, the convention is that operations that can fail always use `Try`.
 
 To describe something that's not an operation that can fail, an explicit tag union can be
@@ -249,27 +252,27 @@ a new function by composing together two existing functions without naming inter
 Here's an example:
 
 ```roc
-reverse_sort : List(elem) -> List(elem)
-reverse_sort = compose(List.reverse, List.sort)
+normalize : Str -> Str
+normalize = compose(Str.trim, Str.with_ascii_lowercased)
 
 compose : (a -> b), (c -> a) -> (c -> b)
-compose = |f, g, x| -> f(g(x))
+compose = |f, g| |x| f(g(x))
 ```
 
 Here's a way to write it without pointfree function composition:
 
 ```roc
-reverse_sort : List(elem) -> List(elem)
-reverse_sort = |list| list.sort().reverse()
+normalize : Str -> Str
+normalize = |str| str.with_ascii_lowercased().trim()
 ```
 
-It's common for programmers to build a mental model of what `compose(List.reverse, List.sort)` does by mentally
-translating it into `|list| list.sort().reverse()`. This extra mental translation step makes it take
+It's common for programmers to build a mental model of what `compose(Str.trim, Str.with_ascii_lowercased)` does by mentally
+translating it into `|str| str.with_ascii_lowercased().trim()`. This extra mental translation step makes it take
 longer to read and to understand despite being technically more concise. In more complex examples (this
 is among the tamest of pointfree function composition examples), the chances increase of making a mistake in
 the mental translation step, leading to a misunderstanding of what the function is doing—which can cause bugs.
 
-Some languages place such a high value on conciseness that they would consider the conciceness upside to outweigh
+Some languages place such a high value on conciseness that they would consider the conciseness upside to outweigh
 these downsides, but Roc is not one of those languages. It's considered stylistically better in Roc to write the
 second version above. Given this, since currying facilitates pointfree function composition, making Roc a curried
 language would have the downside of facilitating an antipattern in the language.
