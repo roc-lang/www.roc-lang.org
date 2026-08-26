@@ -347,6 +347,11 @@ async function checkPage(page, url) {
       return;
     }
 
+    // Ignore known 401 on the tutorial page (unrelated third-party resource)
+    if (url === `${WEBSITE_URL}/tutorial` && text.includes('the server responded with a status of 401')) {
+      return;
+    }
+
     if (type === 'error') {
       errors.push({
         type: 'console_error',
