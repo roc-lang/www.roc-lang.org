@@ -1,4 +1,4 @@
-app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.10.0/26wr2c8pfpVzPv93VVQ9Y2yRQz7tder7atwNG7PvWs6e.tar.zst" }
+app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.11.0/3vqgmE9dzxoPRNgCbUYrfJhcsyV1DKpi8Q8qKAsSt1Br.tar.zst" }
 
 import pf.SSG
 import pf.Path
@@ -12,7 +12,7 @@ main! = |args|
 		[input_dir_arg, output_dir_arg] => {
 			input_dir = Path.from_os_str(input_dir_arg)
 			output_dir = Path.from_os_str(output_dir_arg)
-			pages = SSG.pages!(input_dir)?
+			pages = SSG.markdown_pages!(input_dir)?
 
 			process_all!(pages, output_dir)
 		}
