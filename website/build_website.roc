@@ -20,12 +20,6 @@ cache_marker_path = ".cache/site.millis"
 
 latest_stable_tag = "alpha4-rolling"
 
-compiler_wasm_build_path = "build/echo.wasm"
-
-compiler_wasm_optimized_path = "build/echo.wasm.optimized"
-
-cloudflare_max_asset_size = 26_214_400.U64
-
 binaryen_version = "version_130"
 
 binaryen_dir = ".cache/binaryen-version_130"
@@ -83,6 +77,7 @@ build_examples_only! : CompilerInfo => Try({}, _)
 build_examples_only! = |compiler| {
 	path("build").delete_all!() ?? {}
 	run!("cp", ["-r", "public", "build"])?
+	optimize_compiler_wasm!()?
 	ensure_examples_present!(compiler)?
 	generate_site!(compiler.bin)
 }
@@ -136,7 +131,6 @@ build_with_cache! = |compiler| {
 	if content_changed or public_changed or generator_changed or compiler_changed {
 		if public_changed {
 			run!("cp", ["-r", "public/.", "build/"])?
-			optimize_compiler_wasm!()?
 		} else {}
 
 		if content_changed or generator_changed or compiler_changed {
@@ -149,6 +143,8 @@ build_with_cache! = |compiler| {
 	} else {
 		Stdout.line!("No content, public asset, generator, or compiler-pin changes detected.")?
 	}
+
+	optimize_compiler_wasm!()?
 
 	Ok({})
 }
@@ -223,28 +219,7 @@ ensure_binaryen_present! = || {
 optimize_compiler_wasm! : () => Try({}, _)
 optimize_compiler_wasm! = || {
 	ensure_binaryen_present!()?
-	path(compiler_wasm_optimized_path).delete!() ?? {}
-	run!(
-		"node",
-		[
-			binaryen_wasm_opt_path,
-			"--enable-bulk-memory",
-			"--enable-nontrapping-float-to-int",
-			"-Oz",
-			"--converge",
-			compiler_wasm_build_path,
-			"-o",
-			compiler_wasm_optimized_path,
-		],
-	)?
-	path(compiler_wasm_optimized_path).rename!(path(compiler_wasm_build_path))?
-
-	optimized_size = path(compiler_wasm_build_path).size_in_bytes!()?
-	if optimized_size > cloudflare_max_asset_size {
-		Err(CompilerWasmExceedsCloudflareLimit({ optimized_size, cloudflare_max_asset_size }))
-	} else {
-		Ok({})
-	}
+	run!("node", ["../ci_scripts/prepare_compiler_wasm.mjs", binaryen_wasm_opt_path])
 }
 
 ensure_examples_present! : CompilerInfo => Try({}, _)

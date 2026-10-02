@@ -7,8 +7,8 @@ and the basic-ssg platform. It also downloads the `roc-lang/examples` commit
 configured in `website/examples.json`; the dependency must declare a matching
 `.roc-version`.
 
-The build requires `bash`, `curl`, `python3`, `tar`, `unzip`, and standard Unix
-file tools.
+The build requires Node.js 24 (see `.node-version`), `bash`, `curl`, `python3`,
+`tar`, `unzip`, and standard Unix file tools.
 
 Build with:
 
@@ -49,6 +49,14 @@ Preview the result with:
 ```sh
 python3 serve.py build 8080
 ```
+
+## Browser compiler updates
+
+`website/compiler-wasm.json` pins the homepage's browser compiler and checksum.
+The daily update PR advances it alongside the native compiler once the nightly
+includes `echo.wasm.zst`. Builds verify and optimize the download; CI tests the
+resulting Wasm. Until that artifact is published, `release: null` keeps using the
+checked-in compiler with checksum verification.
 
 ## Redirects
 
