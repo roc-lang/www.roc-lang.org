@@ -1,5 +1,6 @@
 on:
   pull_request:
+  workflow_dispatch:
 
 name: CI checks
 
@@ -38,6 +39,15 @@ jobs:
           version: nightly-new-compiler
           nightly-tag: ${{ steps.roc-version.outputs.nightly-tag }}
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+
+      - name: Test browser compiler download and update logic
+        run: |
+          node --test ci_scripts/prepare_compiler_wasm.test.mjs
+          python3 -m unittest discover -s ci_scripts -p 'test_update_roc_release.py'
+
       - run: roc version
 
       - name: Check and build the website applications
@@ -65,7 +75,9 @@ jobs:
           fi
 
       - name: Test interactive Roc widgets
-        run: ci_scripts/test_interactive_roc.sh
+        run: |
+          ci_scripts/test_interactive_roc.sh
+          node ci_scripts/test_compiler_wasm.mjs website/build/echo.wasm
 
   test-install-script-unix:
     needs: ci-checks

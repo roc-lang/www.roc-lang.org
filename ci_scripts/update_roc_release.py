@@ -4,8 +4,12 @@
 Fetches the latest release from roc-lang/nightlies and rewrites the hardcoded
 version date, build id, base URL and SHA256 checksums in:
   - website/build_website.roc
+  - website/compiler-wasm.json
   - website/public/install_roc.sh
   - website/public/install_roc.ps1
+
+Updates are skipped before editing any pins if echo.wasm.zst is unavailable.
+The browser manifest records the release and compressed artifact checksum.
 
 It also repins `website/examples.json` to the latest commit of the examples
 repository it references.
@@ -27,6 +31,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD_WEBSITE_ROC_PATH = os.path.join(REPO_ROOT, "website", "build_website.roc")
 SH_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.sh")
 PS1_PATH = os.path.join(REPO_ROOT, "website", "public", "install_roc.ps1")
+COMPILER_WASM_PATH = os.path.join(REPO_ROOT, "website", "compiler-wasm.json")
 EXAMPLES_JSON_PATH = os.path.join(REPO_ROOT, "website", "examples.json")
 
 # Maps the "<platform>_<arch>" found in an asset name to its checksum.
@@ -239,13 +244,23 @@ def main():
     unavailable = [k for k in TEMPORARILY_UNAVAILABLE if k not in info["shas"]]
     if unavailable:
         print(f"  temporarily unavailable (skipped): {', '.join(unavailable)}")
+    wasm_assets = [a for a in release["assets"] if a["name"] == "echo.wasm.zst"]
+    if not wasm_assets:
+        print(f"Skipping {info['tag']}: echo.wasm.zst is not published; keeping all existing pins.")
+        return
+    digest = wasm_assets[0].get("digest") or ""
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+        sys.exit("echo.wasm.zst has no valid SHA256 digest; keeping existing pins")
+    with open(COMPILER_WASM_PATH, "w") as f:
+        json.dump({"release": info["tag"], "sha256": digest[7:]}, f, indent=2)
+        f.write("\n")
     update_build_website_roc(info)
     update_sh(info)
     update_ps1(info)
     revision = update_examples_json()
     print(f"Latest examples commit: {revision}")
     print(
-        "Updated build_website.roc, install_roc.sh, install_roc.ps1, and examples.json"
+        "Updated build_website.roc, compiler-wasm.json, install_roc.sh, install_roc.ps1, and examples.json"
     )
 
 
