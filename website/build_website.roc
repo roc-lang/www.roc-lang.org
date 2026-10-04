@@ -368,9 +368,9 @@ ensure_compiler_ready! = |compiler| {
 			Err(LocalRocBinaryNotFound(compiler.bin))?
 		} else {}
 
-		builtin_path = "${compiler.src_dir}/src/build/roc/Builtin.roc"
-		if !path(builtin_path).is_file!()? {
-			Err(LocalRocSourceNotFound(builtin_path))?
+		langref_path = "${compiler.src_dir}/docs/langref"
+		if !path(langref_path).is_dir!()? {
+			Err(LocalRocSourceNotFound(langref_path))?
 		} else {}
 
 		Ok({})
@@ -389,8 +389,7 @@ generate_builtins_docs! = |compiler| {
 		compiler.bin,
 		[
 			"docs",
-			"--no-cache",
-			"${compiler.src_dir}/src/build/roc/Builtin.roc",
+			"--builtins",
 			"--output=build/docs/main",
 			"--with-lang-ref",
 		],
@@ -428,8 +427,8 @@ ensure_pinned_compiler_downloaded! = |compiler| {
 
 ensure_roc_source_at_compiler_commit! : CompilerInfo => Try({}, _)
 ensure_roc_source_at_compiler_commit! = |compiler| {
-	builtin_path = "${compiler.src_dir}/src/build/roc/Builtin.roc"
-	if path(builtin_path).is_file!()? {
+	langref_path = "${compiler.src_dir}/docs/langref"
+	if path(langref_path).is_dir!()? {
 		Ok({})
 	} else {
 		commit = compiler_commit_sha!(compiler.bin)?
