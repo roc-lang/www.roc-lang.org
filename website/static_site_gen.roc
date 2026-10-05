@@ -1,4 +1,4 @@
-app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.11.0/3vqgmE9dzxoPRNgCbUYrfJhcsyV1DKpi8Q8qKAsSt1Br.tar.zst" }
+app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.12.0/2C2pqQg55Sm4Y12imgSpdQi9bRiUeCbDGxF7puKrLqup.tar.zst" }
 
 import pf.SSG
 import pf.Path
@@ -6,7 +6,7 @@ import pf.OsStr
 import pf.Html
 import pf.HtmlAttributes exposing [id, aria_label, aria_hidden, title, href, class, rel, content, lang, charset, name, color, src]
 
-main! : List(OsStr) => Try({}, [Exit(I32), PagesError(Str), ParseError(Str), WriteError(Str), ..])
+main! : List(OsStr) => Try({}, [Exit(I32), PagesError(Str), ParseError(Str), WriteError(Str)])
 main! = |args|
 	match args.drop_first(1) {
 		[input_dir_arg, output_dir_arg] => {
@@ -20,7 +20,7 @@ main! = |args|
 		_ => Err(Exit(1))
 	}
 
-process_all! : List(SSG.Page), Path.Path => Try({}, [ParseError(Str), WriteError(Str), ..])
+process_all! : List(SSG.Page), Path.Path => Try({}, [ParseError(Str), WriteError(Str)])
 process_all! = |pages, output_dir|
 	match pages {
 		[] => Ok({})
@@ -30,7 +30,7 @@ process_all! = |pages, output_dir|
 		}
 	}
 
-process_page! : SSG.Page, Path.Path => Try({}, [ParseError(Str), WriteError(Str), ..])
+process_page! : SSG.Page, Path.Path => Try({}, [ParseError(Str), WriteError(Str)])
 process_page! = |page, output_dir| {
 	in_html = SSG.parse_markdown!(page.source_path)?
 	out_html = transform(page.url, in_html)
