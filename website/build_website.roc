@@ -1,11 +1,11 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
 	roc: "nightly-2026-10-04-130536d",
 }
 
 import pf.Cmd
 import pf.Env
-import pf.OsStr exposing [OsStr]
+import pf.OsStr
 import pf.Path
 import pf.Stdout
 import pf.Utc
