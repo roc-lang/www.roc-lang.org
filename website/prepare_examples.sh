@@ -108,19 +108,6 @@ if [[ "$refresh_examples" == true ]]; then
     unzip -q "$archive" -d "$extracted_dir"
 
     readonly source_root="$extracted_dir/examples-${examples_sha}"
-    if [[ ! -f "$source_root/.roc-version" ]]; then
-        echo "Pinned examples commit does not declare .roc-version" >&2
-        exit 1
-    fi
-    readonly dependency_roc_version="$(tr -d '\r\n' < "$source_root/.roc-version")"
-
-    if [[ "$dependency_roc_version" != "$website_roc_version" ]]; then
-        echo "The pinned examples dependency uses a different Roc compiler." >&2
-        echo "  website: $website_roc_version" >&2
-        echo "  examples: $dependency_roc_version" >&2
-        echo "Update roc-lang/examples on main first, then select a compatible revision in $manifest." >&2
-        exit 1
-    fi
 
     {
         echo "# Examples"
@@ -143,6 +130,17 @@ if [[ "$refresh_examples" == true ]]; then
             exit 1
         fi
 
+        # Each example pins its Roc nightly in its app header.
+        example_roc_versions="$(grep -rhoE --include='*.roc' 'roc: "nightly-[^"]+"' "$source_root/examples/$directory" |
+            sed -E 's/^roc: "(.*)"$/\1/' | sort -u)"
+        if [[ "$example_roc_versions" != "$website_roc_version" ]]; then
+            echo "Pinned example $directory uses a different Roc compiler." >&2
+            echo "  website: $website_roc_version" >&2
+            echo "  example: ${example_roc_versions:-(none)}" >&2
+            echo "Update examples/$directory in roc-lang/examples on main first, then select a compatible revision in $manifest." >&2
+            exit 1
+        fi
+
         cp -R "$source_root/examples/$directory" "$content_dir/$directory"
         printf -- '- [%s](/examples/%s/README.html)\n' "$title" "$directory" >> "$content_dir/index.md"
     done < <(tail -n +2 "$manifest_records")
@@ -153,11 +151,9 @@ if [[ "$refresh_examples" == true ]]; then
     fi
 
     printf '%s' "$examples_sha" > "$content_dir/.source-revision"
-    printf '%s' "$dependency_roc_version" > "$content_dir/.dependency-roc-version"
+    printf '%s' "$website_roc_version" > "$content_dir/.dependency-roc-version"
     cp "$manifest" "$content_dir/.manifest"
     rm -rf "$extracted_dir"
-else
-    readonly dependency_roc_version="$website_roc_version"
 fi
 
 # The version check must run even when the fetched content is reused.

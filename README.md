@@ -4,8 +4,8 @@ Contains everything needed to build [www.roc-lang.org](https://www.roc-lang.org/
 
 The build uses the new Zig-based Roc compiler pinned in `website/build_website.roc`
 and the basic-ssg platform. It also downloads the `roc-lang/examples` commit
-configured in `website/examples.json`; the dependency must declare a matching
-`.roc-version`.
+configured in `website/examples.json`; every example it includes must pin the
+same Roc nightly in its `app` header.
 
 The build requires Node.js 24 (see `.node-version`), `bash`, `curl`, `python3`,
 `tar`, `unzip`, and standard Unix file tools.
