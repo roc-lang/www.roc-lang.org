@@ -26,6 +26,47 @@ fi
 
 mkdir -p .cache
 
+# Prints the one Roc nightly an example pins in its app header(s).
+example_roc_version() {
+    local versions
+    versions="$(grep -rhoE --include='*.roc' 'roc: "nightly-[^"]+"' "$1" | sed -E 's/^roc: "(.*)"$/\1/' | sort -u || true)"
+    if [[ -z "$versions" || "$versions" == *$'\n'* ]]; then
+        echo "$1 must pin exactly one Roc nightly, found: ${versions:-none}" >&2
+        return 1
+    fi
+    echo "$versions"
+}
+
+# Prints the roc binary of a nightly: the website's own, or one downloaded into .cache/<tag>/.
+roc_for_version() {
+    local tag="$1"
+    if [[ "$tag" == "$website_roc_version" ]]; then
+        echo "$roc_bin"
+        return
+    fi
+
+    local suffix arch
+    suffix="${tag#nightly-}"
+    case "$(uname -s)-$(uname -m)" in
+        Linux-x86_64) arch="linux_x86_64" ;;
+        Linux-aarch64 | Linux-arm64) arch="linux_arm64" ;;
+        Darwin-arm64) arch="macos_apple_silicon" ;;
+        Darwin-x86_64) arch="macos_x86_64" ;;
+        *) echo "unsupported platform: $(uname -sm)" >&2; return 1 ;;
+    esac
+
+    local dir=".cache/$tag"
+    if [[ ! -x "$dir/roc" ]]; then
+        local tmp
+        tmp="$(mktemp -d .cache/.tmp.XXXXXX)"
+        curl -fsSL --retry 5 "https://github.com/roc-lang/nightlies/releases/download/${tag}/roc_nightly-${arch}-${suffix}.tar.gz" |
+            tar -xz -C "$tmp" --strip-components=1
+        rm -rf "$dir"
+        mv "$tmp" "$dir"
+    fi
+    echo "$PWD/$dir/roc"
+}
+
 python3 - "$manifest" "$manifest_records" <<'PY'
 import json
 import re
@@ -96,8 +137,8 @@ if [[ ! -d "$content_dir" ]] ||
    [[ ! -f "$content_dir/.source-revision" ]] ||
    [[ "$(<"$content_dir/.source-revision")" != "$examples_sha" ]] ||
    [[ ! -f "$content_dir/.manifest" ]] ||
-   [[ ! -f "$content_dir/.dependency-roc-version" ]] ||
-   [[ "$(<"$content_dir/.dependency-roc-version")" != "$website_roc_version" ]] ||
+   [[ ! -f "$content_dir/.roc-version" ]] ||
+   [[ "$(<"$content_dir/.roc-version")" != "$website_roc_version" ]] ||
    ! cmp -s "$manifest" "$content_dir/.manifest"; then
     refresh_examples=true
 fi
@@ -108,24 +149,11 @@ if [[ "$refresh_examples" == true ]]; then
     unzip -q "$archive" -d "$extracted_dir"
 
     readonly source_root="$extracted_dir/examples-${examples_sha}"
-    if [[ ! -f "$source_root/.roc-version" ]]; then
-        echo "Pinned examples commit does not declare .roc-version" >&2
-        exit 1
-    fi
-    readonly dependency_roc_version="$(tr -d '\r\n' < "$source_root/.roc-version")"
-
-    if [[ "$dependency_roc_version" != "$website_roc_version" ]]; then
-        echo "The pinned examples dependency uses a different Roc compiler." >&2
-        echo "  website: $website_roc_version" >&2
-        echo "  examples: $dependency_roc_version" >&2
-        echo "Update roc-lang/examples on main first, then select a compatible revision in $manifest." >&2
-        exit 1
-    fi
 
     {
         echo "# Examples"
         echo
-        echo "These examples are built and tested with Roc ${website_roc_version}."
+        echo "These examples are built and tested with Roc ${website_roc_version}, unless noted otherwise."
         echo
         echo "Their source comes from [roc-lang/examples at ${examples_sha:0:7}](${examples_repo}/tree/${examples_sha}/examples)."
         echo
@@ -144,7 +172,12 @@ if [[ "$refresh_examples" == true ]]; then
         fi
 
         cp -R "$source_root/examples/$directory" "$content_dir/$directory"
-        printf -- '- [%s](/examples/%s/README.html)\n' "$title" "$directory" >> "$content_dir/index.md"
+        example_version="$(example_roc_version "$content_dir/$directory")"
+        note=""
+        if [[ "$example_version" != "$website_roc_version" ]]; then
+            note=" (Roc ${example_version})"
+        fi
+        printf -- '- [%s](/examples/%s/README.html)%s\n' "$title" "$directory" "$note" >> "$content_dir/index.md"
     done < <(tail -n +2 "$manifest_records")
 
     if [[ "$example_count" -eq 0 ]]; then
@@ -153,23 +186,18 @@ if [[ "$refresh_examples" == true ]]; then
     fi
 
     printf '%s' "$examples_sha" > "$content_dir/.source-revision"
-    printf '%s' "$dependency_roc_version" > "$content_dir/.dependency-roc-version"
+    printf '%s' "$website_roc_version" > "$content_dir/.roc-version"
     cp "$manifest" "$content_dir/.manifest"
     rm -rf "$extracted_dir"
-else
-    readonly dependency_roc_version="$website_roc_version"
-fi
-
-# The version check must run even when the fetched content is reused.
-if [[ "$(<"$content_dir/.dependency-roc-version")" != "$website_roc_version" ]]; then
-    echo "Cached examples were prepared with a different Roc compiler; refreshing is required." >&2
-    exit 1
 fi
 
 rm -rf "$build_dir"
 mkdir -p "$build_dir"
 
 while IFS=$'\t' read -r directory _title actions; do
+    example_version="$(example_roc_version "$content_dir/$directory")"
+    example_roc="$(roc_for_version "$example_version")"
+
     IFS=',' read -r -a validation_actions <<< "$actions"
     for action in "${validation_actions[@]}"; do
         kind="${action%%:*}"
@@ -185,13 +213,13 @@ while IFS=$'\t' read -r directory _title actions; do
 
         case "$kind" in
             build)
-                (cd "$content_dir/$directory" && "$roc_bin" build --no-cache "$target" "--output=../../../$build_dir/$directory")
+                (cd "$content_dir/$directory" && "$example_roc" build --no-cache "$target" "--output=../../../$build_dir/$directory")
                 ;;
             build-dev)
-                (cd "$content_dir/$directory" && "$roc_bin" build --no-cache --opt=dev "$target" "--output=../../../$build_dir/$directory")
+                (cd "$content_dir/$directory" && "$example_roc" build --no-cache --opt=dev "$target" "--output=../../../$build_dir/$directory")
                 ;;
             test)
-                (cd "$content_dir/$directory" && "$roc_bin" test "$target")
+                (cd "$content_dir/$directory" && "$example_roc" test "$target")
                 ;;
             *)
                 echo "Unknown validation action '$kind' for $directory" >&2
