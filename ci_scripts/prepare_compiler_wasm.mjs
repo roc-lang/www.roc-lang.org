@@ -9,7 +9,7 @@ import { execFileSync } from 'node:child_process';
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const MAX_ASSET_SIZE = 26_214_400;
 const MAX_RAW_SIZE = 256 * 1024 * 1024;
-const FLAGS = ['--enable-bulk-memory', '--enable-nontrapping-float-to-int', '-Oz', '--converge'];
+const FLAGS = ['--enable-bulk-memory', '--enable-nontrapping-float-to-int', '-Oz'];
 
 export function validateManifest(manifest, compilerTag) {
   if (!/^[0-9a-f]{64}$/.test(manifest.sha256)) throw new Error('Invalid browser compiler SHA256');
