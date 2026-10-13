@@ -4,8 +4,10 @@ Contains everything needed to build [www.roc-lang.org](https://www.roc-lang.org/
 
 The build uses the new Zig-based Roc compiler pinned in `website/build_website.roc`
 and the basic-ssg platform. It also downloads the `roc-lang/examples` commit
-configured in `website/examples.json`; every example it includes must pin the
-same Roc nightly in its `app` header.
+configured in `website/examples.json`. Each example pins its own Roc nightly in
+its `app` header (`roc: "nightly-..."`) and is built and tested with that
+version; the website's compiler is used when the pins match, otherwise the
+pinned nightly is downloaded.
 
 The build requires Node.js 24 (see `.node-version`), `bash`, `curl`, `python3`,
 `tar`, `unzip`, and standard Unix file tools.
@@ -41,8 +43,8 @@ example like this:
 ```
 
 To update the dependency, select a commit already on `roc-lang/examples/main`,
-update the `revision` and examples in `website/examples.json`, and rebuild. The
-build stops before rendering if the dependency and website Roc pins differ.
+update the `revision` and examples in `website/examples.json`, and rebuild. Examples that pin a
+different nightly than the website are marked as such on the examples index.
 
 Preview the result with:
 
