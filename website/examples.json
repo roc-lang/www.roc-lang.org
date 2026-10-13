@@ -29,6 +29,11 @@
     { "directory": "EncodeDecode", "title": "Encoding & Decoding", "validation": ["build:main.roc"] },
     { "directory": "CustomInspect", "title": "Custom Inspect", "validation": ["test:OpaqueTypes.roc"] },
     { "directory": "LeastSquares", "title": "Least Squares", "validation": ["build:main.roc"] },
-    { "directory": "TowersOfHanoi", "title": "Towers of Hanoi", "validation": ["test:Hanoi.roc"] }
+    { "directory": "TowersOfHanoi", "title": "Towers of Hanoi", "validation": ["test:Hanoi.roc"] },
+    { "directory": "HelloWeb", "title": "Hello Web", "validation": ["check:main.roc"] },
+    { "directory": "ElmWebApp", "title": "Web App with Elm", "validation": ["check:backend.roc"] },
+    { "directory": "MultiLineComments", "title": "Multi-line Comments", "validation": [] },
+    { "directory": "SortStrings", "title": "Sorting Strings (awaiting migration)", "validation": [] },
+    { "directory": "CustomLiterals", "title": "Custom Literals", "validation": ["build:main.roc", "test:main.roc"] }
   ]
 }

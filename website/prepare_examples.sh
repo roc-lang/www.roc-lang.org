@@ -104,12 +104,12 @@ for position, example in enumerate(examples, 1):
     seen.add(directory)
     if not isinstance(title, str) or not title or any(char in title for char in "\t\r\n"):
         raise SystemExit(f"invalid title for {directory}: {title!r}")
-    if not isinstance(validation, list) or not validation:
-        raise SystemExit(f"validation for {directory} must be a non-empty list")
+    if not isinstance(validation, list):
+        raise SystemExit(f"validation for {directory} must be a list")
     for action in validation:
         if not isinstance(action, str):
             raise SystemExit(f"validation actions for {directory} must be strings")
-        match = re.fullmatch(r"(build|build-dev|test):(.+)", action)
+        match = re.fullmatch(r"(build|build-dev|test|check):(.+)", action)
         if not match or match.group(2).startswith("/") or ".." in match.group(2):
             raise SystemExit(f"invalid validation action for {directory}: {action!r}")
     records.append((directory, title, ",".join(validation)))
@@ -153,7 +153,7 @@ if [[ "$refresh_examples" == true ]]; then
     {
         echo "# Examples"
         echo
-        echo "These examples are built and tested with Roc ${website_roc_version}, unless noted otherwise."
+        echo "Code examples are validated with Roc ${website_roc_version}, unless noted otherwise."
         echo
         echo "Their source comes from [roc-lang/examples at ${examples_sha:0:7}](${examples_repo}/tree/${examples_sha}/examples)."
         echo
@@ -172,10 +172,14 @@ if [[ "$refresh_examples" == true ]]; then
         fi
 
         cp -R "$source_root/examples/$directory" "$content_dir/$directory"
-        example_version="$(example_roc_version "$content_dir/$directory")"
         note=""
-        if [[ "$example_version" != "$website_roc_version" ]]; then
-            note=" (Roc ${example_version})"
+        if [[ -z "$actions" ]]; then
+            note=" (not validated)"
+        else
+            example_version="$(example_roc_version "$content_dir/$directory")"
+            if [[ "$example_version" != "$website_roc_version" ]]; then
+                note=" (Roc ${example_version})"
+            fi
         fi
         printf -- '- [%s](/examples/%s/README.html)%s\n' "$title" "$directory" "$note" >> "$content_dir/index.md"
     done < <(tail -n +2 "$manifest_records")
@@ -195,6 +199,10 @@ rm -rf "$build_dir"
 mkdir -p "$build_dir"
 
 while IFS=$'\t' read -r directory _title actions; do
+    # Documentation-only entries need neither a compiler pin nor a compiler.
+    if [[ -z "$actions" ]]; then
+        continue
+    fi
     example_version="$(example_roc_version "$content_dir/$directory")"
     example_roc="$(roc_for_version "$example_version")"
 
@@ -217,6 +225,9 @@ while IFS=$'\t' read -r directory _title actions; do
                 ;;
             build-dev)
                 (cd "$content_dir/$directory" && "$example_roc" build --no-cache --opt=dev "$target" "--output=../../../$build_dir/$directory")
+                ;;
+            check)
+                (cd "$content_dir/$directory" && "$example_roc" check --no-cache "$target")
                 ;;
             test)
                 (cd "$content_dir/$directory" && "$example_roc" test "$target")

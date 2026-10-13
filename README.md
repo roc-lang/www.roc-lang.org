@@ -30,7 +30,7 @@ inside its source checkout. Additional options are:
 ./build_website --examples-only # fetch, validate, and render examples only
 ```
 
-Every build compiles or tests the examples listed in `website/examples.json`.
+Every build runs the validation actions for the examples listed in `website/examples.json`.
 The manifest pins the repository and revision and describes each published
 example like this:
 
@@ -41,6 +41,12 @@ example like this:
   "validation": ["build:main.roc", "test:main.roc"]
 }
 ```
+
+Validation actions support `build`, `build-dev`, `test`, and `check`.
+Use an empty `validation` list for prose-only examples or examples awaiting
+migration; these are labeled "not validated" on the examples index and do not
+require a compiler pin. Include "awaiting migration" in the title when the code
+is not yet compatible.
 
 To update the dependency, select a commit already on `roc-lang/examples/main`,
 update the `revision` and examples in `website/examples.json`, and rebuild. Examples that pin a
