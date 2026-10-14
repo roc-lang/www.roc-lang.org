@@ -61,6 +61,8 @@ EXPECTED=(
     "/builtins/alpha3/ /docs/alpha3/"
     "/builtins/alpha4 /docs/alpha4/"
     "/builtins/alpha4/ /docs/alpha4/"
+    "/docs/main/builtins /docs/main/"
+    "/docs/main/builtins/ /docs/main/"
     "/platforms /docs/main/langref/platforms/"
     "/platforms/ /docs/main/langref/platforms/"
     "/builtins/main/Str/ /docs/main/Str/"
@@ -68,6 +70,8 @@ EXPECTED=(
     "/builtins/alpha4/Str/ /docs/alpha4/Str/"
     "/builtins/Num /docs/main/Num"
     "/builtins/Str/ /docs/main/Str/"
+    "/docs/main/builtins/Try /docs/main/Try/"
+    "/docs/main/builtins/Str/ /docs/main/Str/"
 )
 
 RED='\033[0;31m'
