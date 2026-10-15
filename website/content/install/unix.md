@@ -2,7 +2,13 @@
 
 ## How to install Roc
 
-1. Download the roc install script and execute it:
+1. Install Roc using [Homebrew](https://brew.sh/):
+
+    ```sh
+    brew install roc-lang/roc/roc
+    ```
+
+    Alternatively, download the Roc install script and execute it:
 
     ```sh
     curl --proto '=https' --tlsv1.2 -sSf https://roc-lang.org/install_roc.sh | sh
