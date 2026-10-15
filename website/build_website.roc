@@ -318,7 +318,7 @@ resolve_compiler! = |args| {
 								Ok({ dir: ".cache/${version}/source", managed: Bool.True })
 							}
 						}
-					}
+				}
 
 			resolved = resolved_source?
 			Ok({ bin, src_dir: resolved.dir, managed: resolved.managed, version })
@@ -356,7 +356,7 @@ get_flag_value = |args, prefix|
 			} else {
 				get_flag_value(rest, prefix)
 			}
-		}
+	}
 
 ensure_compiler_ready! : CompilerInfo => Try({}, _)
 ensure_compiler_ready! = |compiler| {
@@ -705,7 +705,7 @@ max_mtime_in_roots! = |roots, maximum|
 				Ok(value) => max_mtime_in_roots!(rest, U128.max(maximum, value))
 				Err(_) => max_mtime_in_roots!(rest, maximum)
 			}
-		}
+	}
 
 max_mtime_in_path_millis! : Path.Path => Try(U128, _)
 max_mtime_in_path_millis! = |root| {

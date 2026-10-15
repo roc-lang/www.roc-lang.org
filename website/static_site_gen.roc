@@ -4,7 +4,7 @@ import pf.SSG
 import pf.Path
 import pf.OsStr
 import pf.Html
-import pf.HtmlAttributes exposing [id, aria_label, aria_hidden, title, href, class, rel, content, lang, charset, name, color, src]
+import pf.HtmlAttributes exposing [aria_hidden, aria_label, charset, class, color, content, href, id, lang, name, rel, src, title]
 
 main! : List(OsStr) => Try({}, [Exit(I32), PagesError(Str), ParseError(Str), WriteError(Str)])
 main! = |args|
@@ -56,7 +56,7 @@ page_data = Dict.empty()
 	.insert("/foundation.html", { title: "Foundation | Roc", description: "Learn about the Roc Programming Language Foundation." })
 	.insert("/different-names.html", { title: "Different Names | Roc", description: "Names of things in Roc that differ from other languages." })
 	.insert("/repl/index.html", { title: "REPL | Roc", description: "Try the Roc programming language in an online REPL." })
-	.insert("/examples/index.html", { title: "Examples | Roc", description: "Examples built and tested with the Roc compiler used by this website." })
+	.insert("/examples/index.html", { title: "Examples | Roc", description: "Explore Roc examples by topic, from language basics and error handling to packages, platforms, and complete programs." })
 	.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
 	.insert("/install/other.html", { title: "Getting started on other systems | Roc", description: "Roc installation guide for other systems" })
 	.insert("/install/unix.html", { title: "Getting started on Unix-based OS | Roc", description: "Roc installation guide for Unix-based OS" })
@@ -88,7 +88,7 @@ get_page_info = |page_path_str|
 			} else {
 				crash "Web page ${page_path_str} did not have a title and description specified in page_data. Please add one to website/static_site_gen.roc."
 			}
-		}
+	}
 
 transform : Str, Str -> Str
 transform = |page_path_str, html_content|
@@ -134,13 +134,14 @@ view_body = |page_path_str, html_content| {
 		match page_path_str {
 			"/index.html" => [id("homepage-main")]
 			"/tutorial.html" => [id("tutorial-main"), class("article-layout")]
+			"/examples/index.html" => [id("examples-main"), class("article-layout")]
 			_ =>
 				if page_path_str.starts_with("/examples/") and page_path_str != "/examples/index.html" {
 					[id("example-main")]
 				} else {
 					[class("article-layout")]
 				}
-			}
+		}
 
 	Html.body(
 		body_attrs,
