@@ -38,8 +38,32 @@ example like this:
 {
   "directory": "FizzBuzz",
   "title": "FizzBuzz",
+  "category": "getting-started",
+  "description": "Use conditions and arithmetic to solve the classic FizzBuzz exercise.",
   "validation": ["build:main.roc", "test:main.roc"]
 }
+```
+
+The manifest's `categories` list defines the section order and stable anchor IDs:
+
+```json
+{ "id": "getting-started", "title": "Getting started" }
+```
+
+Each example belongs to one category and has a short description of what it
+teaches. Categories with no examples are omitted from the page and its navigation.
+Examples retain their manifest order within each category; place simpler examples
+first, before those that build on their concepts. An optional
+`subcategory` groups related entries under a subheading, such as `basic-cli` in
+Platforms; subcategories appear in the order they are first used, after any
+ungrouped entries. Existing example URLs do not depend on these categories.
+
+`website/examples.py` validates the manifest and generates the categorized index.
+`prepare_examples.sh` still copies and validates every example once, regardless
+of its category. Check the manifest and index logic locally with:
+
+```sh
+python3 -m unittest discover -s ci_scripts -p 'test_examples.py'
 ```
 
 To update the dependency, select a commit already on `roc-lang/examples/main`,
