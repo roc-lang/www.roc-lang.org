@@ -17,6 +17,7 @@ readonly website_roc_version="$(sed -n 's/^[[:space:]]*roc: "\([^"]*\)",$/\1/p' 
 readonly manifest="examples.json"
 readonly manifest_records=".cache/examples-manifest.tsv"
 readonly content_dir="content/examples"
+readonly example_versions=".cache/examples-versions.tsv"
 readonly build_dir=".cache/example-builds"
 
 if [[ ! -f "$manifest" ]]; then
@@ -67,58 +68,7 @@ roc_for_version() {
     echo "$PWD/$dir/roc"
 }
 
-python3 - "$manifest" "$manifest_records" <<'PY'
-import json
-import re
-import sys
-
-manifest_path, output_path = sys.argv[1:]
-with open(manifest_path, encoding="utf-8") as source:
-    manifest = json.load(source)
-
-if set(manifest) != {"repository", "revision", "examples"}:
-    raise SystemExit("examples.json must contain exactly repository, revision, and examples")
-
-repository = manifest["repository"]
-revision = manifest["revision"]
-examples = manifest["examples"]
-if repository != "https://github.com/roc-lang/examples":
-    raise SystemExit(f"unsupported examples repository: {repository!r}")
-if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
-    raise SystemExit(f"revision must be one full lowercase Git commit SHA, got: {revision!r}")
-if not isinstance(examples, list) or not examples:
-    raise SystemExit("examples must be a non-empty list")
-
-seen = set()
-records = []
-for position, example in enumerate(examples, 1):
-    if not isinstance(example, dict) or set(example) != {"directory", "title", "validation"}:
-        raise SystemExit(f"example {position} must contain exactly directory, title, and validation")
-    directory = example["directory"]
-    title = example["title"]
-    validation = example["validation"]
-    if not isinstance(directory, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", directory):
-        raise SystemExit(f"invalid example directory at position {position}: {directory!r}")
-    if directory in seen:
-        raise SystemExit(f"duplicate example directory: {directory}")
-    seen.add(directory)
-    if not isinstance(title, str) or not title or any(char in title for char in "\t\r\n"):
-        raise SystemExit(f"invalid title for {directory}: {title!r}")
-    if not isinstance(validation, list):
-        raise SystemExit(f"validation for {directory} must be a list")
-    for action in validation:
-        if not isinstance(action, str):
-            raise SystemExit(f"validation actions for {directory} must be strings")
-        match = re.fullmatch(r"(build|build-dev|test|check):(.+)", action)
-        if not match or match.group(2).startswith("/") or ".." in match.group(2):
-            raise SystemExit(f"invalid validation action for {directory}: {action!r}")
-    records.append((directory, title, ",".join(validation)))
-
-with open(output_path, "w", encoding="utf-8", newline="\n") as output:
-    output.write(f"{repository}\t{revision}\n")
-    for record in records:
-        output.write("\t".join(record) + "\n")
-PY
+python3 examples.py records "$manifest" "$manifest_records"
 
 IFS=$'\t' read -r examples_repo examples_sha < "$manifest_records"
 readonly examples_repo examples_sha
@@ -137,6 +87,7 @@ if [[ ! -d "$content_dir" ]] ||
    [[ ! -f "$content_dir/.source-revision" ]] ||
    [[ "$(<"$content_dir/.source-revision")" != "$examples_sha" ]] ||
    [[ ! -f "$content_dir/.manifest" ]] ||
+   [[ ! -f "$example_versions" ]] ||
    [[ ! -f "$content_dir/.roc-version" ]] ||
    [[ "$(<"$content_dir/.roc-version")" != "$website_roc_version" ]] ||
    ! cmp -s "$manifest" "$content_dir/.manifest"; then
@@ -150,14 +101,7 @@ if [[ "$refresh_examples" == true ]]; then
 
     readonly source_root="$extracted_dir/examples-${examples_sha}"
 
-    {
-        echo "# Examples"
-        echo
-        echo "Code examples are validated with Roc ${website_roc_version}, unless noted otherwise."
-        echo
-        echo "Their source comes from [roc-lang/examples at ${examples_sha:0:7}](${examples_repo}/tree/${examples_sha}/examples)."
-        echo
-    } > "$content_dir/index.md"
+    : > "$example_versions"
 
     example_count=0
     while IFS=$'\t' read -r directory title actions; do
@@ -172,16 +116,10 @@ if [[ "$refresh_examples" == true ]]; then
         fi
 
         cp -R "$source_root/examples/$directory" "$content_dir/$directory"
-        note=""
-        if [[ -z "$actions" ]]; then
-            note=" (not validated)"
-        else
+        if [[ -n "$actions" ]]; then
             example_version="$(example_roc_version "$content_dir/$directory")"
-            if [[ "$example_version" != "$website_roc_version" ]]; then
-                note=" (Roc ${example_version})"
-            fi
+            printf '%s\t%s\n' "$directory" "$example_version" >> "$example_versions"
         fi
-        printf -- '- [%s](/examples/%s/README.html)%s\n' "$title" "$directory" "$note" >> "$content_dir/index.md"
     done < <(tail -n +2 "$manifest_records")
 
     if [[ "$example_count" -eq 0 ]]; then
@@ -195,11 +133,13 @@ if [[ "$refresh_examples" == true ]]; then
     rm -rf "$extracted_dir"
 fi
 
+python3 examples.py index "$manifest" "$example_versions" "$website_roc_version" "$content_dir/index.md"
+
 rm -rf "$build_dir"
 mkdir -p "$build_dir"
 
 while IFS=$'\t' read -r directory _title actions; do
-    # Documentation-only entries need neither a compiler pin nor a compiler.
+    # Entries without validation need neither a compiler pin nor a compiler.
     if [[ -z "$actions" ]]; then
         continue
     fi

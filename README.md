@@ -4,8 +4,8 @@ Contains everything needed to build [www.roc-lang.org](https://www.roc-lang.org/
 
 The build uses the new Zig-based Roc compiler pinned in `website/build_website.roc`
 and the basic-ssg platform. It also downloads the `roc-lang/examples` commit
-configured in `website/examples.json`. Each example pins its own Roc nightly in
-its `app` header (`roc: "nightly-..."`) and is built and tested with that
+configured in `website/examples.json`. Each example with validation actions pins
+its own Roc nightly in its `app` header (`roc: "nightly-..."`) and is validated with that
 version; the website's compiler is used when the pins match, otherwise the
 pinned nightly is downloaded.
 
@@ -30,7 +30,7 @@ inside its source checkout. Additional options are:
 ./build_website --examples-only # fetch, validate, and render examples only
 ```
 
-Every build runs the validation actions for the examples listed in `website/examples.json`.
+Every build runs the validation actions for the enabled examples in `website/examples.json`.
 The manifest pins the repository and revision and describes each published
 example like this:
 
@@ -38,6 +38,8 @@ example like this:
 {
   "directory": "FizzBuzz",
   "title": "FizzBuzz",
+  "category": "getting-started",
+  "description": "Use conditions and arithmetic to solve the classic FizzBuzz exercise.",
   "validation": ["build:main.roc", "test:main.roc"]
 }
 ```
@@ -47,6 +49,38 @@ Use an empty `validation` list for prose-only examples or examples awaiting
 migration; these are labeled "not validated" on the examples index and do not
 require a compiler pin. Include "awaiting migration" in the title when the code
 is not yet compatible.
+
+Examples are enabled by default. Set `"enabled": false` to keep an entry's metadata
+while excluding it from the index, generated pages, and validation runs. Categories
+and subcategories with no enabled examples are also omitted. Unlike an empty
+`validation` list, this prevents the example from being published at all.
+
+`HelloWeb`, `ElmWebApp`, and `SortStrings` are disabled until the examples repository
+has proper test runs for them. Once those tests are in place, update the pinned
+revision and validation actions as needed, then remove `"enabled": false` or set it
+to `true`.
+
+The manifest's `categories` list defines the section order and stable anchor IDs:
+
+```json
+{ "id": "getting-started", "title": "Getting started" }
+```
+
+Each example belongs to one category and has a short description of what it
+teaches. Categories with no examples are omitted from the page and its navigation.
+Examples retain their manifest order within each category; place simpler examples
+first, before those that build on their concepts. An optional
+`subcategory` groups related entries under a subheading, such as `basic-cli` in
+Platforms; subcategories appear in the order they are first used, after any
+ungrouped entries. Existing example URLs do not depend on these categories.
+
+`website/examples.py` validates the manifest and generates the categorized index.
+`website/prepare_examples.sh` copies every enabled example and runs its configured validation
+actions, regardless of its category. Check the manifest and index logic locally with:
+
+```sh
+python3 -m unittest discover -s ci_scripts -p 'test_examples.py'
+```
 
 To update the dependency, select a commit already on `roc-lang/examples/main`,
 update the `revision` and examples in `website/examples.json`, and rebuild. Examples that pin a
