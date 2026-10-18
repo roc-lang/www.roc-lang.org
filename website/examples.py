@@ -47,14 +47,16 @@ def load_manifest(path):
     seen = set()
     required = {"directory", "title", "description", "category", "validation"}
     for position, example in enumerate(examples, 1):
-        if not isinstance(example, dict) or not required <= set(example) or set(example) - required - {"subcategory"}:
-            raise ValueError(f"example {position} must contain directory, title, description, category, validation, and optionally subcategory")
+        if not isinstance(example, dict) or not required <= set(example) or set(example) - required - {"subcategory", "enabled"}:
+            raise ValueError(f"example {position} must contain directory, title, description, category, validation, and optionally subcategory and enabled")
         directory = example["directory"]
         if not isinstance(directory, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", directory):
             raise ValueError(f"invalid example directory at position {position}: {directory!r}")
         if directory in seen:
             raise ValueError(f"duplicate example directory: {directory}")
         seen.add(directory)
+        if "enabled" in example and not isinstance(example["enabled"], bool):
+            raise ValueError(f"enabled for {directory} must be a boolean")
         category_id = example["category"]
         if not isinstance(category_id, str) or category_id not in category_ids:
             raise ValueError(f"unknown category for {directory}: {category_id!r}")
@@ -62,13 +64,17 @@ def load_manifest(path):
             if field in example and not single_line(example[field]):
                 raise ValueError(f"invalid {field} for {directory}")
         validation = example["validation"]
-        if not isinstance(validation, list) or not validation:
-            raise ValueError(f"validation for {directory} must be a non-empty list")
+        if not isinstance(validation, list):
+            raise ValueError(f"validation for {directory} must be a list")
         for action in validation:
-            match = re.fullmatch(r"(build|build-dev|test):(.+)", action) if isinstance(action, str) else None
+            match = re.fullmatch(r"(build|build-dev|test|check):(.+)", action) if isinstance(action, str) else None
             if not match or match.group(2).startswith("/") or ".." in match.group(2) or not single_line(action):
                 raise ValueError(f"invalid validation action for {directory}: {action!r}")
     return manifest
+
+
+def enabled_examples(manifest):
+    return [example for example in manifest["examples"] if example.get("enabled", True)]
 
 
 def write_records(manifest, output):
@@ -76,15 +82,16 @@ def write_records(manifest, output):
     lines = [f'{manifest["repository"]}\t{manifest["revision"]}']
     lines.extend(
         "\t".join((example["directory"], example["title"], ",".join(example["validation"])))
-        for example in manifest["examples"]
+        for example in enabled_examples(manifest)
     )
     Path(output).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def render_index(manifest, versions, website_version):
+    enabled = enabled_examples(manifest)
     sections = []
     for category in manifest["categories"]:
-        examples = [example for example in manifest["examples"] if example["category"] == category["id"]]
+        examples = [example for example in enabled if example["category"] == category["id"]]
         if examples:
             sections.append((category, examples))
 
@@ -110,15 +117,18 @@ def render_index(manifest, versions, website_version):
                 lines.extend([f"<h3>{escape(group)}</h3>", ""])
             for example in members:
                 directory = example["directory"]
-                version = versions[directory]
-                note = f" (Roc {version})" if version != website_version else ""
+                if example["validation"]:
+                    version = versions[directory]
+                    note = f" (Roc {version})" if version != website_version else ""
+                else:
+                    note = " (not validated)"
                 lines.append(f'- [{example["title"]}](/examples/{directory}/README.html){note} — {example["description"]}')
             lines.append("")
 
     revision = manifest["revision"]
     lines.extend([
         "---", "",
-        f"These examples are built and tested with Roc {website_version}, unless noted otherwise.", "",
+        f"Code examples are validated with Roc {website_version}, unless noted otherwise.", "",
         f'Their source comes from [roc-lang/examples at {revision[:7]}]({manifest["repository"]}/tree/{revision}/examples).', "",
     ])
     return "\n".join(lines)

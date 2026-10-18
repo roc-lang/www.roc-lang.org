@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/roc-lang/examples",
-  "revision": "0457fea8c524c59d983f0ea4ec0e8abdf24ca85a",
+  "revision": "4eec8fb98f33f6113e2665baf478ac109f477d80",
   "categories": [
     {"id": "getting-started", "title": "Getting started"},
     {"id": "types-and-functions", "title": "Types and functions"},
@@ -19,6 +19,13 @@
       "category": "getting-started",
       "description": "Print a greeting with a minimal Roc application.",
       "validation": ["build:main.roc"]
+    },
+    {
+      "directory": "MultiLineComments",
+      "title": "Multi-line Comments",
+      "category": "getting-started",
+      "description": "Write comments across several lines and learn why Roc uses # for each line.",
+      "validation": []
     },
     {
       "directory": "FizzBuzz",
@@ -54,6 +61,13 @@
       "category": "types-and-functions",
       "description": "Customize how opaque values appear when inspected, including hiding a secret.",
       "validation": ["test:OpaqueTypes.roc"]
+    },
+    {
+      "directory": "CustomLiterals",
+      "title": "Custom Literals",
+      "category": "types-and-functions",
+      "description": "Create values of your own types from number literals, quoted strings, and interpolated strings.",
+      "validation": ["build:main.roc", "test:main.roc"]
     },
     {
       "directory": "BasicDict",
@@ -168,6 +182,14 @@
       "validation": ["build:main.roc"]
     },
     {
+      "directory": "SortStrings",
+      "enabled": false,
+      "title": "Sorting Strings (awaiting migration)",
+      "category": "packages",
+      "description": "Sort ASCII strings in ascending and descending order with the ascii package.",
+      "validation": []
+    },
+    {
       "directory": "RandomNumbers",
       "title": "Random Numbers",
       "category": "packages",
@@ -212,6 +234,24 @@
       "subcategory": "basic-cli",
       "description": "Build a playable Snake game with an effectful game loop.",
       "validation": ["build:main.roc", "test:main.roc"]
+    },
+    {
+      "directory": "HelloWeb",
+      "enabled": false,
+      "title": "Hello Web",
+      "category": "platforms",
+      "subcategory": "basic-webserver",
+      "description": "Serve a web page with a minimal Roc HTTP server.",
+      "validation": ["check:main.roc"]
+    },
+    {
+      "directory": "ElmWebApp",
+      "enabled": false,
+      "title": "Web App with Elm",
+      "category": "platforms",
+      "subcategory": "basic-webserver",
+      "description": "Connect an Elm frontend to a Roc web server.",
+      "validation": ["check:backend.roc"]
     }
   ]
 }

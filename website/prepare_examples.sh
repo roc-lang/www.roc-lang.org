@@ -116,8 +116,10 @@ if [[ "$refresh_examples" == true ]]; then
         fi
 
         cp -R "$source_root/examples/$directory" "$content_dir/$directory"
-        example_version="$(example_roc_version "$content_dir/$directory")"
-        printf '%s\t%s\n' "$directory" "$example_version" >> "$example_versions"
+        if [[ -n "$actions" ]]; then
+            example_version="$(example_roc_version "$content_dir/$directory")"
+            printf '%s\t%s\n' "$directory" "$example_version" >> "$example_versions"
+        fi
     done < <(tail -n +2 "$manifest_records")
 
     if [[ "$example_count" -eq 0 ]]; then
@@ -137,6 +139,10 @@ rm -rf "$build_dir"
 mkdir -p "$build_dir"
 
 while IFS=$'\t' read -r directory _title actions; do
+    # Entries without validation need neither a compiler pin nor a compiler.
+    if [[ -z "$actions" ]]; then
+        continue
+    fi
     example_version="$(example_roc_version "$content_dir/$directory")"
     example_roc="$(roc_for_version "$example_version")"
 
@@ -159,6 +165,9 @@ while IFS=$'\t' read -r directory _title actions; do
                 ;;
             build-dev)
                 (cd "$content_dir/$directory" && "$example_roc" build --no-cache --opt=dev "$target" "--output=../../../$build_dir/$directory")
+                ;;
+            check)
+                (cd "$content_dir/$directory" && "$example_roc" check --no-cache "$target")
                 ;;
             test)
                 (cd "$content_dir/$directory" && "$example_roc" test "$target")
