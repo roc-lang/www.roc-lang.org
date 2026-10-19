@@ -1450,6 +1450,7 @@ function setup(div) {
   textarea.spellcheck = false;
   textarea.wrap = "off";
   textarea.className = "roc-source";
+  textarea.setAttribute("aria-label", "Roc code");
 
   const sourceEditor = document.createElement("div");
   sourceEditor.className = "roc-source-editor";
