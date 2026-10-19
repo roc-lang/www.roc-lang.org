@@ -342,13 +342,13 @@ async function checkPage(page, url) {
     const text = msg.text();
     const type = msg.type();
 
-    // Ignore transient 503 responses
-    if (text.includes('the server responded with a status of 503')) {
+    // Pages that redirect off the site (e.g. /tutorial to GitHub) are not ours to check
+    if (!page.url().startsWith(WEBSITE_URL)) {
       return;
     }
 
-    // Ignore known 401 on the tutorial page (unrelated third-party resource)
-    if (url === `${WEBSITE_URL}/tutorial` && text.includes('the server responded with a status of 401')) {
+    // Ignore transient 503 responses
+    if (text.includes('the server responded with a status of 503')) {
       return;
     }
 
@@ -396,6 +396,10 @@ async function checkPage(page, url) {
   
   // Capture JavaScript errors
   page.on('pageerror', error => {
+    if (!page.url().startsWith(WEBSITE_URL)) {
+      return;
+    }
+
     errors.push({
       type: 'page_error',
       message: error.message,
