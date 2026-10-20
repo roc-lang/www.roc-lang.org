@@ -55,6 +55,10 @@
 /docs/main/builtins /docs/main/ 301
 /docs/main/builtins/ /docs/main/ 301
 
+# The Linux and macOS install pages were split out of /install/unix.
+/install/unix /install/ 301
+/install/unix/ /install/ 301
+
 # The platforms page moved into the language reference.
 /platforms /docs/main/langref/platforms/ 301
 /platforms/ /docs/main/langref/platforms/ 301
