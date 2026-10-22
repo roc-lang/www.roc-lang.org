@@ -1,4 +1,6 @@
+import io
 import json
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,7 +16,8 @@ class BrowserCompilerUpdateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory) / "compiler-wasm.json"
             manifest.write_text('{"release": null}')
-            with patch.object(updater, "fetch_latest_release", return_value={"assets": assets}), \
+            with patch.object(updater, "fetch_latest_examples", return_value=("b" * 40, info["tag"])), \
+                 patch.object(updater, "fetch_release", return_value={"assets": assets}) as release, \
                  patch.object(updater, "parse_release", return_value=info), \
                  patch.object(updater, "COMPILER_WASM_PATH", str(manifest)), \
                  patch.object(updater, "update_build_website_roc") as build, \
@@ -28,8 +31,11 @@ class BrowserCompilerUpdateTests(unittest.TestCase):
                 else:
                     updater.main()
                     changed = bool(assets)
+                release.assert_called_once_with(info["tag"])
                 for mock in (build, sh, ps1, examples):
                     self.assertEqual(mock.call_count, int(changed))
+                if changed:
+                    examples.assert_called_once_with("b" * 40)
                 value = json.loads(manifest.read_text())
                 self.assertEqual(value, {"release": info["tag"], "sha256": "a" * 64}
                                  if changed else {"release": None})
@@ -43,3 +49,30 @@ class BrowserCompilerUpdateTests(unittest.TestCase):
 
     def test_matching_artifact_updates_browser_and_native_pins(self):
         self.run_update([{"name": "echo.wasm.zst", "digest": "sha256:" + "a" * 64}])
+
+
+class ExamplePinTests(unittest.TestCase):
+    def archive(self, files):
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode="w:gz") as tar:
+            for name, text in files.items():
+                content = text.encode()
+                member = tarfile.TarInfo(f"examples-{'c' * 40}/{name}")
+                member.size = len(content)
+                tar.addfile(member, io.BytesIO(content))
+        data.seek(0)
+        return data
+
+    def test_newest_example_pin_is_chosen(self):
+        archive = self.archive({
+            "examples/Old/main.roc": 'app [main!] { pf: platform "x.tar.zst", roc: "nightly-2026-10-06-c34079d" }',
+            "examples/New/main.roc": 'app [main!] {\n    roc: "nightly-2026-10-21-5349569",\n}',
+            "examples/New/Helper.roc": "module [helper]",
+            "examples/New/README.md": 'roc: "nightly-2026-10-22-0000000"',
+        })
+        self.assertEqual(updater.newest_pinned_nightly(archive), "nightly-2026-10-21-5349569")
+
+    def test_examples_without_pins_are_rejected(self):
+        archive = self.archive({"examples/HelloWorld/main.roc": "app [main!] {}"})
+        with self.assertRaises(SystemExit):
+            updater.newest_pinned_nightly(archive)

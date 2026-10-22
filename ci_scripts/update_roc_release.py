@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """Update the pinned Roc nightly release used by the website and installers.
 
-Fetches the latest release from roc-lang/nightlies and rewrites the hardcoded
-version date, build id, base URL and SHA256 checksums in:
+Repins `website/examples.json` to the latest commit of the examples repository
+it references, and pins the website to the newest Roc nightly that the examples
+at that commit pin. The examples are upgraded to a nightly some time after it is
+published, so following the latest release instead could pin examples that all
+still use an older nightly.
+
+For that release from roc-lang/nightlies, it rewrites the hardcoded version
+date, build id, base URL and SHA256 checksums in:
   - website/build_website.roc
   - website/compiler-wasm.json
   - website/public/install_roc.sh
@@ -10,9 +16,6 @@ version date, build id, base URL and SHA256 checksums in:
 
 Updates are skipped before editing any pins if echo.wasm.zst is unavailable.
 The browser manifest records the release and compressed artifact checksum.
-
-It also repins `website/examples.json` to the latest commit of the examples
-repository it references.
 
 The script edits only the specific variable assignments, so unrelated changes to
 the installers are preserved. It exits 0 whether or not anything changed; the CI
@@ -23,9 +26,13 @@ import json
 import os
 import re
 import sys
+import tarfile
 import urllib.request
 
-RELEASES_API = "https://api.github.com/repos/roc-lang/nightlies/releases/latest"
+RELEASES_API = "https://api.github.com/repos/roc-lang/nightlies/releases/tags/"
+
+# The Roc nightly an example pins in its app header.
+EXAMPLE_PIN_RE = re.compile(rb'roc: "(nightly-\d{4}-\d{2}-\d{2}-[0-9a-f]+)"')
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD_WEBSITE_ROC_PATH = os.path.join(REPO_ROOT, "website", "build_website.roc")
@@ -68,8 +75,44 @@ def fetch_json(url):
         return json.load(resp)
 
 
-def fetch_latest_release():
-    return fetch_json(RELEASES_API)
+def fetch_release(tag):
+    return fetch_json(RELEASES_API + tag)
+
+
+def examples_repo():
+    """Return the owner and name of the examples repository in examples.json."""
+    with open(EXAMPLES_JSON_PATH, "r") as f:
+        repo_url = json.load(f)["repository"].rstrip("/")
+    m = re.match(r"^https://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?$", repo_url)
+    if not m:
+        sys.exit(f"Unsupported repository URL in {EXAMPLES_JSON_PATH}: {repo_url}")
+    return m.group("owner"), m.group("repo")
+
+
+def newest_pinned_nightly(archive):
+    """Return the newest nightly pinned by an example in a .tar.gz of the examples repository."""
+    pins = set()
+    with tarfile.open(fileobj=archive, mode="r|gz") as tar:
+        for member in tar:
+            # Members are named <repo>-<revision>/examples/<Example>/...
+            if member.isfile() and member.name.endswith(".roc") and "/examples/" in member.name:
+                pins.update(EXAMPLE_PIN_RE.findall(tar.extractfile(member).read()))
+    if not pins:
+        sys.exit("No example pins a Roc nightly")
+    # Tags start with their date, so the newest sorts last.
+    return max(pins).decode()
+
+
+def fetch_latest_examples():
+    """Return the latest examples commit and the newest nightly its examples pin."""
+    owner, repo = examples_repo()
+    revision = fetch_json(f"https://api.github.com/repos/{owner}/{repo}/commits/HEAD")["sha"]
+    req = urllib.request.Request(
+        f"https://github.com/{owner}/{repo}/archive/{revision}.tar.gz",
+        headers={"User-Agent": "roc-lang-installer-updater"},
+    )
+    with urllib.request.urlopen(req) as resp:
+        return revision, newest_pinned_nightly(resp)
 
 
 def parse_release(release):
@@ -205,25 +248,14 @@ def update_build_website_roc(info):
         f.write(text)
 
 
-def update_examples_json():
-    """Repin examples.json to the latest commit of the examples repository.
+def update_examples_json(revision):
+    """Repin examples.json to the given commit of the examples repository.
 
     The revision is rewritten in place (rather than re-serializing the JSON) so
     the hand-maintained formatting of the examples list is preserved.
     """
     with open(EXAMPLES_JSON_PATH, "r") as f:
         text = f.read()
-
-    config = json.loads(text)
-    repo_url = config["repository"].rstrip("/")
-    m = re.match(r"^https://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?$", repo_url)
-    if not m:
-        sys.exit(f"Unsupported repository URL in {EXAMPLES_JSON_PATH}: {repo_url}")
-
-    commits_api = (
-        f"https://api.github.com/repos/{m.group('owner')}/{m.group('repo')}/commits/HEAD"
-    )
-    revision = fetch_json(commits_api)["sha"]
 
     text = replace_assignment(
         text, r'"revision": "[^"]*"', f'"revision": "{revision}"', EXAMPLES_JSON_PATH
@@ -232,13 +264,13 @@ def update_examples_json():
     with open(EXAMPLES_JSON_PATH, "w") as f:
         f.write(text)
 
-    return revision
-
 
 def main():
-    release = fetch_latest_release()
+    revision, tag = fetch_latest_examples()
+    print(f"Latest examples commit: {revision}")
+    release = fetch_release(tag)
     info = parse_release(release)
-    print(f"Latest nightly: {info['tag']}")
+    print(f"Newest nightly the examples pin: {info['tag']}")
     print(f"  version date: {info['version_date']}")
     print(f"  build id:     {info['build_id']}")
     unavailable = [k for k in TEMPORARILY_UNAVAILABLE if k not in info["shas"]]
@@ -257,8 +289,7 @@ def main():
     update_build_website_roc(info)
     update_sh(info)
     update_ps1(info)
-    revision = update_examples_json()
-    print(f"Latest examples commit: {revision}")
+    update_examples_json(revision)
     print(
         "Updated build_website.roc, compiler-wasm.json, install_roc.sh, install_roc.ps1, and examples.json"
     )
