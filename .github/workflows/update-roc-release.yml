@@ -2,7 +2,8 @@ name: Update Roc Release
 
 on:
   schedule:
-    # Run daily at 12 PM UTC, after the nightlies are typically published.
+    # Run daily at 12 PM UTC. The release follows the nightly that the latest
+    # roc-lang/examples commit pins, so it moves once the examples were upgraded.
     - cron: '0 12 * * *'
   workflow_dispatch: # Allow manual triggering
 
@@ -19,7 +20,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
-    - name: Update Roc, install scripts and examples to the latest commits
+    - name: Update examples to the latest commit, and Roc and install scripts to the nightly it pins
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: python3 ci_scripts/update_roc_release.py
@@ -52,6 +53,6 @@ jobs:
         if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
           gh pr create \
             --title "Update Roc release in install scripts and examples commit" \
-            --body "Automated update of \`website/build_website.roc\`, \`install_roc.sh\`, and \`install_roc.ps1\` to the latest release from \`roc-lang/nightlies\`, including the matching browser compiler checksum in \`website/compiler-wasm.json\`, and of \`website/examples.json\` to the latest commit of \`roc-lang/examples\`." \
+            --body "Automated update of \`website/build_website.roc\`, \`install_roc.sh\`, and \`install_roc.ps1\` to the newest \`roc-lang/nightlies\` release that the latest commit of \`roc-lang/examples\` pins, including the matching browser compiler checksum in \`website/compiler-wasm.json\`, and of \`website/examples.json\` to that commit." \
             --head "$BRANCH"
         fi
