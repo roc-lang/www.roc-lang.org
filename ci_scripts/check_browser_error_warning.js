@@ -15,145 +15,38 @@ const EXCLUDE_PATTERNS = [
   /javascript:/, // JavaScript links
 ];
 
-// Accessibility checking function using browser's built-in accessibility API
+// Accessibility checks, using Chrome's accessibility tree and the DOM
 async function checkAccessibility(page) {
   const issues = [];
-  
-  // Use Playwright's built-in accessibility snapshot
-  try {
-    const snapshot = await page.accessibility.snapshot();
-    
-    // Parse the accessibility tree for issues
-    function parseAccessibilityTree(node, depth = 0) {
-      if (!node) return;
-      
-      // Check for accessibility violations in the node
-      if (node.role && node.name !== undefined) {
-        // Check for empty names on important roles
-        if (['button', 'link', 'textbox', 'combobox', 'listbox'].includes(node.role) && 
-            (!node.name || node.name.trim() === '')) {
-          issues.push({
-            type: 'missing_accessible_name',
-            level: 'AA_FAIL',
-            role: node.role,
-            element: node.role,
-            message: `${node.role} missing accessible name`
-          });
-        }
-        
-        // Check for duplicate accessible names with different purposes
-        if (node.role === 'link' && node.name) {
-          // This will be handled by our existing duplicate link checker
-        }
-      }
-      
-      // Recursively check children
-      if (node.children) {
-        node.children.forEach(child => parseAccessibilityTree(child, depth + 1));
-      }
-    }
-    
-    if (snapshot) {
-      parseAccessibilityTree(snapshot);
-    }
-    
-  } catch (error) {
-    console.log('  ⚠️  Accessibility snapshot failed:', error.message);
-  }
-  
-  // Use browser's DevTools accessibility audit via CDP
+
+  // Interactive elements must have an accessible name
   const client = await page.context().newCDPSession(page);
-  
   try {
-    // Enable accessibility domain
-    await client.send('Accessibility.enable');
-    
-    // Get accessibility violations using browser's built-in audit
-    const { accessibilityNode } = await client.send('Accessibility.getFullAXTree');
-    
-    // Function to traverse and check nodes
-    function checkAXNode(node) {
-      if (!node) return;
-      
-      // Check for color contrast issues using browser's data
-      if (node.properties) {
-        for (const prop of node.properties) {
-          if (prop.name === 'colorContrast' && prop.value) {
-            const contrast = parseFloat(prop.value);
-            const isLargeText = node.role === 'text' && 
-                               node.properties.some(p => p.name === 'fontSize' && parseFloat(p.value) >= 18);
-            const minContrast = isLargeText ? 3 : 4.5;
-            
-            if (contrast < minContrast) {
-              issues.push({
-                type: 'contrast',
-                level: 'AA_FAIL',
-                contrast: contrast,
-                required: minContrast,
-                isLargeText: isLargeText,
-                element: node.name || 'text element',
-                message: `Low contrast ratio: ${contrast}:1 (needs ${minContrast}:1)`
-              });
-            }
-          }
+    const { nodes } = await client.send('Accessibility.getFullAXTree');
+    for (const node of nodes) {
+      const role = node.role?.value;
+      const name = node.name?.value ?? '';
+      if (!node.ignored &&
+          ['button', 'link', 'textbox', 'combobox', 'listbox'].includes(role) &&
+          name.trim() === '') {
+        let element = role;
+        if (node.backendDOMNodeId !== undefined) {
+          const { outerHTML } = await client.send('DOM.getOuterHTML', { backendNodeId: node.backendDOMNodeId });
+          element = outerHTML.length > 200 ? `${outerHTML.slice(0, 200)}...` : outerHTML;
         }
-      }
-      
-      // Check children
-      if (node.children) {
-        node.children.forEach(checkAXNode);
-      }
-    }
-    
-    if (accessibilityNode) {
-      checkAXNode(accessibilityNode);
-    }
-    
-  } catch (error) {
-    console.log('  ⚠️  CDP accessibility audit failed:', error.message);
-    
-    // Fallback to our DOM-based checks if CDP fails
-    const domIssues = await page.evaluate(() => {
-      const issues = [];
-      
-      // Basic DOM-based fallback checks
-      // Missing alt text on images
-      const images = document.querySelectorAll('img:not([alt])');
-      images.forEach((img, index) => {
         issues.push({
-          type: 'missing_alt',
+          type: 'missing_accessible_name',
           level: 'AA_FAIL',
-          element: `img:nth-of-type(${index + 1})`,
-          src: img.src,
-          message: 'Image missing alt attribute'
+          role: role,
+          element: element,
+          message: `${role} missing accessible name: ${element}`
         });
-      });
-      
-      // Form inputs without labels
-      // const inputs = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
-      // inputs.forEach((input, index) => {
-      //   const hasLabel = document.querySelector(`label[for="${input.id}"]`) || 
-      //                   input.closest('label') ||
-      //                   input.getAttribute('aria-label') ||
-      //                   input.getAttribute('aria-labelledby');
-      //   
-      //   if (!hasLabel) {
-      //     issues.push({
-      //       type: 'missing_label',
-      //       level: 'AA_FAIL',
-      //       element: `${input.tagName.toLowerCase()}:nth-of-type(${index + 1})`,
-      //       inputType: input.type || input.tagName.toLowerCase(),
-      //       message: 'Form control missing accessible label'
-      //     });
-      //   }
-      // });
-      
-      return issues;
-    });
-    
-    issues.push(...domIssues);
+      }
+    }
+  } finally {
+    await client.detach();
   }
-  
+
   // Additional DOM-based checks that we'll always run
   const additionalIssues = await page.evaluate(() => {
     const issues = [];
@@ -342,13 +235,13 @@ async function checkPage(page, url) {
     const text = msg.text();
     const type = msg.type();
 
-    // Ignore transient 503 responses
-    if (text.includes('the server responded with a status of 503')) {
+    // Pages that redirect off the site (e.g. /tutorial to GitHub) are not ours to check
+    if (!page.url().startsWith(WEBSITE_URL)) {
       return;
     }
 
-    // Ignore known 401 on the tutorial page (unrelated third-party resource)
-    if (url === `${WEBSITE_URL}/tutorial` && text.includes('the server responded with a status of 401')) {
+    // Ignore transient 503 responses
+    if (text.includes('the server responded with a status of 503')) {
       return;
     }
 
@@ -396,6 +289,10 @@ async function checkPage(page, url) {
   
   // Capture JavaScript errors
   page.on('pageerror', error => {
+    if (!page.url().startsWith(WEBSITE_URL)) {
+      return;
+    }
+
     errors.push({
       type: 'page_error',
       message: error.message,
@@ -416,7 +313,9 @@ async function checkPage(page, url) {
     
     // Run accessibility checks
     try {
-      accessibilityIssues = await checkAccessibility(page);
+      if (page.url().startsWith(WEBSITE_URL)) {
+        accessibilityIssues = await checkAccessibility(page);
+      }
     } catch (error) {
       console.log(`  ⚠️  Accessibility check failed for ${url}: ${error.message}`);
       errors.push({
@@ -485,8 +384,8 @@ function countIssues(results) {
     for (const issue of result.accessibilityIssues) {
       let key;
       switch (issue.type) {
-        case 'contrast':
-          key = `Low contrast (${issue.contrast}:1, needs ${issue.required}:1)`;
+        case 'missing_accessible_name':
+          key = `${issue.role} missing accessible name`;
           break;
         case 'missing_alt':
           key = 'Image missing alt attribute';
@@ -594,12 +493,9 @@ async function generateReport(results, discoveryPath) {
       report += `### Accessibility Issues (${result.accessibilityIssues.length})\n`;
       result.accessibilityIssues.forEach((issue, i) => {
         switch (issue.type) {
-          case 'contrast':
-            report += `${i + 1}. **Color Contrast** (${issue.level}): `;
-            report += `Text "${issue.text}" has contrast ratio ${issue.contrast}:1 `;
-            report += `(needs ${issue.required}:1). `;
-            report += `Colors: ${issue.colors.foreground} on ${issue.colors.background} `;
-            report += `(Element: ${issue.element})\n`;
+          case 'missing_accessible_name':
+            report += `${i + 1}. **Missing Accessible Name** (${issue.level}): `;
+            report += `${issue.role} element \`${issue.element}\`\n`;
             break;
           case 'missing_alt':
             report += `${i + 1}. **Missing Alt Text**: Image without alt attribute `;
