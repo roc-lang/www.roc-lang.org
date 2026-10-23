@@ -4,7 +4,7 @@ import pf.SSG
 import pf.Path
 import pf.OsStr
 import pf.Html
-import pf.HtmlAttributes exposing [aria_hidden, aria_label, charset, class, color, content, href, id, lang, name, rel, src, title]
+import pf.HtmlAttributes exposing [aria_hidden, aria_label, charset, class, color, content, href, id, lang, name, rel, src, title, type]
 
 main! : List(OsStr) => Try({}, [Exit(I32), PagesError(Str), ParseError(Str), WriteError(Str)])
 main! = |args|
@@ -116,7 +116,8 @@ view_head = |page_path_str| {
 			Html.title([], [Html.text(page_info.title)]),
 			Html.meta([name("description"), content(page_info.description)]),
 			Html.meta([name("viewport"), content("width=device-width")]),
-			Html.link([rel("icon"), href("/favicon.svg")]),
+			Html.link([rel("icon"), href("/favicon.ico"), type("image/x-icon")]),
+			Html.link([rel("icon"), href("/favicon.svg"), type("image/svg+xml")]),
 			Html.link([rel("prefetch"), href("/repl/roc_repl_wasm.js")]),
 			Html.link([rel("stylesheet"), href("/site.css")]),
 			# Safari ignores rel="icon" and only respects rel="mask-icon". It renders the
