@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/roc-lang/examples",
-  "revision": "3066ff92d6c1b6fbdf048a0a41ccf4081bd35e1e",
+  "revision": "be160e703877074fb411dc7f7ccdcc2ce6ca544b",
   "categories": [
     {"id": "getting-started", "title": "Getting started"},
     {"id": "types-and-functions", "title": "Types and functions"},
