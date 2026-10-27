@@ -133,7 +133,7 @@ if [[ "$refresh_examples" == true ]]; then
     rm -rf "$extracted_dir"
 fi
 
-python3 examples.py index "$manifest" "$example_versions" "$website_roc_version" "$content_dir/index.md"
+python3 examples.py index "$manifest" "$content_dir/index.md"
 
 rm -rf "$build_dir"
 mkdir -p "$build_dir"
