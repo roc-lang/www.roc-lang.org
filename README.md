@@ -83,8 +83,7 @@ python3 -m unittest discover -s ci_scripts -p 'test_examples.py'
 ```
 
 To update the dependency, select a commit already on `roc-lang/examples/main`,
-update the `revision` and examples in `website/examples.json`, and rebuild. Examples that pin a
-different nightly than the website are marked as such on the examples index.
+update the `revision` and examples in `website/examples.json`, and rebuild. Each example’s page shows the Roc nightly used to validate it.
 
 Preview the result with:
 

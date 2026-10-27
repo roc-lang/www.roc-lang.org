@@ -88,7 +88,7 @@ def write_records(manifest, output):
     Path(output).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def render_index(manifest, versions, website_version):
+def render_index(manifest):
     enabled = enabled_examples(manifest)
     sections = []
     for category in manifest["categories"]:
@@ -118,18 +118,15 @@ def render_index(manifest, versions, website_version):
                 lines.extend([f"<h3>{escape(group)}</h3>", ""])
             for example in members:
                 directory = example["directory"]
-                if example["validation"]:
-                    version = versions[directory]
-                    note = f" (Roc {version})" if version != website_version else ""
-                else:
-                    note = " (not validated)"
+                # MultiLineComments contains only comments, with no code to validate.
+                note = "" if example["validation"] or directory == "MultiLineComments" else " (not validated)"
                 lines.append(f'- [{example["title"]}](/examples/{directory}/README.html){note} — {example["description"]}')
             lines.append("")
 
     revision = manifest["revision"]
     lines.extend([
         "---", "",
-        f"Code examples are validated with Roc {website_version}, unless noted otherwise.", "",
+        "Each example’s page lists the Roc version used to validate it.", "",
         f'Their source comes from [roc-lang/examples at {revision[:7]}]({manifest["repository"]}/tree/{revision}/examples).', "",
     ])
     return "\n".join(lines)
@@ -148,21 +145,41 @@ def copy_images(manifest, source, output):
                 shutil.copyfile(image, destination)
 
 
+def add_version_notes(manifest, versions, output):
+    """Show the validated compiler version on each example's generated page."""
+    for example in enabled_examples(manifest):
+        directory = example["directory"]
+        page = Path(output) / directory / "README.html"
+        html = page.read_text(encoding="utf-8")
+        if example["validation"]:
+            message = f'Validated with Roc <code>{escape(versions[directory])}</code>.'
+        else:
+            message = "This example is not validated."
+        note = f'<p class="example-version">{message}</p>'
+        html = re.sub(r'<p class="example-version">.*?</p>', "", html)
+        if "</main>" not in html:
+            raise ValueError(f"No main content found in {page}")
+        html = html.replace("</main>", note + "\n</main>", 1)
+        page.write_text(html, encoding="utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     records = commands.add_parser("records", help="validate the manifest and write build records")
     records.add_argument("manifest")
     records.add_argument("output")
-    index = commands.add_parser("index", help="render the index using the copied examples' version pins")
+    index = commands.add_parser("index", help="render the categorized examples index")
     index.add_argument("manifest")
-    index.add_argument("versions", help="tab-separated directory and nightly records")
-    index.add_argument("website_version")
     index.add_argument("output")
     images = commands.add_parser("images", help="copy enabled examples' images into the generated site")
     images.add_argument("manifest")
     images.add_argument("source")
     images.add_argument("output")
+    versions = commands.add_parser("versions", help="add compiler version notes to example pages")
+    versions.add_argument("manifest")
+    versions.add_argument("versions", help="tab-separated directory and nightly records")
+    versions.add_argument("output")
     args = parser.parse_args()
     try:
         manifest = load_manifest(args.manifest)
@@ -170,10 +187,12 @@ def main():
             write_records(manifest, args.output)
         elif args.command == "images":
             copy_images(manifest, args.source, args.output)
-        else:
+        elif args.command == "versions":
             versions = dict(line.split("\t") for line in Path(args.versions).read_text().splitlines())
+            add_version_notes(manifest, versions, args.output)
+        else:
             output = Path(args.output)
-            rendered = render_index(manifest, versions, args.website_version)
+            rendered = render_index(manifest)
             # Preserve mtime so the website's cached build can skip unchanged pages.
             if not output.exists() or output.read_text(encoding="utf-8") != rendered:
                 output.write_text(rendered, encoding="utf-8")
