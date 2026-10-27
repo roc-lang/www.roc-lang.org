@@ -153,6 +153,7 @@ generate_site! : Str => Try({}, _)
 generate_site! = |roc_bin| {
 	run!(roc_bin, ["build", "static_site_gen.roc"])?
 	run!("./static_site_gen", ["content", "build"])?
+	run!("python3", ["examples.py", "images", "examples.json", "content/examples", "build/examples"])?
 	add_github_links_to_examples!()
 }
 

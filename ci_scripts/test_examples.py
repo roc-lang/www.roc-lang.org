@@ -142,6 +142,27 @@ class ExamplesTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "duplicate"):
                     self.validate(manifest)
 
+    def test_images_keep_relative_paths_and_exclude_disabled_examples(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["examples"] = manifest["examples"][:2]
+        enabled, disabled = manifest["examples"]
+        disabled["enabled"] = False
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            output = Path(directory) / "build"
+            for entry in manifest["examples"]:
+                folder = source / entry["directory"] / "images"
+                folder.mkdir(parents=True)
+                (folder / "screenshot.png").write_bytes(b"example image")
+                (folder / "main.roc").write_text("source code")
+            examples.copy_images(manifest, source, output)
+            self.assertEqual(
+                (output / enabled["directory"] / "images/screenshot.png").read_bytes(),
+                b"example image",
+            )
+            self.assertFalse((output / enabled["directory"] / "images/main.roc").exists())
+            self.assertFalse((output / disabled["directory"]).exists())
+
 
 if __name__ == "__main__":
     unittest.main()

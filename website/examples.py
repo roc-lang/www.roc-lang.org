@@ -5,6 +5,7 @@ from html import escape
 import json
 from pathlib import Path
 import re
+import shutil
 
 
 def single_line(value):
@@ -134,6 +135,19 @@ def render_index(manifest, versions, website_version):
     return "\n".join(lines)
 
 
+def copy_images(manifest, source, output):
+    """Copy example images alongside the HTML generated from their READMEs."""
+    source, output = Path(source), Path(output)
+    for example in manifest["examples"]:
+        if not example.get("enabled", True):
+            continue
+        for image in (source / example["directory"]).rglob("*"):
+            if image.is_file() and image.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}:
+                destination = output / image.relative_to(source)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(image, destination)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -145,11 +159,17 @@ def main():
     index.add_argument("versions", help="tab-separated directory and nightly records")
     index.add_argument("website_version")
     index.add_argument("output")
+    images = commands.add_parser("images", help="copy enabled examples' images into the generated site")
+    images.add_argument("manifest")
+    images.add_argument("source")
+    images.add_argument("output")
     args = parser.parse_args()
     try:
         manifest = load_manifest(args.manifest)
         if args.command == "records":
             write_records(manifest, args.output)
+        elif args.command == "images":
+            copy_images(manifest, args.source, args.output)
         else:
             versions = dict(line.split("\t") for line in Path(args.versions).read_text().splitlines())
             output = Path(args.output)
