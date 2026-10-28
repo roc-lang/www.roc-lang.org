@@ -1912,3 +1912,12 @@ code .dim,
         grid-template-columns: 1fr;
     }
 }
+
+/* Semantic roles share the site's palette, independently of lexical spelling. */
+::highlight(roc-parameter) { color: #e5bc70; }
+::highlight(roc-function) { color: var(--primary-1); }
+::highlight(roc-property) { color: #aeb4c6; }
+::highlight(roc-namespace),
+::highlight(roc-type),
+::highlight(roc-enumMember),
+::highlight(roc-typeParameter) { color: var(--dark-cyan); }

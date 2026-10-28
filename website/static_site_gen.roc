@@ -124,6 +124,8 @@ view_head = |page_path_str| {
 			Html.link([rel("mask-icon"), href("/favicon.svg"), color("#7d59dd")]),
 			# Remove no-js before the body renders to avoid a flash of hidden content.
 			Html.script([], [Html.text("document.documentElement.className = document.documentElement.className.replace('no-js', '');")]),
+			Html.script([src("/roc-builtin-metadata.js")], []),
+			Html.script([src("/roc-syntax.js")], []),
 			Html.script([src("/compiler.js")], []),
 		],
 	)

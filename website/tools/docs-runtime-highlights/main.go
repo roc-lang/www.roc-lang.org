@@ -81,33 +81,32 @@ func processHTML(path string) error {
 
 func addCompilerScript(doc *html.Node) bool {
 	head := findElement(doc, "head")
-	if head == nil || hasCompilerScript(head) {
+	if head == nil {
 		return false
 	}
-
-	head.AppendChild(&html.Node{
-		Type: html.ElementNode,
-		Data: "script",
-		Attr: []html.Attribute{
-			{Key: "src", Val: "/compiler.js"},
-		},
-	})
-
-	return true
-}
-
-func hasCompilerScript(node *html.Node) bool {
-	if node.Type == html.ElementNode && node.Data == "script" && attr(node, "src") == "/compiler.js" {
-		return true
-	}
-
-	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		if hasCompilerScript(child) {
-			return true
+	changed := false
+	var before *html.Node
+	// Insert in reverse order so cached docs gain dependencies before compiler.js.
+	for _, src := range []string{"/compiler.js", "/roc-syntax.js", "/roc-builtin-metadata.js"} {
+		var existing *html.Node
+		for child := head.FirstChild; child != nil; child = child.NextSibling {
+			if child.Type == html.ElementNode && child.Data == "script" && attr(child, "src") == src {
+				existing = child
+				break
+			}
 		}
+		if existing == nil {
+			existing = &html.Node{
+				Type: html.ElementNode,
+				Data: "script",
+				Attr: []html.Attribute{{Key: "src", Val: src}},
+			}
+			head.InsertBefore(existing, before)
+			changed = true
+		}
+		before = existing
 	}
-
-	return false
+	return changed
 }
 
 func addInitialHighlightScript(doc *html.Node) bool {

@@ -985,7 +985,7 @@ class RocTokenizer {
   }
 }
 
-const ROC_HIGHLIGHT_TYPES = "u v n s k p d o e c f".split(" ");
+const ROC_HIGHLIGHT_TYPES = "u v n s k p d o e c f parameter function property namespace type enumMember typeParameter".split(" ");
 const rocHighlightRoots = new Map();
 const rocHighlightObjects = new Map();
 let rocHighlightRootId = 0;
@@ -1014,7 +1014,7 @@ function byteOffsetsForText(text, bytes) {
   return offsets;
 }
 
-function rocTokenRanges(source) {
+function rocLexicalTokens(source) {
   const tokenized = new RocTokenizer(source).tokenize();
   const tokens = tokenized.t.filter(
     (token) => token[0] !== CM && token[1] !== token[2],
@@ -1082,19 +1082,14 @@ function rocTokenRanges(source) {
   return ranges;
 }
 
-function syncRocSyntaxHighlights() {
-  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
-
-  for (const type of ROC_HIGHLIGHT_TYPES) {
-    const highlight = rocHighlightObjectForType(type);
-    highlight.clear();
-
-    for (const rootHighlights of rocHighlightRoots.values()) {
-      for (const range of rootHighlights[type]) {
-        highlight.add(range);
-      }
-    }
-  }
+function rocTokenRanges(source, options = {}) {
+  const classes = {
+    comment: "c", number: "n", string: "s", keyword: "k", operator: "o",
+    variable: "v", bracket: "p", punctuation: "d", error: "e",
+  };
+  return globalThis.rocSemanticTokens(source, {
+    ...options, lexicalTokens: rocLexicalTokens(source),
+  }).map((token) => ({ ...token, type: classes[token.type] ?? token.type }));
 }
 
 function rocHighlightObjectForType(type) {
@@ -1174,44 +1169,29 @@ function ensureRocHighlightId(container) {
   return root.dataset.rocHighlightId;
 }
 
-function addRocTextNodeHighlights(textNode, grouped) {
-  for (const token of rocTokenRanges(textNode.nodeValue)) {
+// Semantic analysis needs an entire snippet, including text split by links.
+function addRocElementHighlights(element, grouped) {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let source = "";
+  let node;
+  while ((node = walker.nextNode())) {
+    if (!node.nodeValue.length) continue;
+    nodes.push({ node, start: source.length, end: source.length + node.nodeValue.length });
+    source += node.nodeValue;
+  }
+  let startNode = 0;
+  for (const token of rocTokenRanges(source, element.rocSyntaxOptions)) {
+    while (startNode < nodes.length && nodes[startNode].end <= token.start) startNode += 1;
+    let endNode = startNode;
+    while (endNode < nodes.length && nodes[endNode].end < token.end) endNode += 1;
+    if (!nodes[startNode] || !nodes[endNode]) continue;
     const range = new Range();
-    range.setStart(textNode, token.start);
-    range.setEnd(textNode, token.end);
+    range.setStart(nodes[startNode].node, token.start - nodes[startNode].start);
+    range.setEnd(nodes[endNode].node, token.end - nodes[endNode].start);
     grouped[token.type].push(range);
   }
-}
-
-function collectRocSyntaxHighlights(container, grouped) {
-  const includeWholeContainer = container?.matches?.(".roc-highlight") ?? false;
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
-    acceptNode: (textNode) => {
-      if (textNode.nodeValue.length === 0) return NodeFilter.FILTER_REJECT;
-      if (includeWholeContainer) return NodeFilter.FILTER_ACCEPT;
-      return textNode.parentElement?.closest?.(".roc-highlight")
-        ? NodeFilter.FILTER_ACCEPT
-        : NodeFilter.FILTER_REJECT;
-    },
-  });
-
-  let textNode;
-  let chars = 0;
-  let textNodes = 0;
-
-  while ((textNode = walker.nextNode())) {
-    chars += textNode.nodeValue.length;
-    textNodes += 1;
-    addRocTextNodeHighlights(textNode, grouped);
-  }
-
-  return { chars, textNodes };
-}
-
-function rocHighlightRootCount(container) {
-  let count = container?.matches?.(".roc-highlight") ? 1 : 0;
-  count += container?.querySelectorAll?.(".roc-highlight").length ?? 0;
-  return count;
+  return { chars: source.length, textNodes: nodes.length };
 }
 
 function buildRocSyntaxHighlights(container) {
@@ -1219,16 +1199,7 @@ function buildRocSyntaxHighlights(container) {
 
   const id = ensureRocHighlightId(container);
   const grouped = emptyRocHighlightGroups();
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-  let textNode;
-  let chars = 0;
-  let textNodes = 0;
-
-  while ((textNode = walker.nextNode())) {
-    chars += textNode.nodeValue.length;
-    textNodes += 1;
-    addRocTextNodeHighlights(textNode, grouped);
-  }
+  const { chars, textNodes } = addRocElementHighlights(container, grouped);
 
   addRocHighlightRoot(id, grouped);
   return { chars, textNodes };
@@ -1275,75 +1246,24 @@ function clearRocSyntaxHighlights(container, sync = true) {
 }
 
 function highlightRocSyntaxIn(container) {
-  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
-
-  const totalStart = performance.now();
-  const rootElements = [];
-
-  if (container?.matches?.(".roc-highlight")) {
-    rootElements.push(container);
-  }
-
-  container
-    ?.querySelectorAll?.(".roc-highlight")
-    .forEach((root) => rootElements.push(root));
-
-  if (rootElements.length === 0) return;
-
-  const id = ensureRocHighlightId(container);
-  const grouped = emptyRocHighlightGroups();
-  const tokenizeStart = performance.now();
-  const { chars, textNodes } = collectRocSyntaxHighlights(container, grouped);
-
-  const tokenizingMs = performance.now() - tokenizeStart;
-
-  const syncStart = performance.now();
-  addRocHighlightRoot(id, grouped);
-  const syncMs = performance.now() - syncStart;
-  const totalMs = performance.now() - totalStart;
-
-  // console.log(
-  //   `[roc-highlight] roots=${rootElements.length} textNodes=${textNodes} chars=${chars} tokenize=${tokenizingMs.toFixed(1)}ms sync=${syncMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms`,
-  // );
+  highlightRocSyntaxNodes([container]);
 }
 
 function highlightRocSyntaxNodes(nodes) {
   if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
-
-  const nodeList = Array.from(nodes ?? []);
-  const containers = nodeList.filter((node) => node.nodeType === Node.ELEMENT_NODE);
-  let rootCount = 0;
-
-  for (const container of containers) {
-    rootCount += rocHighlightRootCount(container);
+  const roots = new Set();
+  for (const container of nodes ?? []) {
+    for (const root of rocSyntaxRootElements(container)) roots.add(root);
   }
-
-  if (rootCount === 0) return;
-
-  const root = containers[0];
-  const id = ensureRocHighlightId(root);
-  const grouped = emptyRocHighlightGroups();
-  const totalStart = performance.now();
-  const tokenizeStart = performance.now();
-  let chars = 0;
-  let textNodes = 0;
-
-  for (const container of containers) {
-    const result = collectRocSyntaxHighlights(container, grouped);
-    chars += result.chars;
-    textNodes += result.textNodes;
+  for (const root of roots) {
+    let parent = root.parentElement;
+    while (parent && !roots.has(parent)) parent = parent.parentElement;
+    if (parent) continue;
+    const id = ensureRocHighlightId(root);
+    const grouped = emptyRocHighlightGroups();
+    addRocElementHighlights(root, grouped);
+    addRocHighlightRoot(id, grouped);
   }
-
-  const tokenizingMs = performance.now() - tokenizeStart;
-
-  const syncStart = performance.now();
-  addRocHighlightRoot(id, grouped);
-  const syncMs = performance.now() - syncStart;
-  const totalMs = performance.now() - totalStart;
-
-  // console.log(
-  //   `[roc-highlight] chunkNodes=${nodeList.length} roots=${rootCount} textNodes=${textNodes} chars=${chars} tokenize=${tokenizingMs.toFixed(1)}ms sync=${syncMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms`,
-  // );
 }
 
 function rocSyntaxRootElements(container) {
@@ -1357,7 +1277,14 @@ function rocSyntaxRootElements(container) {
     ?.querySelectorAll?.(".roc-highlight")
     .forEach((root) => rootElements.push(root));
 
-  return rootElements;
+  // A nested marker belongs to the same logical snippet as its outer root.
+  const selected = new Set(rootElements);
+  return rootElements.filter((root) => {
+    for (let parent = root.parentElement; parent; parent = parent.parentElement) {
+      if (selected.has(parent)) return false;
+    }
+    return true;
+  });
 }
 
 function unhighlightedRocSyntaxRootElements(container) {
@@ -1409,6 +1336,7 @@ function highlightRocSyntaxProgressively(container, initialLimit = 32, batchSize
 }
 
 window.rocSyntax = {
+  tokens: (source, options) => globalThis.rocSemanticTokens(source, options),
   highlight: highlightRocSyntaxIn,
   highlightNodes: highlightRocSyntaxNodes,
   highlightFirst: highlightFirstRocSyntaxRoots,
