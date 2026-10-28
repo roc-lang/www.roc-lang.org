@@ -174,7 +174,7 @@
       }
       return result;
     }
-    function pattern(s, role, stop, base = null) {
+    function pattern(s, role, stop, base = null, shape = variable) {
       while (pos < ts.length && !stop.includes(ts[pos].text)) {
         if (base && boundary(ts[pos], base)) break;
         const t = ts[pos++];
@@ -192,7 +192,15 @@
             mark(t, "property");
             pos++;
             pattern(s, role, [",", "}", ")", "]", ...stop]);
-          } else bind(s, t, variable, role);
+          } else
+            bind(
+              s,
+              t,
+              shape,
+              role === "variable" && shape.kind === "function"
+                ? "function"
+                : role,
+            );
         }
       }
     }
@@ -239,12 +247,12 @@
     }
     function match(s, base) {
       pos++;
-      expression(s, ts[pos] || base, ["{"]);
+      const scrutinee = expression(s, ts[pos] || base, ["{"]);
       if (!take("{")) return variable;
       while (pos < ts.length && !at("}")) {
         const before = pos,
           child = scope(s);
-        pattern(child, "variable", ["=>", "if", "}"]);
+        pattern(child, "variable", ["=>", "if", "}"], null, scrutinee);
         if (take("if")) expression(child, ts[pos] || base, ["=>"]);
         if (take("=>")) expression(child, ts[pos] || base);
         take(",");
@@ -311,8 +319,12 @@
         if (t.text === "." && word.test(ts[pos + 1]?.text || "")) {
           pos++;
           const name = ts[pos++];
+          const namespace = shape.module;
           shape = member(shape, name.text);
-          mark(name, shape.kind === "function" ? "function" : "property");
+          mark(
+            name,
+            namespace && shape.kind === "function" ? "function" : "property",
+          );
           if (at("(") && name.end === ts[pos].start) mark(name, "function");
         } else if (t.text === "(" && ts[pos - 1]?.end === t.start) {
           const previous = ts[pos - 1];

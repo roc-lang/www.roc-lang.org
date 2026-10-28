@@ -175,7 +175,7 @@ test("JavaScript object property names are ordinary Roc names", () => {
   assert.deepEqual(roles("result = constructor", "constructor"), ["variable"]);
   assert.deepEqual(roles("result = toString", "toString"), ["variable"]);
   const source = "record = { constructor: |x| x }\nvalue = record.constructor";
-  assert.deepEqual(roles(source, "constructor"), ["property", "function"]);
+  assert.deepEqual(roles(source, "constructor"), ["property", "property"]);
 });
 test("unbraced conditionals separate conditions, branches and record expressions", () => {
   const source =
@@ -224,4 +224,11 @@ test("parenthesized branches are not whitespace function applications", () => {
   assert.deepEqual(roles(source, "amount"), ["property", "property"]);
   assert.deepEqual(roles(source, "value"), ["variable", "variable"]);
   assert.deepEqual(roles(source, "y"), ["parameter", "parameter"]);
+});
+
+test("match binding inherits callable shape while record access remains property", () => {
+  const source =
+    "module [result]\nresult : I64\nresult = match { amount: |n| n }.amount { f => 1 }\n";
+  assert.deepEqual(roles(source, "amount"), ["property", "property"]);
+  assert.deepEqual(roles(source, "f"), ["function"]);
 });
