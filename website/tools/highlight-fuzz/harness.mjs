@@ -208,7 +208,7 @@ export function generator(seed) {
     return (state >>> 0) % n;
   };
   const expr = (depth, scope, features) => {
-    const choice = depth > 4 ? random(2) : random(8);
+    const choice = depth > 4 ? random(2) : random(12);
     features.add(`${depth}:${choice}`);
     if (choice === 0) return String(random(100));
     if (choice === 1)
@@ -224,6 +224,14 @@ export function generator(seed) {
       return `{ amount: ${expr(depth + 1, scope, features)} }.amount`;
     if (choice === 6)
       return `if True ${expr(depth + 1, scope, features)} else ${expr(depth + 1, scope, features)}`;
+    if (choice === 8)
+      return `(|{ amount: ${name} }| ${expr(depth + 1, [...scope, name], features)})({ amount: ${expr(depth + 1, scope, features)} })`;
+    if (choice === 9)
+      return `(|(${name}, ${name}b)| ${expr(depth + 1, [...scope, name, name + "b"], features)})((${expr(depth + 1, scope, features)}, ${expr(depth + 1, scope, features)}))`;
+    if (choice === 10)
+      return `{\n ${name} : I64\n ${name} = ${expr(depth + 1, scope, features)}\n ${expr(depth + 1, [...scope, name], features)}\n}`;
+    if (choice === 11)
+      return `{\n ${name} = Str.is_empty\n if ${name}("😀") ${expr(depth + 1, scope, features)} else ${expr(depth + 1, scope, features)}\n}`;
     return `match ${expr(depth + 1, scope, features)} {\n ${name} => ${expr(depth + 1, [...scope, name], features)}\n}`;
   };
   const next = () => {
@@ -236,6 +244,9 @@ export function generator(seed) {
       source = source.slice(0, at) + source.slice(at + 1 + random(3));
       malformed = true;
     }
+    // JavaScript edits can split an emoji surrogate pair. TextEncoder (used by
+    // the real compiler widget) normalizes that to U+FFFD as well.
+    source = source.toWellFormed();
     return { source, features: [...features].sort(), malformed };
   };
   next.random = random;
@@ -611,6 +622,11 @@ async function metadata(reference) {
     formatVersion: 1,
     rocRevision: revision,
     confidence: referenceTokens.confidence,
+    moduleKinds: Object.fromEntries(
+      Object.keys(modules)
+        .filter((name) => name !== "Builtin")
+        .map((name) => [name, "type"]),
+    ),
     modules,
   };
   const path = join(publicDir, "roc-builtin-metadata.js");
