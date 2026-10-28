@@ -135,6 +135,7 @@
     function annotation(base) {
       let result = variable,
         nesting = 0;
+      const containers = [];
       while (pos < ts.length) {
         const t = ts[pos];
         if (nesting === 0 && (t.text === "=" || boundary(t, base))) break;
@@ -144,24 +145,31 @@
           mark(
             t,
             upper.test(t.text)
-              ? "type"
+              ? containers.at(-1) === "["
+                ? "enumMember"
+                : "type"
               : ts[pos]?.text === ":"
                 ? "property"
                 : "typeParameter",
           );
-        if ("([{".includes(t.text)) nesting++;
+        if ("([{".includes(t.text)) {
+          nesting++;
+          containers.push(t.text);
+        }
         if (")]}".includes(t.text)) {
           if (!nesting) {
             pos--;
             break;
           }
           nesting--;
+          containers.pop();
         }
       }
       return result;
     }
-    function pattern(s, role, stop) {
+    function pattern(s, role, stop, base = null) {
       while (pos < ts.length && !stop.includes(ts[pos].text)) {
+        if (base && boundary(ts[pos], base)) break;
         const t = ts[pos++];
         if (t.text === "{" || t.text === "(" || t.text === "[") {
           const closer = { "{": "}", "(": ")", "[": "]" }[t.text];
@@ -184,7 +192,7 @@
     function lambda(s, base) {
       const child = scope(s);
       pos++;
-      pattern(child, "parameter", ["|", "}"]);
+      pattern(child, "parameter", ["|", "}"], base);
       if (!take("|")) return fn;
       const result = expression(child, ts[pos] || base);
       return { kind: "function", result };
@@ -384,6 +392,20 @@
           pattern(s, "variable", ["="]);
           if (take("=")) expression(s, ts[pos] || t);
         } else if (
+          upper.test(t.text) &&
+          ts[pos + 1]?.text === "(" &&
+          typeDeclarationEnd(pos) !== null
+        ) {
+          bind(s, t, { kind: "type" }, "type");
+          pos += 2;
+          while (pos < ts.length && !at(")")) {
+            const parameter = ts[pos++];
+            if (word.test(parameter.text)) mark(parameter, "typeParameter");
+          }
+          take(")");
+          pos++;
+          annotation(t);
+        } else if (
           word.test(t.text) &&
           ["=", ":", ":=", "::"].includes(ts[pos + 1]?.text)
         ) {
@@ -412,6 +434,15 @@
         if (pos === before) pos++;
       }
       return result;
+    }
+    function typeDeclarationEnd(start) {
+      let nesting = 0;
+      for (let i = start + 1; i < ts.length; i++) {
+        if (ts[i].text === "(") nesting++;
+        else if (ts[i].text === ")" && --nesting === 0)
+          return [":", ":=", "::"].includes(ts[i + 1]?.text) ? i : null;
+      }
+      return null;
     }
     function patternDeclarationEnd(start) {
       let nesting = 0;

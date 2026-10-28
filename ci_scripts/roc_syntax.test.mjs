@@ -151,3 +151,23 @@ test("loop bindings and destructuring declarations stay inside their scopes", ()
   assert.deepEqual(roles(source, "b"), ["property"]);
   assert.deepEqual(roles(source, "renamed"), ["variable", "variable"]);
 });
+test("generic declarations distinguish tag variants from payload types", () => {
+  const source =
+    "Shape(a) : [Circle(a), Empty]\nPair(a) : { first: a, second: Str }";
+  assert.deepEqual(roles(source, "Shape"), ["type"]);
+  assert.deepEqual(roles(source, "Circle"), ["enumMember"]);
+  assert.deepEqual(roles(source, "Empty"), ["enumMember"]);
+  assert.deepEqual(roles(source, "first"), ["property"]);
+  assert.deepEqual(roles(source, "Str"), ["type"]);
+  assert.ok(roles(source, "a").every((r) => r === "typeParameter"));
+});
+test("unfinished lambda does not consume subsequent declarations", () => {
+  const source = "broken = |x\nvalid = |y| y";
+  assert.deepEqual(roles(source, "valid"), ["function"]);
+  assert.deepEqual(roles(source, "y"), ["parameter", "parameter"]);
+});
+test("match branch bindings do not escape their branch", () => {
+  const source = "f = |x| match x {\n Some(y) => y\n None => x\n}\nother = y";
+  assert.deepEqual(roles(source, "y"), ["variable", "variable", "variable"]);
+  assert.deepEqual(roles(source, "x"), ["parameter", "parameter", "parameter"]);
+});
