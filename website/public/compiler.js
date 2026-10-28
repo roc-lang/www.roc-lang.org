@@ -1336,7 +1336,9 @@ function highlightRocSyntaxProgressively(container, initialLimit = 32, batchSize
 }
 
 window.rocSyntax = {
-  tokens: (source, options) => globalThis.rocSemanticTokens(source, options),
+  tokens: (source, options = {}) => globalThis.rocSemanticTokens(source, {
+    ...options, lexicalTokens: rocLexicalTokens(source),
+  }),
   highlight: highlightRocSyntaxIn,
   highlightNodes: highlightRocSyntaxNodes,
   highlightFirst: highlightFirstRocSyntaxRoots,
@@ -1508,8 +1510,20 @@ function setupCopyButtons() {
   });
 }
 
+// The SSG's Roc renderer emits compact token classes without a language marker.
+// Its other language renderers use scoped classes, e.g. `keyword ... shell`.
+function markRocCodeBlocks(root = document) {
+  for (const code of root.querySelectorAll("pre > samp, code.language-roc, samp.language-roc")) {
+    if (code.matches("code.language-roc, samp.language-roc") ||
+        code.querySelector("span.op, span.kw, span.number, span.str, span.colon, span.paren, span.brace, span.comma")) {
+      code.classList.add("roc-highlight");
+    }
+  }
+}
+
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
+  markRocCodeBlocks();
   setupCopyButtons();
 
   const interactiveWidgets = document.querySelectorAll(".roc-interactive");

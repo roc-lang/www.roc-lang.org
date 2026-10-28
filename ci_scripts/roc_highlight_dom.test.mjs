@@ -104,3 +104,27 @@ test('editor replacement removes old ranges', () => {
   vm.runInContext('buildRocSyntaxHighlights(editor)', context);
   assert.equal(highlights.get('roc-parameter').size, 0);
 });
+
+test('Roc Markdown samples are selected without highlighting shell commands or diagnostics', () => {
+  const { context } = fixture();
+  const candidate = (language, compactTokens) => ({
+    marked: false,
+    matches: () => language === 'roc',
+    querySelector: () => compactTokens,
+    classList: { add() { this.owner.marked = true; } },
+  });
+  const samples = [candidate('roc', false), candidate('', true), candidate('shell', false), candidate('diagnostic', false)];
+  for (const sample of samples) sample.classList.owner = sample;
+  context.page = { querySelectorAll: () => samples };
+  vm.runInContext('markRocCodeBlocks(page)', context);
+  assert.deepEqual(samples.map(sample => sample.marked), [true, true, false, false]);
+});
+
+test('public tokens uses the production lexer and forwards snippet metadata', () => {
+  const { context } = fixture();
+  context.rocSemanticTokens = (source, options) => options;
+  const modules = { Example: { transform: { kind: 'function' } } };
+  const options = context.rocSyntax.tokens('name = 1', { modules });
+  assert.equal(options.modules, modules);
+  assert.ok(options.lexicalTokens.some(token => token.type === 'n'));
+});
