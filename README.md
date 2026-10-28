@@ -91,6 +91,25 @@ Preview the result with:
 python3 serve.py build 8080
 ```
 
+## Syntax highlighting
+
+Roc highlighting runs in pure JavaScript. The lexer feeds a structural parser
+and binding analysis in `website/public/roc-syntax.js`; semantic spans are mapped
+back to DOM ranges without replacing links or markup. Builtin export metadata
+lets the highlighter distinguish imported functions from values. Snippets can
+provide additional module metadata through their `rocSyntaxOptions` property.
+
+Run the compact highlighting regression suite with:
+
+```sh
+node --test ci_scripts/roc_syntax.test.mjs ci_scripts/roc_highlight_dom.test.mjs
+```
+
+The compiler-backed differential harness is a local development tool. Its setup,
+fuzzing, replay, minimization, and metadata refresh commands are documented in
+[`website/tools/highlight-fuzz/README.md`](website/tools/highlight-fuzz/README.md).
+Normal highlighting and regression tests do not require the native driver.
+
 ## Browser compiler updates
 
 `website/compiler-wasm.json` pins the homepage's browser compiler and checksum.
