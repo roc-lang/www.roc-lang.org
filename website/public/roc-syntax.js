@@ -100,7 +100,12 @@
       return null;
     }
     function boundary(t, base) {
-      return t && t.line > base.line && t.column <= base.column;
+      return (
+        t &&
+        t.line > base.line &&
+        t.column <= base.column &&
+        source.slice(ts[pos - 1]?.end ?? 0, t.start).includes("\n")
+      );
     }
     function shapeOf(entry) {
       return typeof entry === "string" ? { kind: entry } : entry || variable;
@@ -199,7 +204,7 @@
       const result = expression(child, ts[pos] || base);
       return { kind: "function", result };
     }
-    function recordOrBlock(s, base) {
+    function recordOrBlock(s, base, forceBlock = false) {
       pos++;
       const child = scope(s),
         fields = Object.create(null);
@@ -210,7 +215,7 @@
         (ts[pos + 1]?.text === ":" ||
           ts[pos]?.text === ".." ||
           ts[pos + 1]?.text === "," ||
-          ts[pos + 1]?.text === "}");
+          (!forceBlock && ts[pos + 1]?.text === "}"));
       if (record) {
         while (pos < ts.length && !at("}")) {
           const before = pos,
@@ -248,26 +253,17 @@
       take("}");
       return variable;
     }
-    function atom(s, base) {
+    function atom(s, base, forceBlock = false) {
       const t = ts[pos];
       if (!t) return variable;
       if (t.text === "|") return lambda(s, base);
-      if (t.text === "{") return recordOrBlock(s, base);
+      if (t.text === "{") return recordOrBlock(s, base, forceBlock);
       if (t.text === "match") return match(s, base);
       if (t.text === "if") {
         pos++;
         expression(s, ts[pos] || base, ["{"]);
-        let result = variable;
-        if (take("{")) {
-          result = sequence(scope(s), "}");
-          take("}");
-        }
-        if (take("else")) {
-          if (take("{")) {
-            sequence(scope(s), "}");
-            take("}");
-          } else expression(s, ts[pos] || base);
-        }
+        const result = expression(s, ts[pos] || base, ["else"], true);
+        if (take("else")) expression(s, ts[pos] || base, [], true);
         return result;
       }
       if (t.text === "for") {
@@ -297,16 +293,18 @@
       if (word.test(t.text) && t.type !== "keyword") return reference(t, s);
       return variable;
     }
-    function expression(s, base, extraStops = []) {
+    function expression(s, base, extraStops = [], forceBlock = false) {
       if (!base || depth++ > 160) {
         depth--;
         return variable;
       }
-      let shape = atom(s, base);
+      let shape = atom(s, base, forceBlock);
       while (pos < ts.length) {
         const t = ts[pos];
         if (
-          [",", ")", "]", "}", "=>", "=", ...extraStops].includes(t.text) ||
+          [",", ")", "]", "}", "=>", "=", "else", ...extraStops].includes(
+            t.text,
+          ) ||
           boundary(t, base)
         )
           break;
@@ -315,8 +313,8 @@
           const name = ts[pos++];
           shape = member(shape, name.text);
           mark(name, shape.kind === "function" ? "function" : "property");
-          if (at("(")) mark(name, "function");
-        } else if (t.text === "(") {
+          if (at("(") && name.end === ts[pos].start) mark(name, "function");
+        } else if (t.text === "(" && ts[pos - 1]?.end === t.start) {
           const previous = ts[pos - 1];
           if (previous && previous.type === "variable")
             mark(previous, "function");
@@ -332,11 +330,11 @@
         } else if (t.text === ":") {
           pos++;
           annotation(base);
-        } else {
-          const before = pos;
-          atom(s, base);
-          if (before === pos) pos++;
-        }
+        } else if (t.type === "operator" || ["and", "or"].includes(t.text)) {
+          pos++;
+          atom(s, ts[pos] || base);
+          shape = variable;
+        } else break;
       }
       depth--;
       return shape;

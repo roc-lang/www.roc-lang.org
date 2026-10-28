@@ -177,3 +177,51 @@ test("JavaScript object property names are ordinary Roc names", () => {
   const source = "record = { constructor: |x| x }\nvalue = record.constructor";
   assert.deepEqual(roles(source, "constructor"), ["property", "function"]);
 });
+test("unbraced conditionals separate conditions, branches and record expressions", () => {
+  const source =
+    "module [result]\nresult : I64\nresult = if True 41 else { amount: 59 }.amount";
+  assert.deepEqual(roles(source, "amount"), ["property", "property"]);
+  assert.deepEqual(roles(source, "result"), [
+    "variable",
+    "variable",
+    "variable",
+  ]);
+});
+test("parenthesized lambda application returns its value shape", () => {
+  const source =
+    "result = (|x| {\n local = if True x else x\n { amount: x }.amount\n})(3)";
+  assert.deepEqual(roles(source, "result"), ["variable"]);
+  assert.deepEqual(roles(source, "x"), [
+    "parameter",
+    "parameter",
+    "parameter",
+    "parameter",
+  ]);
+  assert.deepEqual(roles(source, "amount"), ["property", "property"]);
+});
+test("shipped builtin snapshot identifies function values and leaves absent exports general", () => {
+  const metadataContext = vm.createContext({});
+  vm.runInContext(
+    readFileSync(
+      new URL("../website/public/roc-builtin-metadata.js", import.meta.url),
+      "utf8",
+    ),
+    metadataContext,
+  );
+  const options = { metadata: metadataContext.rocBuiltinMetadata };
+  assert.deepEqual(roles("f = List.map\ng = f", "f", options), [
+    "function",
+    "function",
+  ]);
+  assert.deepEqual(roles("f = List.absent_export", "absent_export", options), [
+    "property",
+  ]);
+});
+test("parenthesized branches are not whitespace function applications", () => {
+  const source =
+    "result = if True (|x| x)(1) else {\n value = { amount: 3 }.amount\n (|y| y)(value)\n}";
+  assert.deepEqual(roles(source, "True"), ["enumMember"]);
+  assert.deepEqual(roles(source, "amount"), ["property", "property"]);
+  assert.deepEqual(roles(source, "value"), ["variable", "variable"]);
+  assert.deepEqual(roles(source, "y"), ["parameter", "parameter"]);
+});
