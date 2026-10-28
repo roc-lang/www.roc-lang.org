@@ -1,0 +1,13 @@
+.{
+    .name = .roc_highlight_reference,
+    .version = "0.1.0",
+    .fingerprint = 0xe4a6c9cb3691ff11,
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        .roc = .{
+            .url = "https://github.com/roc-lang/roc/archive/bad769be8e8855fa90e08800e31a75bfed1fb128.tar.gz",
+            .hash = "roc-0.0.0-NAC9wwhwAwSJAgrCyx77vUzlAS0SJlKkmQqefsN2wF1w",
+        },
+    },
+    .paths = .{""},
+}
