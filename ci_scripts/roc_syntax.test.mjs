@@ -171,3 +171,9 @@ test("match branch bindings do not escape their branch", () => {
   assert.deepEqual(roles(source, "y"), ["variable", "variable", "variable"]);
   assert.deepEqual(roles(source, "x"), ["parameter", "parameter", "parameter"]);
 });
+test("JavaScript object property names are ordinary Roc names", () => {
+  assert.deepEqual(roles("result = constructor", "constructor"), ["variable"]);
+  assert.deepEqual(roles("result = toString", "toString"), ["variable"]);
+  const source = "record = { constructor: |x| x }\nvalue = record.constructor";
+  assert.deepEqual(roles(source, "constructor"), ["property", "function"]);
+});

@@ -105,13 +105,15 @@
     function shapeOf(entry) {
       return typeof entry === "string" ? { kind: entry } : entry || variable;
     }
+    function own(object, key) {
+      return object && Object.hasOwn(object, key) ? object[key] : undefined;
+    }
     function member(shape, name) {
-      if (shape?.module)
-        return shapeOf(
-          modules[shape.module]?.exports?.[name] ||
-            modules[shape.module]?.[name],
-        );
-      return shape?.fields?.[name] || variable;
+      if (shape?.module) {
+        const module = own(modules, shape.module);
+        return shapeOf(own(module?.exports || module, name));
+      }
+      return own(shape?.fields, name) || variable;
     }
     function reference(t, s) {
       const found = lookup(s, t.text);
@@ -122,7 +124,7 @@
         );
         return found;
       }
-      if (modules[t.text]) {
+      if (own(modules, t.text)) {
         mark(t, "namespace");
         return { kind: "namespace", module: t.text };
       }
@@ -200,7 +202,7 @@
     function recordOrBlock(s, base) {
       pos++;
       const child = scope(s),
-        fields = {};
+        fields = Object.create(null);
       // A leading field assignment/colon or a comma identifies a record. Empty
       // braces need no bindings and work for either structural interpretation.
       const record =
