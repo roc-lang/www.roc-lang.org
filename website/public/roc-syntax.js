@@ -21,6 +21,8 @@
 
   global.rocSemanticTokens = function (source, options = {}) {
     const lexical = options.lexicalTokens || global.rocLexicalTokens(source);
+    const metadata = options.metadata || global.rocBuiltinMetadata || {};
+    const moduleKinds = metadata.moduleKinds || {};
     const modules =
       options.modules ||
       options.metadata?.modules ||
@@ -130,8 +132,9 @@
         return found;
       }
       if (own(modules, t.text)) {
-        mark(t, "namespace");
-        return { kind: "namespace", module: t.text };
+        const kind = own(moduleKinds, t.text) || "namespace";
+        mark(t, kind);
+        return { kind, module: t.text };
       }
       if (upper.test(t.text)) {
         mark(t, "enumMember");
@@ -218,7 +221,20 @@
         fields = Object.create(null);
       // A leading field assignment/colon or a comma identifies a record. Empty
       // braces need no bindings and work for either structural interpretation.
+      let declaration = false,
+        nesting = 0;
+      for (let i = pos; i < ts.length; i++) {
+        const text = ts[i].text;
+        if (nesting === 0 && [",", "}"].includes(text)) break;
+        if (nesting === 0 && text === "=") {
+          declaration = true;
+          break;
+        }
+        if ("([{".includes(text)) nesting++;
+        else if (")]}".includes(text)) nesting--;
+      }
       const record =
+        !declaration &&
         ts[pos] &&
         (ts[pos + 1]?.text === ":" ||
           ts[pos]?.text === ".." ||
@@ -321,10 +337,7 @@
           const name = ts[pos++];
           const namespace = shape.module;
           shape = member(shape, name.text);
-          mark(
-            name,
-            namespace && shape.kind === "function" ? "function" : "property",
-          );
+          mark(name, namespace && shape !== variable ? shape.kind : "property");
           if (at("(") && name.end === ts[pos].start) mark(name, "function");
         } else if (t.text === "(" && ts[pos - 1]?.end === t.start) {
           const previous = ts[pos - 1];

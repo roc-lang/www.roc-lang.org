@@ -232,3 +232,15 @@ test("match binding inherits callable shape while record access remains property
   assert.deepEqual(roles(source, "amount"), ["property", "property"]);
   assert.deepEqual(roles(source, "f"), ["function"]);
 });
+test("annotated local declarations make a block rather than a record", () => {
+  const source =
+    "f = |x| {\n local : I64\n local = x\n if True local else x\n}";
+  assert.deepEqual(roles(source, "local"), [
+    "variable",
+    "variable",
+    "variable",
+  ]);
+  assert.deepEqual(roles(source, "I64"), ["type"]);
+  assert.deepEqual(roles(source, "x"), ["parameter", "parameter", "parameter"]);
+  assert.deepEqual(roles(source, "if"), ["keyword"]);
+});
