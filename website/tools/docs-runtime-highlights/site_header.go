@@ -95,10 +95,16 @@ func updateSiteSidebar(sidebar *html.Node) {
 		return
 	}
 	if findID(sidebar, "getting-started-link") == nil {
-		entryDoc, _ := html.Parse(strings.NewReader(`<ul><li class="sidebar-entry"><a id="getting-started-link" class="sidebar-module-link prose-label" href="/docs/main/">Getting Started</a></li></ul>`))
+		entryDoc, _ := html.Parse(strings.NewReader(`<ul><li class="sidebar-entry"><a id="getting-started-link" class="sidebar-module-link prose-label" href="/docs/main/">Docs Home</a></li></ul>`))
 		entry := findElement(entryDoc, "li")
 		entry.Parent.RemoveChild(entry)
 		links.InsertBefore(entry, links.FirstChild)
+	}
+	if link := findID(sidebar, "getting-started-link"); link != nil {
+		for link.FirstChild != nil {
+			link.RemoveChild(link.FirstChild)
+		}
+		link.AppendChild(&html.Node{Type: html.TextNode, Data: "Docs Home"})
 	}
 	var faq *html.Node
 	for entry := links.FirstChild; entry != nil; {
