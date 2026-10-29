@@ -50,7 +50,6 @@ REDIRECTS_FILE="$SCRIPT_DIR/../website/public/_redirects"
 # Location is compared as written in _redirects (fragment included); it is
 # resolved against the base URL when relative. Following it must end in a 200.
 EXPECTED=(
-    "/tutorial https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md"
     "/builtins/Inspect /docs/main/Str/#inspect"
     "/builtins/Inspect/ /docs/main/Str/#inspect"
     "/builtins /docs/main/"

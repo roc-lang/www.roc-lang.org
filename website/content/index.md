@@ -61,9 +61,9 @@ main! = |_args| {
 
 <a class="btn-small" href="/examples">Examples</a>
 
-To get started with the language, try the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
+To get started with the language, try the [tutorial](/tutorial/)!
 
-<a class="btn-small" href="https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md">Tutorial</a>
+<a class="btn-small" href="/tutorial/">Tutorial</a>
 
 ## [Sponsors](#sponsors) {#sponsors}
 
