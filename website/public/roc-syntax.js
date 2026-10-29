@@ -34,9 +34,9 @@
       scanned = 0;
     for (const range of lexical) {
       // The lexer groups field names with their colon. Split structural tokens,
-      // retaining literal and error extents exactly as the lexer produced them.
+      // retaining operators, literals, and errors exactly as the lexer produced them.
       const text = source.slice(range.start, range.end);
-      const pieces = ["s", "c", "n", "e"].includes(range.type)
+      const pieces = ["s", "c", "n", "e", "o"].includes(range.type)
         ? [{ index: 0, 0: text }]
         : [
             ...text.matchAll(
@@ -347,6 +347,7 @@
         return variable;
       }
       let shape = atom(s, base, forceBlock);
+      let binary = false;
       while (pos < ts.length) {
         const t = ts[pos];
         if (
@@ -381,12 +382,12 @@
           annotation(base);
         } else if (t.type === "operator" || ["and", "or"].includes(t.text)) {
           pos++;
-          atom(s, ts[pos] || base);
-          shape = variable;
+          shape = atom(s, ts[pos] || base);
+          binary = true;
         } else break;
       }
       depth--;
-      return shape;
+      return binary ? variable : shape;
     }
     function imports(s, base) {
       pos++;

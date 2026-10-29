@@ -266,3 +266,29 @@ test("deep destructuring uses bounded call stack and recovers following declarat
   assert.deepEqual(roles(broken, "valid"), ["function"]);
   assert.deepEqual(roles(broken, "y"), ["parameter", "parameter"]);
 });
+
+test("pipeline operators preserve qualified functions without inventing lambda parameters", () => {
+  const options = {
+    modules: { Str: { join_with: "function", trim: "function" } },
+  };
+  const source =
+    'main! = |numbers| {\n result = numbers.map(U32.to_str)\n  |> Str.join_with("\\n")\n result\n}\nvalue = "hi" |> Str.trim';
+  assert.deepEqual(roles(source, "join_with", options), ["function"]);
+  assert.deepEqual(roles(source, "trim", options), ["function"]);
+  assert.deepEqual(roles(source, "numbers", options), [
+    "parameter",
+    "parameter",
+  ]);
+  assert.deepEqual(roles(source, "value", options), ["variable"]);
+  assert.equal(
+    tokens(source, options).filter(t => t.text === "|>" && t.type === "operator").length,
+    2,
+  );
+  for (const operator of ["|>", "??", "//", "<-"]) {
+    assert.ok(
+      tokens(`value = left ${operator} right`).some(
+        t => t.text === operator && t.type === "operator",
+      ),
+    );
+  }
+});
