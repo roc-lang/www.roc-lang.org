@@ -67,7 +67,7 @@ p {
 
 details summary {
     cursor: pointer;
-    color: var(--primary-1);
+    color: var(--primary-2);
 }
 
 details summary:hover {
@@ -815,6 +815,10 @@ details {
 }
 
 @media (prefers-color-scheme: dark) {
+    details summary {
+        color: var(--primary-1);
+    }
+
     :root {
         /* WCAG AAA Compliant colors */
         --code-bg: #202746;
@@ -947,7 +951,7 @@ code .punctuation.terminator,
 samp .kw,
 code .kw,
 .roc-interactive .roc-output .k {
-    color: var(--primary-1);
+    color: var(--syntax-accent);
 }
 
 ::highlight(roc-k) {
@@ -961,7 +965,7 @@ samp .keyword.operator,
 code .keyword.operator,
 samp .colon,
 code .colon {
-    color: var(--primary-1);
+    color: var(--syntax-accent);
 }
 
 ::highlight(roc-o) {
@@ -971,7 +975,7 @@ code .colon {
 /* Delimieters */
 samp .delimiter,
 code .delimiter {
-    color: var(--primary-1);
+    color: var(--syntax-accent);
 }
 
 ::highlight(roc-d) {
