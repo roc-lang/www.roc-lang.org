@@ -17,13 +17,19 @@ pre > code.roc-highlight,
 
 ::highlight(roc-c) { color: #596078; }
 ::highlight(roc-n),
-::highlight(roc-s),
-::highlight(roc-u) { color: #087970; }
+::highlight(roc-s) { color: #087970; }
 ::highlight(roc-k),
-::highlight(roc-o),
-::highlight(roc-d) { color: #6633bf; }
+::highlight(roc-o) { color: #6633bf; }
+::highlight(roc-d),
 ::highlight(roc-f),
-::highlight(roc-p) { color: #3e496d; }
+::highlight(roc-p),
+::highlight(roc-parameter),
+::highlight(roc-property),
+::highlight(roc-namespace) { color: #4d5670; }
+::highlight(roc-u),
+::highlight(roc-type),
+::highlight(roc-enumMember),
+::highlight(roc-typeParameter) { color: #245ca6; }
 ::highlight(roc-v),
 ::highlight(roc-function) { color: #202746; }
 ::highlight(roc-e) { color: #b42338; }
@@ -33,21 +39,27 @@ pre > code.roc-highlight,
     .entry-signature:has(.roc-highlight),
     .entry-type-def.roc-highlight {
         background-color: #202746;
-        color: #e0d6f0;
+        color: white;
     }
 
     pre > code.roc-highlight,
     .entry-signature-code.roc-highlight,
-    .type-ahead-signature.roc-highlight { color: #e0d6f0; }
-    ::highlight(roc-c) { color: #ccc; }
+    .type-ahead-signature.roc-highlight { color: white; }
+    ::highlight(roc-c) { color: #9ba6bf; }
     ::highlight(roc-n),
-    ::highlight(roc-s),
-    ::highlight(roc-u) { color: #4eefd9; }
+    ::highlight(roc-s) { color: #4eefd9; }
     ::highlight(roc-k),
-    ::highlight(roc-o),
-    ::highlight(roc-d) { color: #a17cf3; }
+    ::highlight(roc-o) { color: #a17cf3; }
+    ::highlight(roc-d),
     ::highlight(roc-f),
-    ::highlight(roc-p) { color: #aeb4c6; }
+    ::highlight(roc-p),
+    ::highlight(roc-parameter),
+    ::highlight(roc-property),
+    ::highlight(roc-namespace) { color: #b9c1d5; }
+    ::highlight(roc-u),
+    ::highlight(roc-type),
+    ::highlight(roc-enumMember),
+    ::highlight(roc-typeParameter) { color: #9ecbff; }
     ::highlight(roc-v),
     ::highlight(roc-function) { color: white; }
     ::highlight(roc-e) { color: hsl(0, 96%, 67%); }
@@ -114,21 +126,5 @@ pre > code.roc-highlight,
     margin-left: 0;
 }
 
-
-/* Semantic roles in code blocks and linked documentation signatures. */
-::highlight(roc-property) { color: #3e496d; }
-::highlight(roc-parameter),
-::highlight(roc-namespace),
-::highlight(roc-type),
-::highlight(roc-enumMember),
-::highlight(roc-typeParameter) { color: #087970; }
-@media (prefers-color-scheme: dark) {
-    ::highlight(roc-property) { color: #aeb4c6; }
-    ::highlight(roc-parameter),
-    ::highlight(roc-namespace),
-    ::highlight(roc-type),
-    ::highlight(roc-enumMember),
-    ::highlight(roc-typeParameter) { color: #4eefd9; }
-}
 
 /* End Roc website docs patches */

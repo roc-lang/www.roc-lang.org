@@ -910,11 +910,11 @@ details {
 samp .comment,
 code .comment,
 .roc-interactive .roc-output .c {
-    color: #ccc;
+    color: #9ba6bf;
 }
 
 ::highlight(roc-c) {
-    color: #ccc;
+    color: #9ba6bf;
 }
 
 /* Number, String, Tag literals */
@@ -978,13 +978,10 @@ code .delimiter {
     color: var(--syntax-accent);
 }
 
-::highlight(roc-d) {
-    color: var(--syntax-accent);
-}
-
+::highlight(roc-d),
 ::highlight(roc-f),
 ::highlight(roc-p) {
-    color: #aeb4c6;
+    color: #b9c1d5;
 }
 
 /* Variables modules and field names */
@@ -1027,7 +1024,7 @@ code .upperident {
 }
 
 ::highlight(roc-u) {
-    color: var(--dark-cyan);
+    color: #9ecbff;
 }
 
 samp .dim,
@@ -1919,10 +1916,10 @@ code .dim,
     }
 }
 
-/* Semantic roles share the site's palette, independently of lexical spelling. */
-::highlight(roc-property) { color: #aeb4c6; }
+/* Supporting names recede; nominal names stay distinct from literal data. */
 ::highlight(roc-parameter),
-::highlight(roc-namespace),
+::highlight(roc-property),
+::highlight(roc-namespace) { color: #b9c1d5; }
 ::highlight(roc-type),
 ::highlight(roc-enumMember),
-::highlight(roc-typeParameter) { color: var(--dark-cyan); }
+::highlight(roc-typeParameter) { color: #9ecbff; }
