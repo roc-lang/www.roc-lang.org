@@ -84,3 +84,21 @@ Consolidate cases exercising the same rule. Generated corpora, compiler caches, 
 and executables stay ignored; do not commit entire fuzz campaigns or broad snapshots.
 When changing the compiler reference, update the URL and hash together with `zig fetch
 --save-exact=roc URL`, refresh metadata intentionally, and rerun focused regressions.
+
+## Recorded validation and recovery limits
+
+The final development campaigns used Zig 0.17.0 **Debug**, the pinned compiler above,
+and seeds 1, 2, and 3 with 10,000 evaluations each. They produced 21,680 checked inputs
+and 8,320 parse/recovery inputs, with **zero disagreements on checked inputs and zero
+crashes or timeouts**. The three shipped candidate files had combined SHA-256
+`361aa6b56a538d4db456a6c6e130168de4aebd664d65e9484c329a8462b34130`.
+The driver stops after checking; it deliberately skips compile-time finalization and
+lowering, which are unnecessary for semantic tokens.
+
+Recovery findings remain visible. Deleted delimiters can affect whether subsequent
+names appear to be parameters or fields, and damaged annotations can extend type
+parameter classification into following text. These cases are not masked by an
+allowlist. Compare their parse diagnostics and keep any future regression assertions
+focused on useful editing behavior rather than demanding compiler parity for every
+malformed string. Generated coverage is bounded and does not establish equivalence
+for arbitrary Roc programs.

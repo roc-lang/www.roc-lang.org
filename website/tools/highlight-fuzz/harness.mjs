@@ -401,13 +401,14 @@ async function main() {
       failures = 0;
     const corpus = option("corpus", null);
     if (corpus)
-      for (const name of (await readdir(resolve(corpus))).sort())
-        if (name.endsWith(".roc"))
-          retained.push({
-            source: await readFile(join(resolve(corpus), name), "utf8"),
-            features: [],
-            malformed: false,
-          });
+      for (const name of (await readdir(resolve(corpus))).sort()) {
+        if (!name.endsWith(".roc")) continue;
+        const source = (
+          await readFile(join(resolve(corpus), name), "utf8")
+        ).toWellFormed();
+        if (Buffer.byteLength(source) <= 8192)
+          retained.push({ source, features: [], malformed: false });
+      }
     const info = await provenance(prefix);
     for (let iteration = 0; iteration < iterations; iteration++) {
       const generated =
@@ -522,6 +523,10 @@ async function metadata(reference) {
     "utf8",
   );
   const referenceTokens = await reference.evaluate(source, false, true);
+  if (referenceTokens.confidence !== "checked")
+    throw Error(
+      "Metadata requires the checked builtin reference; rerun prepare for this build prefix",
+    );
   const roles = new Map(referenceTokens.semantic.map((x) => [x.start, x.type]));
   const modules = {},
     stack = [];

@@ -63,6 +63,9 @@ fn evaluate(a: std.mem.Allocator, io: std.Io, path: []const u8, request: Request
     var built = try compile.BuildEnv.init(a, .single_threaded, 1, @import("roc_target").RocTarget.detectNative(), "/", io);
     defer built.deinit();
     built.setPostCheckPublicationMode(.none);
+    // Highlighting needs checked CIR only. Do not finalize compile-time values
+    // or enter lowering/backends while evaluating arbitrary fuzz source.
+    built.defer_post_check = true;
     var checked_env: ?*can.ModuleEnv = null;
     if (request.builtin) {
         checked_env = built.builtin_modules.builtin_module.env;
@@ -82,6 +85,15 @@ fn evaluate(a: std.mem.Allocator, io: std.Io, path: []const u8, request: Request
             try diagnostics.append(a, try a.dupe(u8, report.title));
             if (report.severity == .fatal or report.severity == .runtime_error) rejected = true;
         };
+        // Deferred builds retain reports on coordinator modules; ordered sinks
+        // are normally populated during finalization, which this tool skips.
+        if (built.coordinator) |coordinator| {
+            rejected = rejected or coordinator.hasUserErrors();
+            var reports_iter = coordinator.iterReports();
+            while (reports_iter.next()) |entry| {
+                try diagnostics.append(a, try a.dupe(u8, entry.report.title));
+            }
+        }
         if (!rejected) {
             const modules = try built.getCompiledModules(a);
             for (modules) |mod| if (std.mem.eql(u8, mod.path, path)) {

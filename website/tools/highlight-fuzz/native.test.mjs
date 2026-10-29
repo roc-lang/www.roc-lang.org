@@ -35,6 +35,14 @@ test("native checked roles, diagnostics, and document state reset", async () => 
     assert.equal(broken.confidence, "parse");
     assert.ok(broken.diagnostics.length);
     assert.ok(broken.lexical.length);
+    const rejected = await reference.evaluate(
+      "module [result]\nresult = missing_identifier\n",
+    );
+    assert.equal(rejected.confidence, "parse");
+    assert.ok(
+      rejected.diagnostics.length,
+      "checking diagnostics survive deferred finalization",
+    );
     const again = await reference.evaluate(source);
     assert.deepEqual(again.semantic, first.semantic);
   } finally {
