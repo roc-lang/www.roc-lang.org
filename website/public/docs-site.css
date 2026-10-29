@@ -45,7 +45,6 @@ body.website-docs.docs-index main::before { content: none; }
 body.website-docs.docs-index main > .main-content { grid-row: 3; }
 .getting-started { padding: 8px 0 40px; }
 .getting-started h1 { margin-bottom: 16px; }
-.getting-started .docs-intro { font-size: 1.125rem; }
 .docs-start-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
