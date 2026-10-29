@@ -109,7 +109,7 @@ build_with_cache! = |compiler| {
 	path("build").create_all!() ?? {}
 
 	last_build_millis = read_cache_millis!(cache_marker_path) ?? 0
-	latest_compiler_pin_millis = max_mtime_in_dirs_millis!(["build_website.roc"]) ?? 0
+	latest_compiler_pin_millis = max_mtime_in_dirs_millis!(["build_website.roc", "../preview/docs.tar.gz"]) ?? 0
 	compiler_changed = latest_compiler_pin_millis > last_build_millis
 
 	if compiler_changed {
@@ -393,30 +393,10 @@ ensure_compiler_ready! = |compiler| {
 }
 
 generate_builtins_docs! : CompilerInfo => Try({}, _)
-generate_builtins_docs! = |compiler| {
-	ensure_compiler_ready!(compiler)?
-
+# Preview-only: use docs from the modified generator; see ../preview/README.md.
+generate_builtins_docs! = |_compiler| {
 	path("build/docs/main").create_all!()?
-	path("docs/langref").delete_all!() ?? {}
-	path("docs/langref").create_all!()?
-	run!("cp", ["-R", "${compiler.src_dir}/docs/langref/.", "docs/langref"])?
-	search_config = "${compiler.src_dir}/docs/search.tsv"
-	search_args = if path(search_config).is_file!()? {
-		["--search-config=${search_config}"]
-	} else {
-		[]
-	}
-	run!(
-		compiler.bin,
-		[
-			"docs",
-			"--builtins",
-			"--output=build/docs/main",
-			"--with-lang-ref",
-		].concat(search_args),
-	)?
-	path("docs").delete_all!()?
-	Ok({})
+	run!("tar", ["-xzf", "../preview/docs.tar.gz", "-C", "build/docs/main"])
 }
 
 ensure_pinned_compiler_downloaded! : CompilerInfo => Try({}, _)
