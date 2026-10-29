@@ -101,6 +101,10 @@ provide additional module metadata through their `rocSyntaxOptions` property.
 
 The visual policy groups the detailed semantic tokens into seven families:
 
+Code blocks, editable examples, and compiler output follow the system's light
+or dark appearance. Both themes use the same semantic families, with darker
+highlight shades on light surfaces and lighter shades on dark surfaces.
+
 | Family | Includes | Color |
 | --- | --- | --- |
 | Literals | Strings, characters, numbers, including numeric suffixes | Teal |
