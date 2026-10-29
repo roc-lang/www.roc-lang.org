@@ -1,3 +1,5 @@
+// Keep implementation names private so the production minifier can shorten them.
+(function () {
 // main.js — Roc interactive examples
 "use strict";
 
@@ -192,7 +194,7 @@ function terminal(text) {
 }
 
 const CL = [null, "u", "v", "n", "s", "k", "p", "d", "o", "e", "c"];
-const M = 15, X = 16, A = 32, N = 64, B = 128, G = 256, H = 512;
+const M = 15, X = 16, B = 128, G = 256;
 const Z = 0, ER = 9, EE = 25, U = 17, L = 82, NUM = 19, S = 4, SE = 20;
 const K = 5, KE = 21, P = 6, PE = 22, F = 38, D = 7, DE = 23, O = 8;
 const OF = 40, CO = 520, DL = 210, DU = 145, DN = 147, DO = 136;
@@ -990,61 +992,26 @@ const rocHighlightRoots = new Map();
 const rocHighlightObjects = new Map();
 let rocHighlightRootId = 0;
 
-function byteOffsetsForText(text, bytes) {
-  const offsets = new Array(bytes.length + 1);
-  let byteIndex = 0;
-
-  for (let index = 0; index < text.length;) {
-    const codepoint = text.codePointAt(index);
-    const codeUnits = codepoint > 0xffff ? 2 : 1;
-    const bytesForCodepoint =
-      codepoint <= 0x7f ? 1 :
-      codepoint <= 0x7ff ? 2 :
-      codepoint <= 0xffff ? 3 : 4;
-
-    for (let i = 0; i < bytesForCodepoint; i += 1) {
-      offsets[byteIndex + i] = index;
-    }
-
-    byteIndex += bytesForCodepoint;
-    index += codeUnits;
-  }
-
-  offsets[byteIndex] = text.length;
-  return offsets;
-}
-
 function rocLexicalTokens(source) {
   const tokenized = new RocTokenizer(source).tokenize();
-  const tokens = tokenized.t.filter(
-    (token) => token[0] !== CM && token[1] !== token[2],
-  );
-  const fields = new Map();
-
-  for (let i = 0; i < tokens.length; i += 1) {
-    const previous = tokens[i - 1];
-    const token = tokens[i];
-    const next = tokens[i + 1];
-    if (
-      previous != null &&
-      next != null &&
-      (previous[0] & A) !== 0 &&
-      (token[0] & N) !== 0 &&
-      (next[0] & H) !== 0 &&
-      decode(tokenized.b.subarray(token[2], next[1])).trim() === ""
-    ) {
-      fields.set(token[1], next[2]);
-    }
-  }
-
   const ranges = [];
-  const offsets = byteOffsetsForText(source, tokenized.b);
+  // Token boundaries are ordered: one cursor maps bytes to UTF-16 without a
+  // source-sized offset array. The structural analyzer classifies fields.
+  let textIndex = 0, byteIndex = 0;
+  const offset = target => {
+    while (byteIndex < target) {
+      const cp = source.codePointAt(textIndex);
+      textIndex += cp > 0xffff ? 2 : 1;
+      byteIndex += cp <= 0x7f ? 1 : cp <= 0x7ff ? 2 : cp <= 0xffff ? 3 : 4;
+    }
+    return textIndex;
+  };
   let lastEnd = 0;
 
   const add = (start, end, type) => {
-    const textStart = offsets[start];
-    const textEnd = offsets[end];
-    if (textStart != null && textEnd != null && textStart < textEnd) {
+    const textStart = offset(start);
+    const textEnd = offset(end);
+    if (textStart < textEnd) {
       ranges.push({ type, start: textStart, end: textEnd });
     }
     lastEnd = end;
@@ -1058,20 +1025,15 @@ function rocLexicalTokens(source) {
       continue;
     }
 
-    const fieldEnd = fields.get(start);
-    let cls = fieldEnd == null ? CL[tag & M] : "f";
+    const cls = CL[tag & M];
     if (cls == null) {
       continue;
     }
 
-    if (fieldEnd != null) {
-      end = fieldEnd;
-    }
-
-    if (fieldEnd == null && (tag & B) !== 0 && start + 1 < end) {
+    if ((tag & B) !== 0 && start + 1 < end) {
       add(start, start + 1, "p");
       add(start + 1, end, cls);
-    } else if (fieldEnd == null && (tag & G) !== 0 && start + 2 < end) {
+    } else if ((tag & G) !== 0 && start + 2 < end) {
       add(start, start + 2, "p");
       add(start + 2, end, cls);
     } else {
@@ -1544,3 +1506,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (interactiveWidgets.length > 0) preloadCompiler();
 });
+
+// The structural analyzer and local workbench share this lexical entry point.
+globalThis.rocLexicalTokens = rocLexicalTokens;
+})();

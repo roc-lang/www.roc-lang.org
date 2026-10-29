@@ -23,8 +23,12 @@ class Element {
 function fixture() {
   const calls = [];
   const frames = [];
+  const events = new Map();
   const document = {
-    documentElement: new Element(), addEventListener() {},
+    documentElement: new Element(),
+    addEventListener(name, callback) { events.set(name, callback); },
+    querySelector() { return null; },
+    getElementById() { return null; },
     createTreeWalker(root) {
       const collect = element => element.children.flatMap(child => child instanceof Element ? collect(child) : [child]);
       const nodes = collect(root);
@@ -33,7 +37,7 @@ function fixture() {
   };
   const highlights = new Map();
   const context = vm.createContext({
-    document, CSS: { highlights }, Highlight: Set,
+    document, navigator: {}, CSS: { highlights }, Highlight: Set,
     Node: { ELEMENT_NODE: 1 }, NodeFilter: { SHOW_TEXT: 4 },
     TextEncoder, TextDecoder, performance,
     requestAnimationFrame: callback => frames.push(callback),
@@ -50,7 +54,7 @@ function fixture() {
   });
   context.window = context;
   vm.runInContext(compiler, context);
-  return { context, highlights, calls, frames };
+  return { context, highlights, calls, frames, events };
 }
 
 test('whole-snippet analysis maps a semantic span across a link without changing markup', () => {
@@ -95,18 +99,18 @@ test('progressive batches mark every root and do not revisit completed snippets'
   assert.equal(calls.length, 5);
 });
 
-test('editor replacement removes old ranges', () => {
+test('re-highlighting edited source replaces old ranges', () => {
   const { context, highlights } = fixture();
-  context.editor = new Element(false, ['parameter']);
-  vm.runInContext('buildRocSyntaxHighlights(editor)', context);
+  const editor = new Element(true, ['parameter']);
+  context.rocSyntax.highlight(editor);
   assert.equal(highlights.get('roc-parameter').size, 1);
-  context.editor.children = [{ nodeValue: '', parentElement: context.editor }];
-  vm.runInContext('buildRocSyntaxHighlights(editor)', context);
+  editor.children = [{ nodeValue: '', parentElement: editor }];
+  context.rocSyntax.highlight(editor);
   assert.equal(highlights.get('roc-parameter').size, 0);
 });
 
 test('Roc Markdown samples are selected without highlighting shell commands or diagnostics', () => {
-  const { context } = fixture();
+  const { context, events } = fixture();
   const candidate = (language, compactTokens) => ({
     marked: false,
     matches: () => language === 'roc',
@@ -115,8 +119,8 @@ test('Roc Markdown samples are selected without highlighting shell commands or d
   });
   const samples = [candidate('roc', false), candidate('', true), candidate('shell', false), candidate('diagnostic', false)];
   for (const sample of samples) sample.classList.owner = sample;
-  context.page = { querySelectorAll: () => samples };
-  vm.runInContext('markRocCodeBlocks(page)', context);
+  context.document.querySelectorAll = selector => selector.startsWith('pre > samp') ? samples : [];
+  events.get('DOMContentLoaded')();
   assert.deepEqual(samples.map(sample => sample.marked), [true, true, false, false]);
 });
 
