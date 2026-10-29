@@ -70,8 +70,9 @@ Metadata refresh uses checked builtin semantic roles, then projects annotation r
 syntax into function/value shapes. The snapshot records that distinction's compiler
 revision and confidence. It contains the published annotation surface rather than a
 full type checker, runtime values, or arbitrary dependency exports.
-The shipped data groups export names by descriptor and pools identical descriptors;
-its small decoder preserves the expanded metadata structure and all result shapes.
+The generator factors repeated same-descriptor member sets across modules and pools
+identical descriptors. Factoring happens only in the local generator; the browser's
+small decoder preserves the expanded metadata structure and all result shapes.
 Descriptors are shared, so consumers must treat builtin metadata as read-only.
 
 ## Regression policy

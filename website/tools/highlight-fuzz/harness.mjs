@@ -514,14 +514,19 @@ async function main() {
     reference.stop();
   }
 }
-// Store names once per module/shape group. Runtime descriptors are shared and
-// read-only to consumers; the public expanded metadata contract stays the same.
+// Factor repeated same-shape member sets at generation time. Runtime descriptors
+// are shared/read-only; decoding preserves the public expanded metadata contract.
 export function encodeMetadata(snapshot) {
   const { modules, ...header } = snapshot;
   const shapes = [], shapeIds = new Map();
-  const groupedModules = Object.entries(modules).map(([module, exports]) => {
+  const moduleNames = Object.keys(modules).sort();
+  const moduleIds = new Map(moduleNames.map((name, index) => [name, index]));
+  const memberGroups = [];
+  const pack = names => names.some(name => /\s/.test(name)) ? names : names.join(" ");
+  for (const [module, moduleName] of moduleNames.entries()) {
     const groups = new Map();
-    for (const [name, shape] of Object.entries(exports)) {
+    for (const name of Object.keys(modules[moduleName]).sort()) {
+      const shape = modules[moduleName][name];
       const key = JSON.stringify(shape);
       if (!shapeIds.has(key)) {
         shapeIds.set(key, shapes.length);
@@ -531,21 +536,73 @@ export function encodeMetadata(snapshot) {
       if (!groups.has(id)) groups.set(id, []);
       groups.get(id).push(name);
     }
-    return [module, [...groups].map(([id, names]) => [
-      id, names.some(name => /\s/.test(name)) ? names : names.join(" "),
-    ])];
-  });
+    for (const [shape, names] of groups)
+      memberGroups.push({ module, shape, names: new Set(names) });
+  }
+  const members = [], references = moduleNames.map(() => []);
+  // Find exact intersections only. This is independent of Roc module names and
+  // descriptor kinds, and the fixed bound limits work for future large inputs.
+  for (let round = 0; round < 64; round++) {
+    let best;
+    const considered = new Set();
+    for (let i = 0; i < memberGroups.length; i++) {
+      for (let j = i + 1; j < memberGroups.length; j++) {
+        const left = memberGroups[i], right = memberGroups[j];
+        if (left.shape !== right.shape) continue;
+        const names = [...left.names].filter(name => right.names.has(name)).sort();
+        if (names.length < 2) continue;
+        const key = JSON.stringify([left.shape, names]);
+        if (considered.has(key)) continue;
+        considered.add(key);
+        const matches = memberGroups.filter(group => group.shape === left.shape &&
+          names.every(name => group.names.has(name)));
+        const score = (matches.length - 1) * Buffer.byteLength(JSON.stringify(pack(names))) -
+          matches.length * 3 - 20;
+        if (score > 0 && (!best || score > best.score))
+          best = { shape: left.shape, names, matches, score };
+      }
+    }
+    if (!best) break;
+    const id = members.length;
+    members.push([best.shape, pack(best.names)]);
+    for (const group of best.matches) {
+      references[group.module].push(id);
+      for (const name of best.names) group.names.delete(name);
+    }
+  }
+  const remainingIds = new Map();
+  for (const group of memberGroups) {
+    if (!group.names.size) continue;
+    const names = [...group.names].sort();
+    const key = JSON.stringify([group.shape, names]);
+    if (!remainingIds.has(key)) {
+      remainingIds.set(key, members.length);
+      members.push([group.shape, pack(names)]);
+    }
+    references[group.module].push(remainingIds.get(key));
+  }
+  // Reuse module-name indexes rather than spelling qualified names twice.
+  let kinds = null;
+  if (header.moduleKinds && typeof header.moduleKinds === "object" &&
+      !Array.isArray(header.moduleKinds)) {
+    kinds = Object.entries(header.moduleKinds).map(([name, kind]) => [
+      moduleIds.has(name) ? moduleIds.get(name) : name, kind,
+    ]);
+    delete header.moduleKinds;
+  }
   // Parsing data, rather than embedding object literals, preserves every JSON
   // property (including __proto__) without changing object prototypes.
-  const payload = JSON.stringify(JSON.stringify([header, shapes, groupedModules]));
+  const payload = JSON.stringify(JSON.stringify([header, shapes, moduleNames, members, references, kinds]));
   return `// Generated from pinned Roc compiler semantic tokens. Refresh with the local highlight harness.
 // Export descriptors are shared; treat this snapshot as read-only.
 (() => {
-  const [metadata, shapes, modules] = JSON.parse(${payload});
-  metadata.modules = Object.fromEntries(modules.map(([module, groups]) => [module,
-    Object.fromEntries(groups.flatMap(([id, names]) =>
-      (typeof names === "string" ? names.split(" ") : names).map(name => [name, shapes[id]])))
-  ]));
+  const [metadata, shapes, names, members, references, kinds] = JSON.parse(${payload});
+  const entries = members.map(([id, names]) =>
+    (typeof names === "string" ? names.split(" ") : names).map(name => [name, shapes[id]]));
+  metadata.modules = Object.fromEntries(names.map((name, index) => [name,
+    Object.fromEntries(references[index].flatMap(id => entries[id]))]));
+  if (kinds) metadata.moduleKinds = Object.fromEntries(kinds.map(([name, kind]) =>
+    [typeof name === "number" ? names[name] : name, kind]));
   globalThis.rocBuiltinMetadata = metadata;
 })();
 `;

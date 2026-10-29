@@ -43,6 +43,34 @@ test("compact metadata round trips arbitrary shapes and shares identical descrip
   assert.equal(metadata.modules.Demo.curried.result.kind, "function");
   assert.ok(Object.hasOwn(metadata.modules.constructor, "__proto__"));
 });
+test("metadata factoring preserves overlapping sets, different roles, and optional kinds", () => {
+  const fn = { kind: "function", result: { kind: "variable" } };
+  const common = {
+    common_mapping_function: fn,
+    common_filtering_function: fn,
+    common_folding_function: fn,
+  };
+  for (const kinds of [undefined, {}, null, { A: "namespace", B: "type", "External.Type": "type" }]) {
+    const fixture = {
+      formatVersion: 1,
+      ...(kinds === undefined ? {} : { moduleKinds: kinds }),
+      modules: {
+        A: { ...common, same_name: fn, only_a: fn },
+        B: { ...common, same_name: { kind: "variable" }, only_b: fn },
+        C: { ...common, only_c: { kind: "type" } },
+        Empty: {},
+      },
+    };
+    const source = encodeMetadata(fixture);
+    const context = vm.createContext({});
+    vm.runInContext(source, context);
+    const metadata = JSON.parse(JSON.stringify(context.rocBuiltinMetadata));
+    assert.deepEqual(metadata, fixture);
+    assert.equal(source, encodeMetadata(metadata), "decode/re-encode is stable");
+    assert.equal(metadata.modules.A.same_name.kind, "function");
+    assert.equal(metadata.modules.B.same_name.kind, "variable");
+  }
+});
 test("aligns spans across Unicode and differing token boundaries", () => {
   const source = '"😀" x';
   const actual = [
