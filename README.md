@@ -93,73 +93,27 @@ python3 serve.py build 8080
 
 ## Syntax highlighting
 
-Roc highlighting runs in pure JavaScript. The lexer feeds a structural parser
-and binding analysis in `website/public/roc-syntax.js`; semantic spans are mapped
-back to DOM ranges without replacing links or markup. Builtin export metadata
-lets the highlighter distinguish imported functions from values. Snippets can
-provide additional module metadata through their `rocSyntaxOptions` property.
-
-The visual policy groups the detailed semantic tokens into seven families:
-
-Code blocks, editable examples, and compiler output follow the system's light
-or dark appearance. Both themes use the same semantic families, with darker
-highlight shades on light surfaces and lighter shades on dark surfaces.
-
-| Family | Includes | Color |
-| --- | --- | --- |
-| Literals | Strings, characters, numbers, including numeric suffixes | Teal |
-| Comments | Ordinary and documentation comments | Muted gray |
-| Names and bindings | Values, functions, lambda arguments, mutable names, record fields, namespaces | Normal foreground |
-| Types and constructors | Type names, type parameters, tag variants | Blue |
-| Structure | Parentheses, braces, brackets, commas, lambda delimiters | Gray |
-| Operators | Symbolic operators, access dots, `and`, `or`, interpolation boundaries | Purple |
-| Keywords | Control flow, imports, declarations | Purple |
-
-Context determines the role: uppercase tag variants differ from uppercase type
-names, and lowercase type parameters differ from runtime bindings. Definitions,
-uses, and mutability are refinements within these families, rather than reasons
-to dim significant names or add another color. The current token API preserves
-roles such as parameter, property, function, and type parameter; it does not yet
-emit definition/use and mutability modifiers consistently for every binding.
-Roc's documented comments use `#` and `##`; consecutive comment lines stay in
-the comment family. There is no separate block-comment delimiter.
-
-Run the compact highlighting regression suite with:
+Highlighting runs in pure JavaScript, with scope analysis and builtin export
+metadata. Whole-snippet semantic ranges preserve existing links and markup.
+Code surfaces follow system appearance: literals are teal, types and tags blue,
+keywords and operators purple, comments and structure gray, and names retain the
+normal foreground. Snippets can supply module metadata via `rocSyntaxOptions`.
 
 ```sh
-node --test ci_scripts/roc_syntax.test.mjs ci_scripts/roc_highlight_dom.test.mjs
-```
-
-The compiler-backed differential harness is a local development tool. Its setup,
-fuzzing, replay, minimization, and metadata refresh commands are documented in
-[`website/tools/highlight-fuzz/README.md`](website/tools/highlight-fuzz/README.md).
-Normal highlighting and regression tests do not require the native driver.
-
-Measure the shared JavaScript against a Git revision with the production `minify`
-version pinned in `build_cloudflare.sh`:
-
-```sh
+node --test ci_scripts/roc_*.test.mjs ci_scripts/color_contrast.test.mjs
 node ci_scripts/measure_highlight_size.mjs --baseline 56b8dbc --minifier path/to/minify
-```
-
-The JSON report includes source, minified, gzip, and Brotli sizes. Each asset is
-compressed separately to match the website's separate requests; compression
-levels are fixed for reproducible comparisons, rather than predictions of a CDN's
-compression settings.
-
-## Color contrast
-
-With the local preview running, audit rendered text and syntax highlight colors
-in both themes:
-
-```sh
-node ci_scripts/check_color_contrast.mjs --base-url http://localhost:8080
 node ci_scripts/check_color_contrast.mjs --all-pages --json website/.cache/color-contrast.json
 ```
 
-This development tool uses an installed Chrome/Chromium and adds no shipped JS.
-See [the audit guide](ci_scripts/COLOR_CONTRAST.md) for coverage, thresholds,
-manual-review items, and options.
+Size measurements use the production minifier pinned in `build_cloudflare.sh`
+and compress each resource separately. The contrast audit needs a running preview,
+Node.js 24, and Chrome/Chromium. It checks rendered text and highlight colors in
+both themes; it does not establish full WCAG conformance. Unsupported surfaces
+and states needing manual review are reported separately. Use `--help` for options
+or `COLOR_CONTRAST_BROWSER_TESTS=1` to enable the auditor's browser integration test.
+
+The optional [compiler differential harness](website/tools/highlight-fuzz/README.md)
+is local development tooling; normal builds and highlighting tests need no compiler.
 
 ## Browser compiler updates
 
