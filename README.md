@@ -99,6 +99,27 @@ back to DOM ranges without replacing links or markup. Builtin export metadata
 lets the highlighter distinguish imported functions from values. Snippets can
 provide additional module metadata through their `rocSyntaxOptions` property.
 
+The visual policy groups the detailed semantic tokens into seven families:
+
+| Family | Includes | Color |
+| --- | --- | --- |
+| Literals | Strings, characters, numbers, including numeric suffixes | Teal |
+| Comments | Ordinary and documentation comments | Muted gray |
+| Names and bindings | Values, functions, lambda arguments, mutable names, record fields, namespaces | Normal foreground |
+| Types and constructors | Type names, type parameters, tag variants | Blue |
+| Structure | Parentheses, braces, brackets, commas, lambda delimiters | Gray |
+| Operators | Symbolic operators, access dots, `and`, `or`, interpolation boundaries | Purple |
+| Keywords | Control flow, imports, declarations | Purple |
+
+Context determines the role: uppercase tag variants differ from uppercase type
+names, and lowercase type parameters differ from runtime bindings. Definitions,
+uses, and mutability are refinements within these families, rather than reasons
+to dim significant names or add another color. The current token API preserves
+roles such as parameter, property, function, and type parameter; it does not yet
+emit definition/use and mutability modifiers consistently for every binding.
+Roc's documented comments use `#` and `##`; consecutive comment lines stay in
+the comment family. There is no separate block-comment delimiter.
+
 Run the compact highlighting regression suite with:
 
 ```sh
