@@ -512,6 +512,7 @@ patch_docs_indexes! = |paths|
 		[] => Ok({})
 		[first, .. as rest] => {
 			patch_builtins_nav_in_file!(first)?
+			replace_all_in_file!(first, "https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md", "/tutorial/")?
 			add_module_name_to_type_definition!(first)?
 			replace_all_in_file!(
 				first,

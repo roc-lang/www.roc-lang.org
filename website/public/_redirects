@@ -30,10 +30,6 @@
 
 # --- Static rules (exact paths; these win over the dynamic rules below) ---
 
-# The tutorial currently lives in the roc repo; 302 because it is expected to
-# move back onto this site.
-/tutorial https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md 302
-
 # The builtin docs moved from /builtins/<Module> to /docs/main/<Module>. Inspect
 # is the exception: main no longer has a module of its own, and its contents
 # moved into Str. The released versions still have their own Inspect module, so

@@ -45,6 +45,7 @@ PageInfo : {
 
 page_data : Dict(Str, PageInfo)
 page_data = Dict.empty()
+	.insert("/tutorial/index.html", { title: "Tutorial | Roc", description: "Learn Roc with the introductory tutorial: functions, collections, pattern matching, types, and platforms." })
 	.insert("/bdfn.html", { title: "Governance | Roc", description: "Learn about the governance model of the Roc programming language." })
 	.insert("/community.html", { title: "Community | Roc", description: "Connect with the community of the Roc programming language." })
 	.insert("/donate.html", { title: "Donate | Roc", description: "Support the Roc programming language by donating or sponsoring." })
@@ -199,7 +200,7 @@ view_navbar = |page_path_str| {
 					Html.div(
 						[id("top-bar-links")],
 						[
-							Html.a([href("https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md")], [Html.text("Tutorial")]),
+							Html.a([href("/tutorial/")], [Html.text("Tutorial")]),
 							Html.a([href("/install")], [Html.text("Install")]),
 							Html.a([href("/examples")], [Html.text("Examples")]),
 							Html.a([href("/community")], [Html.text("Community")]),
