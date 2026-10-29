@@ -45,13 +45,6 @@ body.website-docs.docs-index main::before { content: none; }
 body.website-docs.docs-index main > .main-content { grid-row: 3; }
 .getting-started { padding: 8px 0 40px; }
 .getting-started h1 { margin-bottom: 16px; }
-.getting-started .docs-eyebrow {
-    color: var(--text-color);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
 .getting-started .docs-intro { font-size: 1.125rem; }
 .docs-start-grid {
     display: grid;
