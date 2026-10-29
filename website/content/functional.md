@@ -136,4 +136,4 @@ Roc evaluates top-level values at compile time because they can only call pure f
 
 ## Get started
 
-If this design sounds interesting to you, you can give Roc a try by heading over to the [tutorial](https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md)!
+If this design sounds interesting to you, you can give Roc a try by heading over to the [tutorial](/tutorial/)!

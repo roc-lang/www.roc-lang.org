@@ -132,3 +132,11 @@ These rules used to be written by `write_builtins_redirects!` in
 derived from the build any more.
 
 `serve.py` applies `_redirects` too, so a local preview behaves like production.
+
+## Website tutorial
+
+The single-page tutorial is `website/content/tutorial/index.md`, imported from
+`roc-lang/roc/docs/mini-tutorial-new-compiler.md`. The source and import date are
+recorded in its opening comment. When refreshing it, preserve the prose and code,
+use `roc` fences instead of GitHub's `ruby` fallback, retain heading anchors and
+the contents list, and make links to this website relative.
