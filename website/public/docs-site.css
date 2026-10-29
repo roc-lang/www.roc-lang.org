@@ -86,7 +86,7 @@ section.getting-started h2,
 section.getting-started p { padding-left: 0; padding-right: 0; }
 body.website-docs.docs-index footer { padding-left: 36px; }
 
-/* Align the home branding with the desktop sidebar disclosure icons. */
+/* Place the home branding slightly left of the desktop sidebar labels. */
 @media (min-width: 769px) {
     .website-docs #top-bar nav {
         max-width: none;
@@ -96,7 +96,7 @@ body.website-docs.docs-index footer { padding-left: 36px; }
     }
     .website-docs #nav-home-link {
         justify-self: start;
-        margin-left: 20px; /* Sidebar disclosure icon inset, minus the link padding. */
+        margin-left: 36px; /* 16px left of the sidebar labels, minus link padding. */
     }
     .website-docs #top-bar-links { justify-self: center; }
 }
