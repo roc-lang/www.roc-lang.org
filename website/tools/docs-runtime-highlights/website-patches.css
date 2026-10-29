@@ -18,13 +18,14 @@ pre > code.roc-highlight,
 ::highlight(roc-c) { color: #596078; }
 ::highlight(roc-n),
 ::highlight(roc-s),
-::highlight(roc-u) { color: #087f78; }
+::highlight(roc-u) { color: #087970; }
 ::highlight(roc-k),
 ::highlight(roc-o),
 ::highlight(roc-d) { color: #6633bf; }
 ::highlight(roc-f),
 ::highlight(roc-p) { color: #3e496d; }
-::highlight(roc-v) { color: #202746; }
+::highlight(roc-v),
+::highlight(roc-function) { color: #202746; }
 ::highlight(roc-e) { color: #b42338; }
 
 @media (prefers-color-scheme: dark) {
@@ -44,11 +45,18 @@ pre > code.roc-highlight,
     ::highlight(roc-u) { color: #4eefd9; }
     ::highlight(roc-k),
     ::highlight(roc-o),
-    ::highlight(roc-d) { color: #9b6bf2; }
+    ::highlight(roc-d) { color: #a17cf3; }
     ::highlight(roc-f),
     ::highlight(roc-p) { color: #aeb4c6; }
-    ::highlight(roc-v) { color: white; }
+    ::highlight(roc-v),
+    ::highlight(roc-function) { color: white; }
     ::highlight(roc-e) { color: hsl(0, 96%, 67%); }
+}
+
+/* Keep the tip link readable on the tinted sidebar surface. */
+.builtins-tip a { color: #6633bf; }
+@media (prefers-color-scheme: dark) {
+    .builtins-tip a { color: var(--link-color); }
 }
 
 /* Sidebar chevrons */
@@ -109,15 +117,13 @@ pre > code.roc-highlight,
 
 /* Semantic roles in code blocks and linked documentation signatures. */
 ::highlight(roc-parameter) { color: #77551c; }
-::highlight(roc-function) { color: #6633bf; }
 ::highlight(roc-property) { color: #3e496d; }
 ::highlight(roc-namespace),
 ::highlight(roc-type),
 ::highlight(roc-enumMember),
-::highlight(roc-typeParameter) { color: #087f78; }
+::highlight(roc-typeParameter) { color: #087970; }
 @media (prefers-color-scheme: dark) {
     ::highlight(roc-parameter) { color: #e5bc70; }
-    ::highlight(roc-function) { color: #9b6bf2; }
     ::highlight(roc-property) { color: #aeb4c6; }
     ::highlight(roc-namespace),
     ::highlight(roc-type),

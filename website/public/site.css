@@ -35,6 +35,7 @@
     --body-max-width: 1024px;
     --action-btn-width: 120px;
     --dark-code-bg: #202746;
+    --syntax-accent: #a17cf3;
 
     /* Tutorial */
     --header-link-color: #1bbcb3;
@@ -950,7 +951,7 @@ code .kw,
 }
 
 ::highlight(roc-k) {
-    color: var(--primary-1);
+    color: var(--syntax-accent);
 }
 
 /* Operators */
@@ -964,7 +965,7 @@ code .colon {
 }
 
 ::highlight(roc-o) {
-    color: var(--primary-1);
+    color: var(--syntax-accent);
 }
 
 /* Delimieters */
@@ -974,7 +975,7 @@ code .delimiter {
 }
 
 ::highlight(roc-d) {
-    color: var(--primary-1);
+    color: var(--syntax-accent);
 }
 
 ::highlight(roc-f),
@@ -996,7 +997,8 @@ code .lowerident,
     color: white;
 }
 
-::highlight(roc-v) {
+::highlight(roc-v),
+::highlight(roc-function) {
     color: white;
 }
 
@@ -1915,7 +1917,6 @@ code .dim,
 
 /* Semantic roles share the site's palette, independently of lexical spelling. */
 ::highlight(roc-parameter) { color: #e5bc70; }
-::highlight(roc-function) { color: var(--primary-1); }
 ::highlight(roc-property) { color: #aeb4c6; }
 ::highlight(roc-namespace),
 ::highlight(roc-type),
