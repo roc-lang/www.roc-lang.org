@@ -1,15 +1,15 @@
 <!-- Imported from https://github.com/roc-lang/roc/blob/main/docs/mini-tutorial-new-compiler.md on 2026-10-29. Prose and examples retained; links, anchors, and code-fence languages adapted for the website. -->
 
-# Mini Tutorial for Roc
+# Tutorial
 
-Roc is still a work in progress and has not reached a 0.1 release, so expect missing features and bugs.
+Roc is still a work in progress and has not reached a 0.1 release, so expect missing features and bugs. This tutorial is also work in progress.
 
 Helpful resources:
 - [Standard library docs](/docs/main/)
 - [Examples](/examples/)
 - [Language reference](/docs/main/langref/)
-- [Roc syntax overview](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc)
-- Learn roc by doing, with [exercism](https://exercism.org/tracks/roc/)
+- [Roc syntax overview](/examples/AllSyntax/README.html)
+- Learn Roc by doing, with [exercism](https://exercism.org/tracks/roc/)
 
 If you want help, the best place to get it is [Roc Zulip](https://roc.zulipchat.com/). You're welcome to ask any questions in [#beginners](https://roc.zulipchat.com/#narrow/channel/231634-beginners/).
 
@@ -739,6 +739,7 @@ For more, check out:
 
 - [Roc's standard library and language documentation](/docs/main/)
 - [Examples](/examples/)
+- [Language reference](/docs/main/langref/)
 - [The source code for all builtin functions](https://github.com/roc-lang/roc/blob/main/src/build/roc/Builtin.roc)
-- [A single file demonstrating Roc syntax](https://github.com/roc-lang/roc/blob/main/test/echo/all_syntax_test.roc)
+- [A single file demonstrating Roc syntax](/examples/AllSyntax/README.html)
 - [The Exercism.org Roc track](https://exercism.org/tracks/roc/)
