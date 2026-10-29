@@ -1,12 +1,48 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import vm from "node:vm";
 import {
   compare,
   generator,
   minimize,
   signature,
   candidate,
+  encodeMetadata,
 } from "./harness.mjs";
+
+test("compact metadata round trips arbitrary shapes and shares identical descriptors", () => {
+  const functionShape = { kind: "function", result: { kind: "variable" } };
+  const fixture = {
+    formatVersion: 1,
+    rocRevision: "fixture",
+    confidence: "checked",
+    moduleKinds: { Demo: "namespace", Empty: "type", constructor: "type" },
+    futureHeader: { enabled: true },
+    modules: {
+      Demo: {
+        first: functionShape,
+        second: { ...functionShape },
+        curried: { kind: "function", result: functionShape },
+        record: { kind: "variable", fields: { run: functionShape } },
+      },
+      Empty: {},
+      constructor: Object.fromEntries([
+        ["__proto__", { kind: "type", futureDetail: "retained" }],
+        ["two words", { kind: "variable" }],
+      ]),
+    },
+  };
+  const source = encodeMetadata(fixture);
+  assert.equal(source, encodeMetadata(fixture), "encoding is deterministic");
+  const context = vm.createContext({});
+  vm.runInContext(source, context);
+  const metadata = context.rocBuiltinMetadata;
+  assert.deepEqual(JSON.parse(JSON.stringify(metadata)), fixture);
+  assert.equal(metadata.modules.Demo.first, metadata.modules.Demo.second);
+  assert.equal(metadata.modules.Demo.first.result.kind, "variable");
+  assert.equal(metadata.modules.Demo.curried.result.kind, "function");
+  assert.ok(Object.hasOwn(metadata.modules.constructor, "__proto__"));
+});
 test("aligns spans across Unicode and differing token boundaries", () => {
   const source = '"😀" x';
   const actual = [

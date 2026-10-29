@@ -514,6 +514,43 @@ async function main() {
     reference.stop();
   }
 }
+// Store names once per module/shape group. Runtime descriptors are shared and
+// read-only to consumers; the public expanded metadata contract stays the same.
+export function encodeMetadata(snapshot) {
+  const { modules, ...header } = snapshot;
+  const shapes = [], shapeIds = new Map();
+  const groupedModules = Object.entries(modules).map(([module, exports]) => {
+    const groups = new Map();
+    for (const [name, shape] of Object.entries(exports)) {
+      const key = JSON.stringify(shape);
+      if (!shapeIds.has(key)) {
+        shapeIds.set(key, shapes.length);
+        shapes.push(shape);
+      }
+      const id = shapeIds.get(key);
+      if (!groups.has(id)) groups.set(id, []);
+      groups.get(id).push(name);
+    }
+    return [module, [...groups].map(([id, names]) => [
+      id, names.some(name => /\s/.test(name)) ? names : names.join(" "),
+    ])];
+  });
+  // Parsing data, rather than embedding object literals, preserves every JSON
+  // property (including __proto__) without changing object prototypes.
+  const payload = JSON.stringify(JSON.stringify([header, shapes, groupedModules]));
+  return `// Generated from pinned Roc compiler semantic tokens. Refresh with the local highlight harness.
+// Export descriptors are shared; treat this snapshot as read-only.
+(() => {
+  const [metadata, shapes, modules] = JSON.parse(${payload});
+  metadata.modules = Object.fromEntries(modules.map(([module, groups]) => [module,
+    Object.fromEntries(groups.flatMap(([id, names]) =>
+      (typeof names === "string" ? names.split(" ") : names).map(name => [name, shapes[id]])))
+  ]));
+  globalThis.rocBuiltinMetadata = metadata;
+})();
+`;
+}
+
 async function metadata(reference) {
   const packages = await readdir(join(dir, "zig-pkg"));
   const packageName = packages.find((x) => x.startsWith("roc-0.0.0-"));
@@ -637,7 +674,7 @@ async function metadata(reference) {
   const path = join(publicDir, "roc-builtin-metadata.js");
   await writeFile(
     path,
-    `// Generated from pinned Roc compiler semantic tokens. Refresh with the local highlight harness.\nglobalThis.rocBuiltinMetadata = ${JSON.stringify(snapshot)};\n`,
+    encodeMetadata(snapshot),
   );
   console.log(
     `Wrote ${Object.keys(modules).length} modules / ${Object.values(modules).reduce((n, m) => n + Object.keys(m).length, 0)} exports to ${path}`,
