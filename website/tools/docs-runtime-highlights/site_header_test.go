@@ -19,7 +19,7 @@ func renderTest(t *testing.T, doc *html.Node) string {
 	return out.String()
 }
 func TestSiteHeaderPreservesDocsAndIsIdempotent(t *testing.T) {
-	doc, err := html.Parse(strings.NewReader(`<html><head></head><body class="docs-index"><nav id="sidebar-nav"><div class="pkg-and-logo">Old logo</div><div class="module-links-container"><a href="/docs/main/Str/">Str</a></div></nav><main><form id="module-search-form"></form><div class="main-content"><!--!` + "\x00" + `--><section>API</section><!--!` + "\x1e" + `--></div></main></body></html>`))
+	doc, err := html.Parse(strings.NewReader(`<html><head></head><body class="docs-index"><nav id="sidebar-nav"><div class="pkg-and-logo">Old logo</div><div class="module-links-container"><ul class="module-links"><li><a href="/examples/">Examples</a></li><li><a href="/tutorial/">Tutorial</a></li><li id="faq-entry"><a href="/faq">FAQ</a></li><li><a data-module-name="Str" href="/docs/main/Str/">Str</a></li><li><a href="/docs/main/langref/">Language Reference</a></li></ul></div></nav><main><form id="module-search-form"></form><div class="main-content"><!--!` + "\x00" + `--><section>API</section><!--!` + "\x1e" + `--></div></main></body></html>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,6 +37,15 @@ func TestSiteHeaderPreservesDocsAndIsIdempotent(t *testing.T) {
 	}
 	if !hasClass(findElement(doc, "body"), "docs-index") {
 		t.Fatal("lost existing body class")
+	}
+
+	links := findElementWithClass(sidebar, "ul", "module-links")
+	if links.LastChild != findID(doc, "faq-entry") {
+		t.Fatal("FAQ is not last")
+	}
+	sidebarHTML := renderTest(t, sidebar)
+	if strings.Contains(sidebarHTML, ">Examples</a>") || strings.Contains(sidebarHTML, ">Tutorial</a>") {
+		t.Fatal("duplicate header links remain in sidebar")
 	}
 	first := renderTest(t, doc)
 	applySiteHeader(doc, header)

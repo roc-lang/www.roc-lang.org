@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -59,6 +60,7 @@ func applySiteHeader(doc, header *html.Node) bool {
 	if logo := findElementWithClass(sidebar, "div", "pkg-and-logo"); logo != nil {
 		logo.Parent.RemoveChild(logo)
 	}
+	updateSiteSidebar(sidebar)
 	addClass(body, "website-docs")
 	for _, asset := range []struct{ id, tag, key, path string }{
 		{"website-header-css", "link", "href", "/site-header.css"},
@@ -77,4 +79,32 @@ func applySiteHeader(doc, header *html.Node) bool {
 		head.AppendChild(node)
 	}
 	return true
+}
+
+// Only adjust the top-level website links, leaving API and language entries intact.
+func updateSiteSidebar(sidebar *html.Node) {
+	links := findElementWithClass(sidebar, "ul", "module-links")
+	if links == nil {
+		return
+	}
+	var faq *html.Node
+	for entry := links.FirstChild; entry != nil; {
+		next := entry.NextSibling
+		if entry.Type == html.ElementNode && entry.Data == "li" {
+			link := findElement(entry, "a")
+			if link != nil && attr(link, "data-module-name") == "" {
+				switch strings.TrimSpace(textContent(link)) {
+				case "Examples", "Tutorial":
+					links.RemoveChild(entry)
+				case "FAQ":
+					faq = entry
+				}
+			}
+		}
+		entry = next
+	}
+	if faq != nil {
+		links.RemoveChild(faq)
+		links.AppendChild(faq)
+	}
 }
