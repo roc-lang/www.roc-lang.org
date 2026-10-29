@@ -148,7 +148,13 @@
       const containers = [];
       while (pos < ts.length) {
         const t = ts[pos];
-        if (nesting === 0 && (t.text === "=" || boundary(t, base))) break;
+        if (
+          nesting === 0 &&
+          (t.text === "=" ||
+            boundary(t, base) ||
+            (t.text === base.text && ts[pos + 1]?.text === "="))
+        )
+          break;
         pos++;
         if (nesting === 0 && (t.text === "->" || t.text === "=>")) result = fn;
         if (word.test(t.text) && t.type !== "keyword")
@@ -178,13 +184,27 @@
       return result;
     }
     function pattern(s, role, stop, base = null, shape = variable) {
-      while (pos < ts.length && !stop.includes(ts[pos].text)) {
-        if (base && boundary(ts[pos], base)) break;
+      // Patterns are user input too: use an explicit stack so deeply nested
+      // destructuring does not consume the browser's JavaScript call stack.
+      const frames = [{ stop, closer: null, shape }];
+      while (pos < ts.length && frames.length) {
+        const frame = frames.at(-1),
+          next = ts[pos];
+        if (frame.stop.includes(next.text)) {
+          frames.pop();
+          if (frame.closer) take(frame.closer);
+          continue;
+        }
+        if (
+          base &&
+          boundary(next, base) &&
+          (frames.length === 1 || ts[pos + 1]?.text === "=")
+        )
+          break;
         const t = ts[pos++];
-        if (t.text === "{" || t.text === "(" || t.text === "[") {
+        if (["{", "(", "["].includes(t.text)) {
           const closer = { "{": "}", "(": ")", "[": "]" }[t.text];
-          pattern(s, role, [closer]);
-          take(closer);
+          frames.push({ stop: [closer], closer, shape: variable });
         } else if (
           word.test(t.text) &&
           t.type !== "keyword" &&
@@ -194,13 +214,17 @@
           else if (at(":")) {
             mark(t, "property");
             pos++;
-            pattern(s, role, [",", "}", ")", "]", ...stop]);
+            frames.push({
+              stop: [",", "}", ")", "]", ...stop],
+              closer: null,
+              shape: variable,
+            });
           } else
             bind(
               s,
               t,
-              shape,
-              role === "variable" && shape.kind === "function"
+              frame.shape,
+              role === "variable" && frame.shape.kind === "function"
                 ? "function"
                 : role,
             );

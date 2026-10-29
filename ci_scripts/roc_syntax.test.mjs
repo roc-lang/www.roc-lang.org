@@ -244,3 +244,25 @@ test("annotated local declarations make a block rather than a record", () => {
   assert.deepEqual(roles(source, "x"), ["parameter", "parameter", "parameter"]);
   assert.deepEqual(roles(source, "if"), ["keyword"]);
 });
+test("annotation ends before a repeated definition even without a newline or matching indentation", () => {
+  for (const source of [
+    "result = { value : I64 value = 94\nvalue }",
+    "result = {\nvalue : I64\n value = 94\n value\n}",
+  ]) {
+    assert.deepEqual(roles(source, "value"), [
+      "variable",
+      "variable",
+      "variable",
+    ]);
+    assert.deepEqual(roles(source, "I64"), ["type"]);
+  }
+});
+test("deep destructuring uses bounded call stack and recovers following declarations", () => {
+  const source =
+    "f = |" + "[".repeat(5000) + "x" + "]".repeat(5000) + "| x\nvalid = |y| y";
+  assert.deepEqual(roles(source, "x"), ["parameter", "parameter"]);
+  assert.deepEqual(roles(source, "y"), ["parameter", "parameter"]);
+  const broken = "f = |" + "[".repeat(5000) + "x\nvalid = |y| y";
+  assert.deepEqual(roles(broken, "valid"), ["function"]);
+  assert.deepEqual(roles(broken, "y"), ["parameter", "parameter"]);
+});
