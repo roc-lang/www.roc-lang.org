@@ -1,6 +1,6 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.25.0/CZsY7tYZwR3rj9kYbpaCfxki2yVAaRL8bBwMLvB2xkbA.tar.zst",
-	roc: "nightly-2026-10-21-5349569",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0/GddgvsGjiNXrHFW6au5i5dUDbTs8FinQdrgE2Gqmw53t.tar.zst",
+	roc: "nightly-2026-10-27-de79a0f",
 }
 
 import pf.Cmd
@@ -8,6 +8,7 @@ import pf.Env
 import pf.OsStr
 import pf.Path
 import pf.Stdout
+import pf.System
 import pf.Utc
 import "./build_website.roc" as script : Str
 
@@ -153,6 +154,8 @@ generate_site! : Str => Try({}, _)
 generate_site! = |roc_bin| {
 	run!(roc_bin, ["build", "static_site_gen.roc"])?
 	run!("./static_site_gen", ["content", "build"])?
+	run!("python3", ["examples.py", "images", "examples.json", "content/examples", "build/examples"])?
+	run!("python3", ["examples.py", "versions", "examples.json", ".cache/examples-versions.tsv", "build/examples"])?
 	add_github_links_to_examples!()
 }
 
@@ -445,7 +448,7 @@ ensure_roc_source_at_compiler_commit! = |compiler| {
 
 compiler_commit_sha! : Str => Try(Str, _)
 compiler_commit_sha! = |roc_bin| {
-	version_output = output!(roc_bin, ["version"])?.stdout_utf8.trim()
+	version_output = Cmd.capture!(OsStr.from_str(roc_bin), [OsStr.from_str("version")])?.trim()
 	match version_output.split_on("-").last() {
 		Ok(commit) if !commit.is_empty() => Ok(commit)
 		_ => Err(CannotParseCompilerCommit(version_output))
@@ -454,13 +457,13 @@ compiler_commit_sha! = |roc_bin| {
 
 detect_platform! : () => Try(Str, _)
 detect_platform! = || {
-	target_platform = Env.platform!()
-	match (target_platform.os, target_platform.arch) {
-		(MACOS, AARCH64) => Ok("macos_apple_silicon")
-		(MACOS, X64) => Ok("macos_x86_64")
-		(LINUX, X64) => Ok("linux_x86_64")
-		(LINUX, AARCH64) => Ok("linux_arm64")
-		_ => Err(UnsupportedPlatform(Str.inspect(target_platform)))
+	target = System.target!()
+	match (target.os(), target.arch()) {
+		(MacOS(_), Arm64) => Ok("macos_apple_silicon")
+		(MacOS(_), X64) => Ok("macos_x86_64")
+		(Linux(_), X64) => Ok("linux_x86_64")
+		(Linux(_), Arm64) => Ok("linux_arm64")
+		_ => Err(UnsupportedPlatform(Str.inspect(target)))
 	}
 }
 
@@ -685,42 +688,42 @@ list_child_files_recursive! = |children, accumulated|
 		}
 	}
 
-read_cache_millis! : Str => Try(U128, _)
+read_cache_millis! : Str => Try(I128, _)
 read_cache_millis! = |file_path|
-	U128.from_str(path(file_path).read_utf8!()?)
+	I128.from_str(path(file_path).read_utf8!()?)
 
 write_cache_millis! : Str => Try({}, _)
 write_cache_millis! = |file_path|
 	path(file_path).write_utf8!(Utc.to_millis_since_epoch(Utc.now!()).to_str())
 
-max_mtime_in_dirs_millis! : List(Str) => Try(U128, _)
+max_mtime_in_dirs_millis! : List(Str) => Try(I128, _)
 max_mtime_in_dirs_millis! = |roots|
 	max_mtime_in_roots!(roots, 0)
 
-max_mtime_in_roots! : List(Str), U128 => Try(U128, _)
+max_mtime_in_roots! : List(Str), I128 => Try(I128, _)
 max_mtime_in_roots! = |roots, maximum|
 	match roots {
 		[] => Ok(maximum)
 		[first, .. as rest] =>
 			match max_mtime_in_path_millis!(path(first)) {
-				Ok(value) => max_mtime_in_roots!(rest, U128.max(maximum, value))
+				Ok(value) => max_mtime_in_roots!(rest, I128.max(maximum, value))
 				Err(_) => max_mtime_in_roots!(rest, maximum)
 			}
 	}
 
-max_mtime_in_path_millis! : Path.Path => Try(U128, _)
+max_mtime_in_path_millis! : Path.Path => Try(I128, _)
 max_mtime_in_path_millis! = |root| {
 	files = list_files_recursive!(root)?
 	max_mtime_in_files!(files, 0)
 }
 
-max_mtime_in_files! : List(Path.Path), U128 => Try(U128, _)
+max_mtime_in_files! : List(Path.Path), I128 => Try(I128, _)
 max_mtime_in_files! = |files, maximum|
 	match files {
 		[] => Ok(maximum)
 		[first, .. as rest] => {
 			modified_millis = Utc.to_millis_since_epoch(first.time_modified!()?)
-			max_mtime_in_files!(rest, U128.max(maximum, modified_millis))
+			max_mtime_in_files!(rest, I128.max(maximum, modified_millis))
 		}
 	}
 
@@ -729,8 +732,4 @@ path = |str| Path.utf8(str)
 
 run! : Str, List(Str) => Try({}, _)
 run! = |program, args|
-	Cmd.new_str(program).args_str(args).exec_cmd!()
-
-output! : Str, List(Str) => Try({ stdout_utf8 : Str, stderr_utf8_lossy : Str }, _)
-output! = |program, args|
-	Cmd.new_str(program).args_str(args).exec_output!()
+	Cmd.call!(OsStr.from_str(program), args.map(OsStr.from_str))

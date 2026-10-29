@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/roc-lang/examples",
-  "revision": "be160e703877074fb411dc7f7ccdcc2ce6ca544b",
+  "revision": "bb2ffdf9b78abd000c159b7b477c5d12842dfb42",
   "categories": [
     {"id": "getting-started", "title": "Getting started"},
     {"id": "types-and-functions", "title": "Types and functions"},
@@ -56,6 +56,48 @@
       "validation": ["test:PatternMatching.roc"]
     },
     {
+      "directory": "PatternAliases",
+      "title": "Pattern Aliases",
+      "category": "types-and-functions",
+      "description": "Name an entire matched pattern while binding its individual parts.",
+      "validation": ["test:main.roc"]
+    },
+    {
+      "directory": "NominalTypes",
+      "title": "Nominal and Opaque Types",
+      "category": "types-and-functions",
+      "description": "Define distinct types and control access to their underlying representation.",
+      "validation": ["test:main.roc"]
+    },
+    {
+      "directory": "OpenRecords",
+      "title": "Open Records",
+      "category": "types-and-functions",
+      "description": "Accept records with additional fields while requiring the fields a function needs.",
+      "validation": ["test:main.roc"]
+    },
+    {
+      "directory": "NestedTypes",
+      "title": "Nested Types",
+      "category": "types-and-functions",
+      "description": "Group related types inside a type module.",
+      "validation": ["test:main.roc"]
+    },
+    {
+      "directory": "RecursiveTypes",
+      "title": "Recursive Types",
+      "category": "types-and-functions",
+      "description": "Build expression trees with recursive and mutually recursive types.",
+      "validation": ["test:main.roc"]
+    },
+    {
+      "directory": "Polymorphism",
+      "title": "Polymorphism",
+      "category": "types-and-functions",
+      "description": "Write reusable functions with where constraints and shared constraint aliases.",
+      "validation": ["test:main.roc"]
+    },
+    {
       "directory": "CustomInspect",
       "title": "Custom Inspect",
       "category": "types-and-functions",
@@ -77,11 +119,32 @@
       "validation": ["test:BasicDict.roc"]
     },
     {
+      "directory": "Sets",
+      "title": "Sets",
+      "category": "collections-and-iteration",
+      "description": "Create sets and combine them with union, intersection, and difference.",
+      "validation": ["test:main.roc"]
+    },
+    {
+      "directory": "Loops",
+      "title": "Loops",
+      "category": "collections-and-iteration",
+      "description": "Use for, while, and local variables, and compare loops with fold.",
+      "validation": ["test:main.roc"]
+    },
+    {
       "directory": "LoopEffect",
       "title": "Looping Effectful Functions",
       "category": "collections-and-iteration",
       "description": "Repeat an effectful operation by reading and summing numbers until input ends.",
       "validation": ["build:main.roc"]
+    },
+    {
+      "directory": "Streams",
+      "title": "Streams and for!",
+      "category": "collections-and-iteration",
+      "description": "Consume effectful stream pipelines with for! and create a custom stream for reading file lines.",
+      "validation": ["build:main.roc", "test:main.roc"]
     },
     {
       "directory": "ErrorHandlingBasic",
@@ -105,6 +168,13 @@
       "validation": ["build:main.roc", "test:main.roc"]
     },
     {
+      "directory": "WrappingArithmetic",
+      "title": "Wrapping and Saturating Arithmetic",
+      "category": "error-handling",
+      "description": "Choose wrapping or saturating arithmetic when values exceed numeric limits.",
+      "validation": ["test:main.roc"]
+    },
+    {
       "directory": "ErrorHandlingRealWorld",
       "title": "Error Handling Real World (Try)",
       "category": "error-handling",
@@ -112,11 +182,25 @@
       "validation": ["build:main.roc"]
     },
     {
+      "directory": "StringPatterns",
+      "title": "String Capture Patterns",
+      "category": "parsing-and-encoding",
+      "description": "Capture filenames and parse numeric IDs from paths with string patterns.",
+      "validation": ["test:main.roc"]
+    },
+    {
       "directory": "Json",
       "title": "JSON",
       "category": "parsing-and-encoding",
       "description": "Parse JSON data into a typed Roc record.",
       "validation": ["build:main.roc"]
+    },
+    {
+      "directory": "AdvancedParsing",
+      "title": "Advanced Parsing",
+      "category": "parsing-and-encoding",
+      "description": "Parse optional fields, defaults, and camelCase JSON, and work with other formats.",
+      "validation": ["test:main.roc"]
     },
     {
       "directory": "EncodeDecode",
@@ -190,11 +274,25 @@
       "validation": []
     },
     {
+      "directory": "Paths",
+      "title": "Paths",
+      "category": "packages",
+      "description": "Build and inspect file paths with the path package.",
+      "validation": ["test:main.roc"]
+    },
+    {
       "directory": "RandomNumbers",
       "title": "Random Numbers",
       "category": "packages",
       "description": "Generate reproducible pseudorandom numbers with the roc-random package.",
       "validation": ["build:main.roc"]
+    },
+    {
+      "directory": "Unicode",
+      "title": "Unicode Text",
+      "category": "packages",
+      "description": "Work with graphemes, Unicode scalars, word boundaries, and casing.",
+      "validation": ["test:main.roc"]
     },
     {
       "directory": "Parser",
@@ -234,6 +332,14 @@
       "subcategory": "basic-cli",
       "description": "Build a playable Snake game with an effectful game loop.",
       "validation": ["build:main.roc", "test:main.roc"]
+    },
+    {
+      "directory": "RocRay",
+      "title": "Drawing with RocRay",
+      "category": "platforms",
+      "subcategory": "roc-ray",
+      "description": "Draw an interactive graphical application with the roc-ray platform.",
+      "validation": ["build:main.roc"]
     },
     {
       "directory": "HelloWeb",
