@@ -41,6 +41,7 @@ class ExamplesTests(unittest.TestCase):
             self.assertEqual(examples.index_search(manifest, source, pages, index), 1)
             result = index.read_text()
             self.assertIn('data-title="Examples › FizzBuzz"', result)
+            self.assertIn("<article data-full-navigation", result)
             self.assertIn('data-href="/examples/FizzBuzz/README.html"', result)
             self.assertIn("code_only_token", result)
             self.assertIn("&lt;script&gt;", result)
