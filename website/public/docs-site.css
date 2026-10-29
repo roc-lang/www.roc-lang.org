@@ -86,7 +86,7 @@ section.getting-started h2,
 section.getting-started p { padding-left: 0; padding-right: 0; }
 body.website-docs.docs-index footer { padding-left: 36px; }
 
-/* Preview experiment: center the home branding above the desktop sidebar. */
+/* Align the home branding with the desktop sidebar labels. */
 @media (min-width: 769px) {
     .website-docs #top-bar nav {
         max-width: none;
@@ -94,6 +94,9 @@ body.website-docs.docs-index footer { padding-left: 36px; }
         grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
         padding-right: 0;
     }
-    .website-docs #nav-home-link { justify-self: center; }
+    .website-docs #nav-home-link {
+        justify-self: start;
+        margin-left: 52px; /* 8px sidebar inset + 48px label offset - 4px link padding */
+    }
     .website-docs #top-bar-links { justify-self: center; }
 }
