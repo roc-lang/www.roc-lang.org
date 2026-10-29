@@ -55,7 +55,9 @@
         const value = piece[0];
         let type = names[range.type] || "punctuation";
         if (!["s", "c", "n", "e"].includes(range.type)) {
-          if ("(){}[]|".includes(value)) type = "bracket";
+          if (range.type === "k" && (value === "${" || value === "}"))
+            type = "operator";
+          else if ("(){}[]|".includes(value)) type = "bracket";
           else if (value === "," || value === ":" || value === ".")
             type = "punctuation";
           else if (word.test(value) && range.type !== "k")

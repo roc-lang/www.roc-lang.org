@@ -326,3 +326,14 @@ test("string interpolation uses its enclosing scope while literal contents stay 
   assert.deepEqual(roles(adjacent, "y"), ["parameter", "variable"]);
   assert.deepEqual(roles(adjacent, "x"), ["parameter", "parameter"]);
 });
+
+test("interpolation boundaries share a role while ordinary braces stay brackets", () => {
+  const actual = tokens('render = |name| { "Hello ${name} and ${name.trim()}" }');
+  assert.deepEqual(actual.filter(t => t.text === "${").map(t => t.type), [
+    "operator", "operator",
+  ]);
+  assert.deepEqual(actual.filter(t => t.text === "}").map(t => t.type), [
+    "operator", "operator", "bracket",
+  ]);
+  assert.deepEqual(actual.filter(t => t.text === "{").map(t => t.type), ["bracket"]);
+});
