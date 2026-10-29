@@ -185,7 +185,7 @@ def index_search(manifest, source, pages, index_path):
         text = example["description"] + "\n" + "\n".join(
             path.read_text(encoding="utf-8") for path in files)
         entries.append(
-            f'<article data-category="guides" data-title="Examples › {escape(example["title"], quote=True)}" '
+            f'<article data-full-navigation data-category="guides" data-title="Examples › {escape(example["title"], quote=True)}" '
             f'data-href="/examples/{directory}/README.html"><p>{escape(text)}</p></article>')
     fragment = SEARCH_START + "\n" + "\n".join(entries) + "\n" + SEARCH_END
     if SEARCH_START in original:
