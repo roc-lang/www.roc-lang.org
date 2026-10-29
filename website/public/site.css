@@ -1920,8 +1920,8 @@ code .dim,
 }
 
 /* Semantic roles share the site's palette, independently of lexical spelling. */
-::highlight(roc-parameter) { color: #e5bc70; }
 ::highlight(roc-property) { color: #aeb4c6; }
+::highlight(roc-parameter),
 ::highlight(roc-namespace),
 ::highlight(roc-type),
 ::highlight(roc-enumMember),

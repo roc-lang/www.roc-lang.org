@@ -116,15 +116,15 @@ pre > code.roc-highlight,
 
 
 /* Semantic roles in code blocks and linked documentation signatures. */
-::highlight(roc-parameter) { color: #77551c; }
 ::highlight(roc-property) { color: #3e496d; }
+::highlight(roc-parameter),
 ::highlight(roc-namespace),
 ::highlight(roc-type),
 ::highlight(roc-enumMember),
 ::highlight(roc-typeParameter) { color: #087970; }
 @media (prefers-color-scheme: dark) {
-    ::highlight(roc-parameter) { color: #e5bc70; }
     ::highlight(roc-property) { color: #aeb4c6; }
+    ::highlight(roc-parameter),
     ::highlight(roc-namespace),
     ::highlight(roc-type),
     ::highlight(roc-enumMember),
