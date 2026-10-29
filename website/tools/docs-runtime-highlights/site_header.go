@@ -2,12 +2,16 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"os"
 	"strings"
 
 	"golang.org/x/net/html"
 )
+
+//go:embed getting_started.html
+var gettingStartedHTML string
 
 func findID(node *html.Node, id string) *html.Node {
 	if node.Type == html.ElementNode && attr(node, "id") == id {
@@ -61,6 +65,9 @@ func applySiteHeader(doc, header *html.Node) bool {
 		logo.Parent.RemoveChild(logo)
 	}
 	updateSiteSidebar(sidebar)
+	if hasClass(body, "docs-index") {
+		applyGettingStarted(doc)
+	}
 	addClass(body, "website-docs")
 	for _, asset := range []struct{ id, tag, key, path string }{
 		{"website-header-css", "link", "href", "/site-header.css"},
@@ -87,11 +94,24 @@ func updateSiteSidebar(sidebar *html.Node) {
 	if links == nil {
 		return
 	}
+	if findID(sidebar, "getting-started-link") == nil {
+		entryDoc, _ := html.Parse(strings.NewReader(`<ul><li class="sidebar-entry"><a id="getting-started-link" class="sidebar-module-link prose-label" href="/docs/main/">Getting Started</a></li></ul>`))
+		entry := findElement(entryDoc, "li")
+		entry.Parent.RemoveChild(entry)
+		links.InsertBefore(entry, links.FirstChild)
+	}
 	var faq *html.Node
 	for entry := links.FirstChild; entry != nil; {
 		next := entry.NextSibling
 		if entry.Type == html.ElementNode && entry.Data == "li" {
 			link := findElement(entry, "a")
+			if link != nil && attr(link, "data-module-name") == "__builtin_types__" {
+				for i := range link.Attr {
+					if link.Attr[i].Key == "href" {
+						link.Attr[i].Val = "/docs/main/#builtin-types"
+					}
+				}
+			}
 			if link != nil && attr(link, "data-module-name") == "" {
 				switch strings.TrimSpace(textContent(link)) {
 				case "Examples", "Tutorial":
@@ -107,4 +127,23 @@ func updateSiteSidebar(sidebar *html.Node) {
 		links.RemoveChild(faq)
 		links.AppendChild(faq)
 	}
+}
+
+func applyGettingStarted(doc *html.Node) {
+	main := findElement(doc, "main")
+	if main == nil {
+		return
+	}
+	content := findElementWithClass(main, "div", "main-content")
+	if content == nil {
+		return
+	}
+	page, _ := html.Parse(strings.NewReader(gettingStartedHTML))
+	for content.FirstChild != nil {
+		content.RemoveChild(content.FirstChild)
+	}
+	// Keep the compiler's streaming navigation boundaries around the new content.
+	content.AppendChild(&html.Node{Type: html.CommentNode, Data: "!\x00"})
+	content.AppendChild(cloneNode(findElement(page, "section")))
+	content.AppendChild(&html.Node{Type: html.CommentNode, Data: "!\x1e"})
 }

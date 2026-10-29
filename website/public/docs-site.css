@@ -38,3 +38,49 @@ body.website-docs {
         scroll-padding-top: var(--module-search-form-height);
     }
 }
+
+/* The docs home uses the same content area and streamed navigation as API pages. */
+body.website-docs.docs-index .index-guide-links { display: none; }
+body.website-docs.docs-index main::before { content: none; }
+body.website-docs.docs-index main > .main-content { grid-row: 3; }
+.getting-started { padding: 8px 0 40px; }
+.getting-started h1 { margin-bottom: 16px; }
+.getting-started .docs-eyebrow {
+    color: var(--text-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.getting-started .docs-intro { font-size: 1.125rem; }
+.docs-start-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 32px 0;
+}
+.getting-started .docs-start-card {
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    border: 1px solid var(--violet-border-subtle);
+    border-radius: 12px;
+    color: var(--text-color);
+    text-decoration: none;
+    background: var(--violet-bg);
+}
+.getting-started .docs-start-card:hover {
+    border-color: var(--link-color);
+    text-decoration: none;
+}
+.getting-started .docs-start-card h2 { margin: 12px 0 0; font-size: 1.35rem; }
+.getting-started .docs-start-card p { margin: 12px 0 24px; }
+.getting-started .docs-card-link { margin-top: auto; color: var(--link-color); }
+.getting-started .docs-api-links { padding-left: 24px; }
+.getting-started #builtin-types { scroll-margin-top: var(--module-search-form-height); }
+@media (max-width: 1000px) {
+    .docs-start-grid { grid-template-columns: 1fr; }
+}
+
+.getting-started h1, .getting-started h2 { font-family: var(--font-sans); }
+body.website-docs.docs-index #getting-started-link { font-weight: 700; color: var(--link-color); }

@@ -100,6 +100,10 @@ both the website and compiler documentation have been generated. The
 `site-header.css` is shared with ordinary website pages; `docs-site.css` and
 `docs-site.js` adapt the docs layout while retaining its sidebar and search.
 
+The docs landing content lives in
+`website/tools/docs-runtime-highlights/getting_started.html`. It is embedded by
+the post-processor inside the docs streaming-navigation boundaries.
+
 This is a website-only transformation. It does not change the compiler's API
 documentation generator. Running the post-processor without its optional
 `website-page` argument also retains the original package header.

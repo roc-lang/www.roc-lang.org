@@ -47,6 +47,12 @@ func TestSiteHeaderPreservesDocsAndIsIdempotent(t *testing.T) {
 	if strings.Contains(sidebarHTML, ">Examples</a>") || strings.Contains(sidebarHTML, ">Tutorial</a>") {
 		t.Fatal("duplicate header links remain in sidebar")
 	}
+	if findElementWithClass(doc, "section", "getting-started") == nil {
+		t.Fatal("docs index is missing Getting Started content")
+	}
+	if links.FirstChild != findID(doc, "getting-started-link").Parent {
+		t.Fatal("Getting Started is not the first sidebar entry")
+	}
 	first := renderTest(t, doc)
 	applySiteHeader(doc, header)
 	if second := renderTest(t, doc); second != first {
