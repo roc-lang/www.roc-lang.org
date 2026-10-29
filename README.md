@@ -91,6 +91,30 @@ Preview the result with:
 python3 serve.py build 8080
 ```
 
+## Syntax highlighting
+
+Highlighting runs in pure JavaScript, with scope analysis and builtin export
+metadata. Whole-snippet semantic ranges preserve existing links and markup.
+Code surfaces follow system appearance: literals are teal, types and tags blue,
+keywords and operators purple, comments and structure gray, and names retain the
+normal foreground. Snippets can supply module metadata via `rocSyntaxOptions`.
+
+```sh
+node --test ci_scripts/roc_*.test.mjs ci_scripts/color_contrast.test.mjs
+node ci_scripts/measure_highlight_size.mjs --baseline 56b8dbc --minifier path/to/minify
+node ci_scripts/check_color_contrast.mjs --all-pages --json website/.cache/color-contrast.json
+```
+
+Size measurements use the production minifier pinned in `build_cloudflare.sh`
+and compress each resource separately. The contrast audit needs a running preview,
+Node.js 24, and Chrome/Chromium. It checks rendered text and highlight colors in
+both themes; it does not establish full WCAG conformance. Unsupported surfaces
+and states needing manual review are reported separately. Use `--help` for options
+or `COLOR_CONTRAST_BROWSER_TESTS=1` to enable the auditor's browser integration test.
+
+The optional [compiler differential harness](website/tools/highlight-fuzz/README.md)
+is local development tooling; normal builds and highlighting tests need no compiler.
+
 ## Browser compiler updates
 
 `website/compiler-wasm.json` pins the homepage's browser compiler and checksum.

@@ -48,6 +48,9 @@ jobs:
           node --test ci_scripts/prepare_compiler_wasm.test.mjs
           python3 -m unittest discover -s ci_scripts -p 'test_update_roc_release.py'
 
+      - name: Test semantic highlighting and contrast math
+        run: node --test ci_scripts/roc_*.test.mjs ci_scripts/color_contrast.test.mjs
+
       - name: Test examples manifest and category index
         run: python3 -m unittest discover -s ci_scripts -p 'test_examples.py'
 

@@ -1,3 +1,5 @@
+// Keep implementation names private so the production minifier can shorten them.
+(function () {
 // main.js — Roc interactive examples
 "use strict";
 
@@ -192,11 +194,11 @@ function terminal(text) {
 }
 
 const CL = [null, "u", "v", "n", "s", "k", "p", "d", "o", "e", "c"];
-const M = 15, X = 16, A = 32, N = 64, B = 128, G = 256, H = 512;
+const M = 15, X = 16, B = 128, G = 256;
 const Z = 0, ER = 9, EE = 25, U = 17, L = 82, NUM = 19, S = 4, SE = 20;
 const K = 5, KE = 21, P = 6, PE = 22, F = 38, D = 7, DE = 23, O = 8;
 const OF = 40, CO = 520, DL = 210, DU = 145, DN = 147, DO = 136;
-const DER = 153, DD = 264, CM = 10;
+const DER = 153, CM = 10;
 
 const TWO_BYTE_TOKENS = {
   0x213d: O, // !=
@@ -235,7 +237,7 @@ const ONE_BYTE_TOKENS = {
 };
 
 const KWDS =
-  /^(app|as|crash|dbg|else|expect|exposes|exposing|for|generates|has|hosted|if|implements|import|imports|in|interface|match|module|package|packages|platform|provides|requires|return|targets|var|where|while|with|break)$/;
+  /^(app|as|crash|dbg|else|expect|exposes|exposing|for!?|generates|has|hosted|if|implements|import|imports|in|interface|match|module|package|packages|platform|provides|requires|return|targets|var|where|while|with|break)$/;
 const SUF =
   /^(dec|f32|f64|i128|i16|i32|i64|i8|nat|u128|u16|u32|u64|u8)$/;
 
@@ -398,6 +400,11 @@ class RocTokenizer {
     const c = this.pk();
     if (c == null) {
       return hypothesis;
+    }
+    // Dotted suffixes are type names, including user-defined number types.
+    if (c === 46 && up(this.at(1))) {
+      this.p += 1;
+      return this.ident() ? hypothesis : keepError(hypothesis, EE);
     }
     const isIdentChar =
       lo(c) ||
@@ -713,6 +720,7 @@ class RocTokenizer {
 
     const tag = ONE_BYTE_TOKENS[b];
     if (tag != null) {
+      if (b === 123 && this.s.length) this.s.at(-1).depth++;
       this.p += 1;
       this.push(tag, start);
       return true;
@@ -746,11 +754,13 @@ class RocTokenizer {
         }
       } else if (b === 125) {
         this.p += 1;
-        if (this.s.length > 0) {
-          const last = this.s.pop();
+        const frame = this.s.at(-1);
+        if (frame && frame.depth === 0) {
+          this.s.pop();
           this.push(KE, start);
-          this.stringBody(last);
+          this.stringBody(frame.kind);
         } else {
+          if (frame) frame.depth--;
           this.push(PE, start);
         }
       } else if (this.symbol(start, b)) {
@@ -802,16 +812,16 @@ class RocTokenizer {
     } else if (next === 46) {
       if (this.at(2) === 46) {
         this.p += 3;
-        this.push(P, start);
+        this.push(O, start);
       } else if (this.at(2) === 60) {
         this.p += 3;
-        this.push(DD, start);
+        this.push(O, start);
       } else if (this.at(2) === 61) {
         this.p += 3;
-        this.push(DD, start);
+        this.push(O, start);
       } else {
         this.p += 2;
-        this.push(P, start);
+        this.push(O, start);
       }
     } else if (dig(next)) {
       this.p += 1;
@@ -960,7 +970,7 @@ class RocTokenizer {
         const dollarStart = this.p;
         this.p += 2;
         this.push(K, dollarStart);
-        this.s.push(kind);
+        this.s.push({ kind, depth: 0 });
         return;
       } else if (c === 10) {
         this.push(stringPartTag, start);
@@ -985,66 +995,31 @@ class RocTokenizer {
   }
 }
 
-const ROC_HIGHLIGHT_TYPES = "u v n s k p d o e c f".split(" ");
+const ROC_HIGHLIGHT_TYPES = "u v n s k p d o e c f parameter function property namespace type enumMember typeParameter".split(" ");
 const rocHighlightRoots = new Map();
 const rocHighlightObjects = new Map();
 let rocHighlightRootId = 0;
 
-function byteOffsetsForText(text, bytes) {
-  const offsets = new Array(bytes.length + 1);
-  let byteIndex = 0;
-
-  for (let index = 0; index < text.length;) {
-    const codepoint = text.codePointAt(index);
-    const codeUnits = codepoint > 0xffff ? 2 : 1;
-    const bytesForCodepoint =
-      codepoint <= 0x7f ? 1 :
-      codepoint <= 0x7ff ? 2 :
-      codepoint <= 0xffff ? 3 : 4;
-
-    for (let i = 0; i < bytesForCodepoint; i += 1) {
-      offsets[byteIndex + i] = index;
-    }
-
-    byteIndex += bytesForCodepoint;
-    index += codeUnits;
-  }
-
-  offsets[byteIndex] = text.length;
-  return offsets;
-}
-
-function rocTokenRanges(source) {
+function rocLexicalTokens(source) {
   const tokenized = new RocTokenizer(source).tokenize();
-  const tokens = tokenized.t.filter(
-    (token) => token[0] !== CM && token[1] !== token[2],
-  );
-  const fields = new Map();
-
-  for (let i = 0; i < tokens.length; i += 1) {
-    const previous = tokens[i - 1];
-    const token = tokens[i];
-    const next = tokens[i + 1];
-    if (
-      previous != null &&
-      next != null &&
-      (previous[0] & A) !== 0 &&
-      (token[0] & N) !== 0 &&
-      (next[0] & H) !== 0 &&
-      decode(tokenized.b.subarray(token[2], next[1])).trim() === ""
-    ) {
-      fields.set(token[1], next[2]);
-    }
-  }
-
   const ranges = [];
-  const offsets = byteOffsetsForText(source, tokenized.b);
+  // Token boundaries are ordered: one cursor maps bytes to UTF-16 without a
+  // source-sized offset array. The structural analyzer classifies fields.
+  let textIndex = 0, byteIndex = 0;
+  const offset = target => {
+    while (byteIndex < target) {
+      const cp = source.codePointAt(textIndex);
+      textIndex += cp > 0xffff ? 2 : 1;
+      byteIndex += cp <= 0x7f ? 1 : cp <= 0x7ff ? 2 : cp <= 0xffff ? 3 : 4;
+    }
+    return textIndex;
+  };
   let lastEnd = 0;
 
   const add = (start, end, type) => {
-    const textStart = offsets[start];
-    const textEnd = offsets[end];
-    if (textStart != null && textEnd != null && textStart < textEnd) {
+    const textStart = offset(start);
+    const textEnd = offset(end);
+    if (textStart < textEnd) {
       ranges.push({ type, start: textStart, end: textEnd });
     }
     lastEnd = end;
@@ -1058,20 +1033,15 @@ function rocTokenRanges(source) {
       continue;
     }
 
-    const fieldEnd = fields.get(start);
-    let cls = fieldEnd == null ? CL[tag & M] : "f";
+    const cls = CL[tag & M];
     if (cls == null) {
       continue;
     }
 
-    if (fieldEnd != null) {
-      end = fieldEnd;
-    }
-
-    if (fieldEnd == null && (tag & B) !== 0 && start + 1 < end) {
+    if ((tag & B) !== 0 && start + 1 < end) {
       add(start, start + 1, "p");
       add(start + 1, end, cls);
-    } else if (fieldEnd == null && (tag & G) !== 0 && start + 2 < end) {
+    } else if ((tag & G) !== 0 && start + 2 < end) {
       add(start, start + 2, "p");
       add(start + 2, end, cls);
     } else {
@@ -1082,19 +1052,14 @@ function rocTokenRanges(source) {
   return ranges;
 }
 
-function syncRocSyntaxHighlights() {
-  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
-
-  for (const type of ROC_HIGHLIGHT_TYPES) {
-    const highlight = rocHighlightObjectForType(type);
-    highlight.clear();
-
-    for (const rootHighlights of rocHighlightRoots.values()) {
-      for (const range of rootHighlights[type]) {
-        highlight.add(range);
-      }
-    }
-  }
+function rocTokenRanges(source, options = {}) {
+  const classes = {
+    comment: "c", number: "n", string: "s", keyword: "k", operator: "o",
+    variable: "v", bracket: "p", punctuation: "d", error: "e",
+  };
+  return globalThis.rocSemanticTokens(source, {
+    ...options, lexicalTokens: rocLexicalTokens(source),
+  }).map((token) => ({ ...token, type: classes[token.type] ?? token.type }));
 }
 
 function rocHighlightObjectForType(type) {
@@ -1174,44 +1139,29 @@ function ensureRocHighlightId(container) {
   return root.dataset.rocHighlightId;
 }
 
-function addRocTextNodeHighlights(textNode, grouped) {
-  for (const token of rocTokenRanges(textNode.nodeValue)) {
+// Semantic analysis needs an entire snippet, including text split by links.
+function addRocElementHighlights(element, grouped) {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let source = "";
+  let node;
+  while ((node = walker.nextNode())) {
+    if (!node.nodeValue.length) continue;
+    nodes.push({ node, start: source.length, end: source.length + node.nodeValue.length });
+    source += node.nodeValue;
+  }
+  let startNode = 0;
+  for (const token of rocTokenRanges(source, element.rocSyntaxOptions)) {
+    while (startNode < nodes.length && nodes[startNode].end <= token.start) startNode += 1;
+    let endNode = startNode;
+    while (endNode < nodes.length && nodes[endNode].end < token.end) endNode += 1;
+    if (!nodes[startNode] || !nodes[endNode]) continue;
     const range = new Range();
-    range.setStart(textNode, token.start);
-    range.setEnd(textNode, token.end);
+    range.setStart(nodes[startNode].node, token.start - nodes[startNode].start);
+    range.setEnd(nodes[endNode].node, token.end - nodes[endNode].start);
     grouped[token.type].push(range);
   }
-}
-
-function collectRocSyntaxHighlights(container, grouped) {
-  const includeWholeContainer = container?.matches?.(".roc-highlight") ?? false;
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
-    acceptNode: (textNode) => {
-      if (textNode.nodeValue.length === 0) return NodeFilter.FILTER_REJECT;
-      if (includeWholeContainer) return NodeFilter.FILTER_ACCEPT;
-      return textNode.parentElement?.closest?.(".roc-highlight")
-        ? NodeFilter.FILTER_ACCEPT
-        : NodeFilter.FILTER_REJECT;
-    },
-  });
-
-  let textNode;
-  let chars = 0;
-  let textNodes = 0;
-
-  while ((textNode = walker.nextNode())) {
-    chars += textNode.nodeValue.length;
-    textNodes += 1;
-    addRocTextNodeHighlights(textNode, grouped);
-  }
-
-  return { chars, textNodes };
-}
-
-function rocHighlightRootCount(container) {
-  let count = container?.matches?.(".roc-highlight") ? 1 : 0;
-  count += container?.querySelectorAll?.(".roc-highlight").length ?? 0;
-  return count;
+  return { chars: source.length, textNodes: nodes.length };
 }
 
 function buildRocSyntaxHighlights(container) {
@@ -1219,16 +1169,7 @@ function buildRocSyntaxHighlights(container) {
 
   const id = ensureRocHighlightId(container);
   const grouped = emptyRocHighlightGroups();
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-  let textNode;
-  let chars = 0;
-  let textNodes = 0;
-
-  while ((textNode = walker.nextNode())) {
-    chars += textNode.nodeValue.length;
-    textNodes += 1;
-    addRocTextNodeHighlights(textNode, grouped);
-  }
+  const { chars, textNodes } = addRocElementHighlights(container, grouped);
 
   addRocHighlightRoot(id, grouped);
   return { chars, textNodes };
@@ -1275,75 +1216,24 @@ function clearRocSyntaxHighlights(container, sync = true) {
 }
 
 function highlightRocSyntaxIn(container) {
-  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
-
-  const totalStart = performance.now();
-  const rootElements = [];
-
-  if (container?.matches?.(".roc-highlight")) {
-    rootElements.push(container);
-  }
-
-  container
-    ?.querySelectorAll?.(".roc-highlight")
-    .forEach((root) => rootElements.push(root));
-
-  if (rootElements.length === 0) return;
-
-  const id = ensureRocHighlightId(container);
-  const grouped = emptyRocHighlightGroups();
-  const tokenizeStart = performance.now();
-  const { chars, textNodes } = collectRocSyntaxHighlights(container, grouped);
-
-  const tokenizingMs = performance.now() - tokenizeStart;
-
-  const syncStart = performance.now();
-  addRocHighlightRoot(id, grouped);
-  const syncMs = performance.now() - syncStart;
-  const totalMs = performance.now() - totalStart;
-
-  // console.log(
-  //   `[roc-highlight] roots=${rootElements.length} textNodes=${textNodes} chars=${chars} tokenize=${tokenizingMs.toFixed(1)}ms sync=${syncMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms`,
-  // );
+  highlightRocSyntaxNodes([container]);
 }
 
 function highlightRocSyntaxNodes(nodes) {
   if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
-
-  const nodeList = Array.from(nodes ?? []);
-  const containers = nodeList.filter((node) => node.nodeType === Node.ELEMENT_NODE);
-  let rootCount = 0;
-
-  for (const container of containers) {
-    rootCount += rocHighlightRootCount(container);
+  const roots = new Set();
+  for (const container of nodes ?? []) {
+    for (const root of rocSyntaxRootElements(container)) roots.add(root);
   }
-
-  if (rootCount === 0) return;
-
-  const root = containers[0];
-  const id = ensureRocHighlightId(root);
-  const grouped = emptyRocHighlightGroups();
-  const totalStart = performance.now();
-  const tokenizeStart = performance.now();
-  let chars = 0;
-  let textNodes = 0;
-
-  for (const container of containers) {
-    const result = collectRocSyntaxHighlights(container, grouped);
-    chars += result.chars;
-    textNodes += result.textNodes;
+  for (const root of roots) {
+    let parent = root.parentElement;
+    while (parent && !roots.has(parent)) parent = parent.parentElement;
+    if (parent) continue;
+    const id = ensureRocHighlightId(root);
+    const grouped = emptyRocHighlightGroups();
+    addRocElementHighlights(root, grouped);
+    addRocHighlightRoot(id, grouped);
   }
-
-  const tokenizingMs = performance.now() - tokenizeStart;
-
-  const syncStart = performance.now();
-  addRocHighlightRoot(id, grouped);
-  const syncMs = performance.now() - syncStart;
-  const totalMs = performance.now() - totalStart;
-
-  // console.log(
-  //   `[roc-highlight] chunkNodes=${nodeList.length} roots=${rootCount} textNodes=${textNodes} chars=${chars} tokenize=${tokenizingMs.toFixed(1)}ms sync=${syncMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms`,
-  // );
 }
 
 function rocSyntaxRootElements(container) {
@@ -1357,7 +1247,14 @@ function rocSyntaxRootElements(container) {
     ?.querySelectorAll?.(".roc-highlight")
     .forEach((root) => rootElements.push(root));
 
-  return rootElements;
+  // A nested marker belongs to the same logical snippet as its outer root.
+  const selected = new Set(rootElements);
+  return rootElements.filter((root) => {
+    for (let parent = root.parentElement; parent; parent = parent.parentElement) {
+      if (selected.has(parent)) return false;
+    }
+    return true;
+  });
 }
 
 function unhighlightedRocSyntaxRootElements(container) {
@@ -1409,6 +1306,9 @@ function highlightRocSyntaxProgressively(container, initialLimit = 32, batchSize
 }
 
 window.rocSyntax = {
+  tokens: (source, options = {}) => globalThis.rocSemanticTokens(source, {
+    ...options, lexicalTokens: rocLexicalTokens(source),
+  }),
   highlight: highlightRocSyntaxIn,
   highlightNodes: highlightRocSyntaxNodes,
   highlightFirst: highlightFirstRocSyntaxRoots,
@@ -1580,8 +1480,20 @@ function setupCopyButtons() {
   });
 }
 
+// The SSG's Roc renderer emits compact token classes without a language marker.
+// Its other language renderers use scoped classes, e.g. `keyword ... shell`.
+function markRocCodeBlocks(root = document) {
+  for (const code of root.querySelectorAll("pre > samp, code.language-roc, samp.language-roc")) {
+    if (code.matches("code.language-roc, samp.language-roc") ||
+        code.querySelector("span.op, span.kw, span.number, span.str, span.colon, span.paren, span.brace, span.comma")) {
+      code.classList.add("roc-highlight");
+    }
+  }
+}
+
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
+  markRocCodeBlocks();
   setupCopyButtons();
 
   const interactiveWidgets = document.querySelectorAll(".roc-interactive");
@@ -1602,3 +1514,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (interactiveWidgets.length > 0) preloadCompiler();
 });
+
+// The structural analyzer and local workbench share this lexical entry point.
+globalThis.rocLexicalTokens = rocLexicalTokens;
+})();
