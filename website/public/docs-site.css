@@ -88,6 +88,7 @@ body.website-docs.docs-index footer { padding-left: 36px; }
 
 /* Place the home branding slightly left of the desktop sidebar labels. */
 @media (min-width: 769px) {
+    .website-docs #top-bar .home-link-text { display: inline; }
     .website-docs #top-bar nav {
         max-width: none;
         display: grid;
