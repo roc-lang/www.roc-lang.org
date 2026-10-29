@@ -101,3 +101,20 @@ body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
     }
     .website-docs #top-bar-links { justify-self: center; }
 }
+
+@media (max-width: 768px) {
+    /* The search form is in main's flow now, so it already shares its inset. */
+    .website-docs #module-search-form { padding-left: 0; padding-right: 0; }
+    .website-docs main:has(.getting-started) #module-search-form {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+    .website-docs .menu-toggle { margin-right: 0; }
+}
+
+/* Long qualified type names must not widen the page beyond their code block. */
+.website-docs .entry-type-def,
+.website-docs .entry-signature-pre {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
