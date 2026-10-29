@@ -92,7 +92,7 @@ func TestProcessingWithoutSiteHeaderPreservesPackageBranding(t *testing.T) {
 
 func TestBuiltinTypesPage(t *testing.T) {
 	root := t.TempDir()
-	src := `<html><head><title>Docs</title><script src="search.js"></script></head><body class="docs-index website-docs"><main><div class="main-content"></div></main></body></html>`
+	src := `<html><head><title>Docs</title><script src="search.js"></script></head><body class="docs-index website-docs"><main><form id="module-search-form" data-search-index="search-index.html"></form><div class="main-content"></div></main></body></html>`
 	if err := os.WriteFile(filepath.Join(root, "index.html"), []byte(src), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestBuiltinTypesPage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{`<h1>Builtin Types</h1>`, `src="/docs/main/search.js"`, `href="/docs/main/Str/"`, "<!--!\x00-->", "<!--!\x1e-->"} {
+	for _, want := range []string{`<h1>Builtin Types</h1>`, `src="/docs/main/search.js"`, `data-search-index="/docs/main/search-index.html"`, `href="/docs/main/Str/"`, "<!--!\x00-->", "<!--!\x1e-->"} {
 		if !strings.Contains(string(output), want) {
 			t.Fatalf("missing %q", want)
 		}

@@ -195,7 +195,7 @@ func writeBuiltinTypesPage(root string) error {
 	resolveLinks = func(node *html.Node) {
 		for i := range node.Attr {
 			attr := &node.Attr[i]
-			if attr.Key == "href" || attr.Key == "src" {
+			if attr.Key == "href" || attr.Key == "src" || attr.Key == "data-search-index" {
 				target, err := url.Parse(attr.Val)
 				if err == nil && !target.IsAbs() && !strings.HasPrefix(attr.Val, "/") {
 					attr.Val = base.ResolveReference(target).String()
