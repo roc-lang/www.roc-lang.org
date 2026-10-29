@@ -76,3 +76,24 @@ body.website-docs.docs-index main > .main-content { grid-row: 3; }
 
 .getting-started h1, .getting-started h2 { font-family: var(--font-sans); }
 body.website-docs.docs-index #getting-started-link { font-weight: 700; color: var(--link-color); }
+
+/* Give the search field the same initial top inset as the sidebar label.
+   The margin scrolls away; sticky positioning keeps its normal compact inset. */
+.website-docs #module-search-form { margin-top: 26px; }
+section.getting-started { padding: 8px 16px 40px 36px; }
+section.getting-started h1,
+section.getting-started h2,
+section.getting-started p { padding-left: 0; padding-right: 0; }
+body.website-docs.docs-index footer { padding-left: 36px; }
+
+/* Preview experiment: center the home branding above the desktop sidebar. */
+@media (min-width: 769px) {
+    .website-docs #top-bar nav {
+        max-width: none;
+        display: grid;
+        grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+        padding-right: 0;
+    }
+    .website-docs #nav-home-link { justify-self: center; }
+    .website-docs #top-bar-links { justify-self: center; }
+}
