@@ -80,11 +80,11 @@ body.website-docs.docs-index #getting-started-link { font-weight: 700; color: va
 /* Give the search field the same initial top inset as the sidebar label.
    The margin scrolls away; sticky positioning keeps its normal compact inset. */
 .website-docs #module-search-form { margin-top: 26px; }
-section.getting-started { padding: 8px 16px 40px 18px; }
+section.getting-started { padding: 8px 8px 40px; }
 section.getting-started h1,
 section.getting-started h2,
 section.getting-started p { padding-left: 0; padding-right: 0; }
-body.website-docs.docs-index footer { padding-left: 18px; }
+body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
 
 /* Place the home branding slightly left of the desktop sidebar labels. */
 @media (min-width: 769px) {
