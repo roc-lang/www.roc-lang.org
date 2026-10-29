@@ -16,21 +16,25 @@ body.website-docs {
     grid-template-rows: minmax(0, 1fr) auto;
 }
 @media only screen and (max-width: 768px) {
-    .website-docs > #top-bar {
-        position: sticky;
-        top: 0;
-        z-index: 4;
+    body.website-docs {
+        height: auto;
+        overflow: visible;
     }
     .website-docs > #sidebar-nav {
-        top: var(--site-header-height, 96px);
+        top: 0;
     }
-    .website-docs > main {
+    body.website-docs > main {
         min-height: calc(100dvh - var(--site-header-height, 96px));
+        padding-top: 0;
+        overflow: visible;
     }
     .website-docs #module-search-form {
-        top: var(--site-header-height, 96px);
+        position: sticky;
+        top: 0;
+        flex-shrink: 0;
     }
     html:has(body.website-docs) {
-        scroll-padding-top: calc(var(--site-header-height, 96px) + var(--module-search-form-height));
+        overflow-x: clip;
+        scroll-padding-top: var(--module-search-form-height);
     }
 }

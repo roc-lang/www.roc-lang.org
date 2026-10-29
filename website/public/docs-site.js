@@ -1,5 +1,5 @@
 // The shared header can wrap on narrow screens or when text is zoomed.
-// Keep the mobile sidebar/search below its actual height.
+// Size the mobile content area to the viewport space below the header.
 (() => {
   const header = document.getElementById("top-bar");
   if (!header) return;
