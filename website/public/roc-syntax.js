@@ -36,7 +36,7 @@
       // The lexer groups field names with their colon. Split structural tokens,
       // retaining operators, literals, and errors exactly as the lexer produced them.
       const text = source.slice(range.start, range.end);
-      const pieces = ["s", "c", "n", "e", "o"].includes(range.type)
+      const pieces = ["s", "c", "n", "e", "o"].includes(range.type) || text === "${"
         ? [{ index: 0, 0: text }]
         : [
             ...text.matchAll(
@@ -66,7 +66,10 @@
           end,
           type,
           modifiers: [],
-          text: value,
+          // Literal spelling must never participate in grammar lookahead. Keep
+          // its original extent and category; interpolation expressions retain
+          // their real tokens and are walked in the enclosing binding scope.
+          text: ["s", "n", "e"].includes(range.type) ? "\0" : value,
           line,
           column: start - lineStart,
         });
@@ -85,7 +88,7 @@
       return null;
     }
     function mark(t, type, declaration = false) {
-      if (t) {
+      if (t && t.text !== "\0") {
         t.type = type;
         t.modifiers = declaration ? ["declaration"] : [];
       }
@@ -304,6 +307,36 @@
     function atom(s, base, forceBlock = false) {
       const t = ts[pos];
       if (!t) return variable;
+      if (t.type === "string") {
+        pos++;
+        const opening = source.slice(t.start, t.end);
+        // Character literals are atomic. Quoted and multiline strings have
+        // multiple lexer spans, and interpolation is part of this same atom.
+        if (opening !== '"' && opening !== "\\\\") return variable;
+        const quoted = opening === '"';
+        let line = t.line;
+        while (pos < ts.length) {
+          if (at("${")) {
+            pos++;
+            while (pos < ts.length && !at("}")) {
+              const before = pos;
+              expression(s, ts[pos], ["}"]);
+              if (pos === before) pos++;
+            }
+            take("}");
+            line = ts[pos - 1]?.line ?? line;
+            continue;
+          }
+          const part = ts[pos];
+          if (!["string", "error"].includes(part.type)) break;
+          const spelling = source.slice(part.start, part.end);
+          if (part.line > line && (quoted || spelling !== "\\\\")) break;
+          pos++;
+          line = part.line;
+          if (quoted && spelling === '"') break;
+        }
+        return variable;
+      }
       if (t.text === "|") return lambda(s, base);
       if (t.text === "{") return recordOrBlock(s, base, forceBlock);
       if (t.text === "match") return match(s, base);

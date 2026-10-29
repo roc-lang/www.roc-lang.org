@@ -292,3 +292,37 @@ test("pipeline operators preserve qualified functions without inventing lambda p
     );
   }
 });
+
+test("literal spelling cannot become a tag, binding, keyword, or delimiter", () => {
+  const contents = [
+    "Done", "Waiting", "x", "if", "match", "for", "else", "import", "var",
+    "|", "{", "}", "(", ")", "[", "]", "=", ":", "->", "=>", "and", "or",
+  ];
+  for (const text of contents) {
+    const source = `f = |x| ${JSON.stringify(text)}\nafter = |y| y`;
+    const actual = tokens(source);
+    const immutable = { s: "string", n: "number", e: "error", c: "comment" };
+    for (const lexical of context.rocLexicalTokens(source)) {
+      if (!immutable[lexical.type]) continue;
+      assert.ok(actual.some(token => token.start === lexical.start &&
+        token.end === lexical.end && token.type === immutable[lexical.type]), text);
+    }
+    assert.deepEqual(roles(source, "after"), ["function"], text);
+    assert.deepEqual(roles(source, "y"), ["parameter", "parameter"], text);
+  }
+  const source = 'Status : [Done, Pending]\ndescribe = |status| match status {\n Done => "Done"\n Pending => "Waiting"\n}';
+  assert.deepEqual(roles(source, "Done"), ["enumMember", "enumMember", "string"]);
+  assert.deepEqual(roles(source, "Waiting"), ["string"]);
+});
+
+test("string interpolation uses its enclosing scope while literal contents stay opaque", () => {
+  const source = 'f = |x| "x${x}Done${x.trim()}"\nafter = |y| y';
+  assert.deepEqual(roles(source, "x"), ["parameter", "string", "parameter", "parameter"]);
+  assert.deepEqual(roles(source, "Done"), ["string"]);
+  assert.deepEqual(roles(source, "trim"), ["function"]);
+  assert.deepEqual(roles(source, "y"), ["parameter", "parameter"]);
+  assert.deepEqual(roles('f = |x| "${"${x}"}"', "x"), ["parameter", "parameter"]);
+  const adjacent = 'outer = |x| {\n f = |y| "inside"\n "outside${y}${x}"\n}';
+  assert.deepEqual(roles(adjacent, "y"), ["parameter", "variable"]);
+  assert.deepEqual(roles(adjacent, "x"), ["parameter", "parameter"]);
+});
