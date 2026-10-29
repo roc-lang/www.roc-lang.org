@@ -91,6 +91,25 @@ Preview the result with:
 python3 serve.py build 8080
 ```
 
+## Generated documentation header
+
+The website build adds its shared navigation header to `build/docs/main` after
+both the website and compiler documentation have been generated. The
+`docs-runtime-highlights` post-processor copies the header from the generated
+`community.html`, so navigation links have a single source in `static_site_gen.roc`.
+`site-header.css` is shared with ordinary website pages; `docs-site.css` and
+`docs-site.js` adapt the docs layout while retaining its sidebar and search.
+
+This is a website-only transformation. It does not change the compiler's API
+documentation generator. Running the post-processor without its optional
+`website-page` argument also retains the original package header.
+
+Run the post-processor tests with Go installed:
+
+```sh
+go -C website/tools/docs-runtime-highlights test ./...
+```
+
 ## Browser compiler updates
 
 `website/compiler-wasm.json` pins the homepage's browser compiler and checksum.

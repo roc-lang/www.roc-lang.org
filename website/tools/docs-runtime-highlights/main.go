@@ -28,11 +28,20 @@ var generatedTokenClasses = map[string]bool{
 const initialHighlightScript = `window.rocSyntax&&window.rocSyntax.highlightFirst(document.querySelector("main > .main-content"),32)`
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: docs-runtime-highlights docs-root")
+	if len(os.Args) != 2 && len(os.Args) != 3 {
+		fmt.Fprintln(os.Stderr, "usage: docs-runtime-highlights docs-root [website-page]")
 		os.Exit(2)
 	}
 
+	var header *html.Node
+	if len(os.Args) == 3 {
+		var err error
+		header, err = readSiteHeader(os.Args[2])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
 	root := os.Args[1]
 	if err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
@@ -41,14 +50,14 @@ func main() {
 		if entry.IsDir() || !strings.HasSuffix(path, ".html") {
 			return nil
 		}
-		return processHTML(path)
+		return processHTML(path, header)
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func processHTML(path string) error {
+func processHTML(path string, header *html.Node) error {
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -60,6 +69,9 @@ func processHTML(path string) error {
 	}
 
 	changed := addCompilerScript(doc)
+	if header != nil && applySiteHeader(doc, header) {
+		changed = true
+	}
 	if flattenGeneratedHighlights(doc) {
 		changed = true
 	}

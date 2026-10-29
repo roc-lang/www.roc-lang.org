@@ -119,6 +119,7 @@ view_head = |page_path_str| {
 			Html.link([rel("icon"), href("/favicon.svg")]),
 			Html.link([rel("prefetch"), href("/repl/roc_repl_wasm.js")]),
 			Html.link([rel("stylesheet"), href("/site.css")]),
+			Html.link([rel("stylesheet"), href("/site-header.css")]),
 			# Safari ignores rel="icon" and only respects rel="mask-icon". It renders the
 			# SVG with fill="#000" unless this hardcoded color attribute overrides it.
 			Html.link([rel("mask-icon"), href("/favicon.svg"), color("#7d59dd")]),
