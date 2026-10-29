@@ -51,9 +51,9 @@ test('browser audit catches custom highlights, alpha, and both themes', {
     <p class="faded">Faded text</p><p class="large">Large text</p>
     <p hidden>Invisible text</p><input disabled value="Inactive text">
   </body></html>`;
-  const server = createServer((_request, response) => {
+  const server = createServer((request, response) => {
     response.writeHead(200, { 'Content-Type': 'text/html' });
-    response.end(html);
+    response.end(request.url === '/redirect.html' ? '<meta http-equiv="refresh" content="0;url=/">' : html);
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const work = await mkdtemp(join(tmpdir(), 'roc-contrast-test-'));
@@ -63,13 +63,14 @@ test('browser audit catches custom highlights, alpha, and both themes', {
     try {
       await promisify(execFile)(process.execPath, [
         new URL('./check_color_contrast.mjs', import.meta.url).pathname,
-        '--base-url', `http://127.0.0.1:${server.address().port}`, '--page', '/', '--json', output,
+        '--base-url', `http://127.0.0.1:${server.address().port}`, '--page', '/', '--page', '/redirect.html', '--json', output,
       ], { timeout: 30000 });
       status = 0;
     } catch (error) { status = error.code; }
     assert.equal(status, 1);
     const report = JSON.parse(await readFile(output, 'utf8'));
-    assert.equal(report.pages, 2);
+    assert.equal(report.pages, 4);
+    assert.ok(report.reports.filter(row => row.path === '/redirect.html').every(row => new URL(row.finalURL).pathname === '/'));
     const light = report.reports.find(row => row.theme === 'light');
     const dark = report.reports.find(row => row.theme === 'dark');
     assert.ok(light.pairs.some(pair => pair.role === '::highlight(roc-parameter)' && !pair.pass));

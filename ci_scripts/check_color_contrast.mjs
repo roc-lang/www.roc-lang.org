@@ -46,10 +46,19 @@ class CDP {
       this.socket.send(JSON.stringify({ id, method, params }));
     });
   }
-  async evaluate(expression) {
-    const result = await this.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
-    if (result.exceptionDetails) throw Error(result.exceptionDetails.text + ': ' + result.exceptionDetails.exception?.description);
-    return result.result.value;
+  async evaluate(expression, retryNavigation = false) {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const result = await this.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+        if (result.exceptionDetails) throw Error(result.exceptionDetails.text + ': ' + result.exceptionDetails.exception?.description);
+        return result.result.value;
+      } catch (error) {
+        // A new document can replace the execution context between Page.navigate
+        // and Runtime.evaluate. Retry only that browser lifecycle condition.
+        if (!retryNavigation || attempt >= 20 || !/navigated or closed|Execution context|Cannot find context|Promise was collected/.test(error.message)) throw error;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
   }
   close() { this.socket.close(); }
 }
@@ -114,9 +123,12 @@ function auditPage() {
     const ratio = contrast(colors.ink, colors.paper);
     const hex = color => '#' + color.slice(0, 3).map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
     const foreground = hex(colors.ink), background = hex(colors.paper);
-    const key = [label, foreground, background, required].join(':');
+    // Keep fractional computed channels in the identity: rounding to hex before
+    // deduplication could merge colors on opposite sides of the AA threshold.
+    const key = [label, ...colors.ink, ...colors.paper, required].join(':');
     const result = pairs.get(key) || {
       role: label, foreground, background, ratio, required, pass: passes(ratio, required),
+      foregroundRGBA: colors.ink, backgroundRGBA: colors.paper,
       element: identify(element), fontSize, fontWeight, text: text.trim().slice(0, 100), occurrences: 0,
     };
     result.occurrences++;
@@ -213,6 +225,14 @@ async function launchChrome(binary, profile) {
 }
 async function main() {
   const args = process.argv.slice(2);
+  const flags = new Set(['--all-pages', '--help']);
+  const options = new Set(['--base-url', '--page', '--build-dir', '--chrome', '--json']);
+  for (let index = 0; index < args.length; index++) {
+    if (flags.has(args[index])) continue;
+    if (!options.has(args[index])) throw Error(`Unknown argument: ${args[index]}`);
+    if (!args[index + 1] || args[index + 1].startsWith('--')) throw Error(`Missing value: ${args[index]}`);
+    index++;
+  }
   const value = (name, fallback) => { const at = args.indexOf(name); return at < 0 ? fallback : args[at + 1]; };
   if (args.includes('--help')) {
     console.log('node ci_scripts/check_color_contrast.mjs [--base-url URL] [--page /path ...] [--all-pages] [--build-dir website/build] [--chrome PATH] [--json PATH]');
@@ -242,10 +262,16 @@ async function main() {
         const url = new URL(path, base).href;
         const check = await fetch(url);
         if (!check.ok) throw Error(`${url}: HTTP ${check.status}`);
+        const previousTimeOrigin = await connection.evaluate('performance.timeOrigin');
         const navigation = await connection.send('Page.navigate', { url });
         if (navigation.errorText) throw Error(`${url}: ${navigation.errorText}`);
-        await connection.evaluate(`(async()=>{while(document.readyState!=='complete')await new Promise(r=>setTimeout(r,25));await document.fonts.ready;await new Promise(r=>setTimeout(r,200));return true})()`);
-        const result = await connection.evaluate(`(()=>{${definitions}\nreturn (${auditPage.toString()})();})()`);
+        await connection.evaluate(`(async()=>{
+          const expected=new URL(${JSON.stringify(url)});
+          while(document.readyState!=='complete'||performance.timeOrigin===${previousTimeOrigin})await new Promise(r=>setTimeout(r,25));
+          if(location.origin!==expected.origin)throw Error('Navigation left the audit origin: '+location.href);
+          await document.fonts.ready;await new Promise(r=>setTimeout(r,200));return true;
+        })()`, true);
+        const result = await connection.evaluate(`(()=>{${definitions}\nreturn {finalURL:location.href,...(${auditPage.toString()})()};})()`, true);
         reports.push({ path, theme, ...result });
         const failed = result.pairs.filter(pair => !pair.pass);
         console.log(`${theme.padEnd(5)} ${path}: ${result.pairs.length} color/role pairs, ${failed.length} failures, ${result.manualReview.length} manual-review groups`);
