@@ -55,6 +55,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	if header != nil {
+		if err := writeBuiltinTypesPage(root); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
 }
 
 func processHTML(path string, header *html.Node) error {

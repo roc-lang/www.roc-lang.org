@@ -4,7 +4,9 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -12,6 +14,9 @@ import (
 
 //go:embed getting_started.html
 var gettingStartedHTML string
+
+//go:embed builtin_types.html
+var builtinTypesHTML string
 
 func findID(node *html.Node, id string) *html.Node {
 	if node.Type == html.ElementNode && attr(node, "id") == id {
@@ -114,7 +119,7 @@ func updateSiteSidebar(sidebar *html.Node) {
 			if link != nil && attr(link, "data-module-name") == "__builtin_types__" {
 				for i := range link.Attr {
 					if link.Attr[i].Key == "href" {
-						link.Attr[i].Val = "/docs/main/#builtin-types"
+						link.Attr[i].Val = "/docs/main/builtin-types/"
 					}
 				}
 			}
@@ -136,6 +141,10 @@ func updateSiteSidebar(sidebar *html.Node) {
 }
 
 func applyGettingStarted(doc *html.Node) {
+	replacePageContent(doc, gettingStartedHTML)
+}
+
+func replacePageContent(doc *html.Node, source string) {
 	main := findElement(doc, "main")
 	if main == nil {
 		return
@@ -144,7 +153,7 @@ func applyGettingStarted(doc *html.Node) {
 	if content == nil {
 		return
 	}
-	page, _ := html.Parse(strings.NewReader(gettingStartedHTML))
+	page, _ := html.Parse(strings.NewReader(source))
 	for content.FirstChild != nil {
 		content.RemoveChild(content.FirstChild)
 	}
@@ -152,4 +161,59 @@ func applyGettingStarted(doc *html.Node) {
 	content.AppendChild(&html.Node{Type: html.CommentNode, Data: "!\x00"})
 	content.AppendChild(cloneNode(findElement(page, "section")))
 	content.AppendChild(&html.Node{Type: html.CommentNode, Data: "!\x1e"})
+}
+
+// Reuse the docs shell, resolving its root-relative assets before nesting the page.
+func writeBuiltinTypesPage(root string) error {
+	src, err := os.ReadFile(filepath.Join(root, "index.html"))
+	if err != nil {
+		return err
+	}
+	doc, err := html.Parse(bytes.NewReader(src))
+	if err != nil {
+		return err
+	}
+	body := findElement(doc, "body")
+	for i := range body.Attr {
+		if body.Attr[i].Key == "class" {
+			classes := strings.Fields(body.Attr[i].Val)
+			kept := []string{}
+			for _, class := range classes {
+				if class != "docs-index" {
+					kept = append(kept, class)
+				}
+			}
+			body.Attr[i].Val = strings.Join(kept, " ")
+		}
+	}
+	replacePageContent(doc, builtinTypesHTML)
+	if title := findElement(doc, "title"); title != nil {
+		title.FirstChild.Data = "Builtin Types | Roc Docs"
+	}
+	base, _ := url.Parse("/docs/main/")
+	var resolveLinks func(*html.Node)
+	resolveLinks = func(node *html.Node) {
+		for i := range node.Attr {
+			attr := &node.Attr[i]
+			if attr.Key == "href" || attr.Key == "src" {
+				target, err := url.Parse(attr.Val)
+				if err == nil && !target.IsAbs() && !strings.HasPrefix(attr.Val, "/") {
+					attr.Val = base.ResolveReference(target).String()
+				}
+			}
+		}
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			resolveLinks(child)
+		}
+	}
+	resolveLinks(doc)
+	var out bytes.Buffer
+	if err := html.Render(&out, doc); err != nil {
+		return err
+	}
+	directory := filepath.Join(root, "builtin-types")
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(directory, "index.html"), restoreDocsStreamMarkers(out.Bytes()), 0644)
 }

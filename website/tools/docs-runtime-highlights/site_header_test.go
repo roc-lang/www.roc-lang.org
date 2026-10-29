@@ -89,3 +89,26 @@ func TestProcessingWithoutSiteHeaderPreservesPackageBranding(t *testing.T) {
 		t.Fatal("website header injected without opting in")
 	}
 }
+
+func TestBuiltinTypesPage(t *testing.T) {
+	root := t.TempDir()
+	src := `<html><head><title>Docs</title><script src="search.js"></script></head><body class="docs-index website-docs"><main><div class="main-content"></div></main></body></html>`
+	if err := os.WriteFile(filepath.Join(root, "index.html"), []byte(src), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeBuiltinTypesPage(root); err != nil {
+		t.Fatal(err)
+	}
+	output, err := os.ReadFile(filepath.Join(root, "builtin-types", "index.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`<h1>Builtin Types</h1>`, `src="/docs/main/search.js"`, `href="/docs/main/Str/"`, "<!--!\x00-->", "<!--!\x1e-->"} {
+		if !strings.Contains(string(output), want) {
+			t.Fatalf("missing %q", want)
+		}
+	}
+	if strings.Contains(string(output), "docs-index") {
+		t.Fatal("builtin page retained the docs home layout")
+	}
+}
