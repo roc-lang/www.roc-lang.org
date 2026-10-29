@@ -40,7 +40,7 @@ class ExamplesTests(unittest.TestCase):
             index.write_text('<article data-category="api">Keep API docs</article>')
             self.assertEqual(examples.index_search(manifest, source, pages, index), 1)
             result = index.read_text()
-            self.assertIn('data-title="FizzBuzz"', result)
+            self.assertIn('data-title="FizzBuzz — Example"', result)
             self.assertIn('data-href="/examples/FizzBuzz/README.html"', result)
             self.assertIn("code_only_token", result)
             self.assertIn("&lt;script&gt;", result)
