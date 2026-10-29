@@ -147,6 +147,8 @@ With a compiler that generates `search-index.html`, full and cached website buil
 add every enabled example's title, description, Markdown, and Roc source to the
 “Guides & examples” search category. Results link to the published README page.
 Disabled examples are excluded. Missing source or destination pages fail indexing.
+When the compiler source provides `docs/search.tsv`, the build also passes it to
+the generator to include curated operators and aliases.
 The website owns this integration; the compiler has no dependency on its content.
 Older compilers without prose search print a notice and retain their API search.
 

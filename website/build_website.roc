@@ -154,11 +154,11 @@ build_with_cache! = |compiler| {
 
 index_examples_search! : () => Try({}, _)
 index_examples_search! = || {
-    if path("build/docs/main/search-index.html").is_file!()? {
-        run!("python3", ["examples.py", "search", "examples.json", "content/examples", "build/examples", "build/docs/main/search-index.html"])
-    } else {
-        Stdout.line!("Examples search requires a compiler with prose-search support; this compiler's docs only search API names.")
-    }
+	if path("build/docs/main/search-index.html").is_file!()? {
+		run!("python3", ["examples.py", "search", "examples.json", "content/examples", "build/examples", "build/docs/main/search-index.html"])
+	} else {
+		Stdout.line!("Examples search requires a compiler with prose-search support; this compiler's docs only search API names.")
+	}
 }
 
 generate_site! : Str => Try({}, _)
@@ -399,6 +399,12 @@ generate_builtins_docs! = |compiler| {
 	path("docs/langref").delete_all!() ?? {}
 	path("docs/langref").create_all!()?
 	run!("cp", ["-R", "${compiler.src_dir}/docs/langref/.", "docs/langref"])?
+	search_config = "${compiler.src_dir}/docs/search.tsv"
+	search_args = if path(search_config).is_file!()? {
+		["--search-config=${search_config}"]
+	} else {
+		[]
+	}
 	run!(
 		compiler.bin,
 		[
@@ -406,7 +412,7 @@ generate_builtins_docs! = |compiler| {
 			"--builtins",
 			"--output=build/docs/main",
 			"--with-lang-ref",
-		],
+		].concat(search_args),
 	)?
 	path("docs").delete_all!()?
 	Ok({})
