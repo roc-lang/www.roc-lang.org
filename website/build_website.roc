@@ -97,6 +97,7 @@ full_clean_build! = |compiler| {
 	ensure_builtins_present!(compiler)?
 	generate_site!(compiler.bin)?
 	patch_builtins_html!()?
+	index_examples_search!()?
 	path(".cache").create_all!() ?? {}
 	write_cache_millis!(cache_marker_path)?
 
@@ -145,9 +146,19 @@ build_with_cache! = |compiler| {
 	}
 
 	patch_builtins_html!()?
+	index_examples_search!()?
 	optimize_compiler_wasm!()?
 
 	Ok({})
+}
+
+index_examples_search! : () => Try({}, _)
+index_examples_search! = || {
+    if path("build/docs/main/search-index.html").is_file!()? {
+        run!("python3", ["examples.py", "search", "examples.json", "content/examples", "build/examples", "build/docs/main/search-index.html"])
+    } else {
+        Stdout.line!("Examples search requires a compiler with prose-search support; this compiler's docs only search API names.")
+    }
 }
 
 generate_site! : Str => Try({}, _)
