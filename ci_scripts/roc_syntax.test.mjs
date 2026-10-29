@@ -38,6 +38,48 @@ function roles(source, name, options = {}) {
     .map((t) => t.type);
 }
 
+test("langref singleton blocks and shorthand records have distinct names", () => {
+  assert.deepEqual(roles("f = |x| { x }", "x"), ["parameter", "parameter"]);
+  assert.deepEqual(roles("f = |x| { x, }", "x"), ["parameter", "property"]);
+});
+test("mutable names retain their dollar prefix and distinct binding", () => {
+  const source = "f = |count| {\n var $count = count\n $count = $count + 1\n count\n}";
+  assert.deepEqual(roles(source, "count"), ["parameter", "parameter", "parameter"]);
+  assert.deepEqual(roles(source, "$count"), ["variable", "variable", "variable"]);
+});
+test("optional fields, qualified tags and value aliases keep their roles", () => {
+  const source = "Record : { label ?: Str }\nf = |x| x.?label\na = Color.Red\nb = Color.Blue(1)\nc = a";
+  assert.deepEqual(roles(source, "label"), ["property", "property"]);
+  assert.deepEqual(roles(source, "Red"), ["enumMember"]);
+  assert.deepEqual(roles(source, "Blue"), ["enumMember"]);
+  assert.deepEqual(roles(source, "a"), ["variable", "variable"]);
+});
+test("postfix propagation preserves the following declaration", () => {
+  const source = "f = |x| x?\ng = |y| y\nh = |z| z ? |err| err";
+  assert.deepEqual(roles(source, "g"), ["function"]);
+  assert.deepEqual(roles(source, "y"), ["parameter", "parameter"]);
+  assert.deepEqual(roles(source, "err"), ["parameter", "parameter"]);
+});
+test("record type defaults contain runtime expressions", () => {
+  const source = "Config : { capacity: U64 ?? {\n kibibytes = 1024\n 8 * kibibytes\n} }";
+  assert.deepEqual(roles(source, "capacity"), ["property"]);
+  assert.deepEqual(roles(source, "kibibytes"), ["variable", "variable"]);
+});
+test("where aliases distinguish type names and constraint methods", () => {
+  const source = "a.Showable : where [a.to_str : a -> Str]\na.Encodable(fmt) : where [a.encode : a, fmt -> Str]";
+  assert.deepEqual(roles(source, "Showable"), ["type"]);
+  assert.deepEqual(roles(source, "Encodable"), ["type"]);
+  assert.deepEqual(roles(source, "to_str"), ["function"]);
+  assert.deepEqual(roles(source, "encode"), ["function"]);
+  assert.ok(roles(source, "Str").every(r => r === "type"));
+  assert.ok(roles(source, "fmt").every(r => r === "typeParameter"));
+  assert.deepEqual(roles("show : a -> Str where [a.Showable]", "Showable"), ["type"]);
+});
+test("file imports bind values and effectful loops preserve outer bindings", () => {
+  assert.deepEqual(roles('import "config.json" as config_text : Str\nx = config_text', "config_text"), ["variable", "variable"]);
+  assert.deepEqual(roles("f = |item, xs| {\n for! item in xs { item }\n item\n}", "item"), ["parameter", "variable", "variable", "parameter"]);
+});
+
 test("lambda identity, calls, capture, and block declaration order", () => {
   const source =
     "f = |transform, x| {\n    y = transform(x)\n    g = |z| transform(z)\n    y\n}\nx = 1\nother = x";

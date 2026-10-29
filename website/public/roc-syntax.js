@@ -14,7 +14,7 @@
     c: "comment",
     f: "punctuation",
   };
-  const word = /^[A-Za-z_][A-Za-z_0-9]*!?$/;
+  const word = /^\$?[A-Za-z_][A-Za-z_0-9]*!?$/;
   const upper = /^[A-Z]/;
   const variable = { kind: "variable" };
   const fn = { kind: "function" };
@@ -40,7 +40,7 @@
         ? [{ index: 0, 0: text }]
         : [
             ...text.matchAll(
-              /[A-Za-z_][A-Za-z_0-9]*!?|:=|::|=>|->|==|!=|<=|>=|\.\.|[^\s]/g,
+              /\$?[A-Za-z_][A-Za-z_0-9]*!?|:=|::|=>|->|==|!=|<=|>=|\.\.|[^\s]/g,
             ),
           ];
       for (const piece of pieces) {
@@ -133,7 +133,8 @@
       if (found) {
         mark(
           t,
-          found.role === "parameter" ? "parameter" : found.kind || "variable",
+          found.kind === "function" && found.role !== "parameter"
+            ? "function" : found.role,
         );
         return found;
       }
@@ -148,7 +149,7 @@
       }
       return variable;
     }
-    function annotation(base) {
+    function annotation(base, s) {
       let result = variable,
         nesting = 0;
       const containers = [];
@@ -163,6 +164,10 @@
         )
           break;
         pos++;
+        if (t.text === "??") {
+          expression(s, ts[pos] || base);
+          continue;
+        }
         if (nesting === 0 && (t.text === "->" || t.text === "=>")) result = fn;
         if (word.test(t.text) && t.type !== "keyword")
           mark(
@@ -171,13 +176,13 @@
               ? containers.at(-1) === "["
                 ? "enumMember"
                 : "type"
-              : ts[pos]?.text === ":"
-                ? "property"
+              : ts[pos]?.text === ":" || (at("?") && ts[pos + 1]?.text === ":")
+                ? ts[pos - 2]?.text === "." ? "function" : "property"
                 : "typeParameter",
           );
         if ("([{".includes(t.text)) {
           nesting++;
-          containers.push(t.text);
+          containers.push(t.text === "[" && ts[pos - 2]?.text === "where" ? "where" : t.text);
         }
         if (")]}".includes(t.text)) {
           if (!nesting) {
@@ -247,7 +252,7 @@
       const result = expression(child, ts[pos] || base);
       return { kind: "function", result };
     }
-    function recordOrBlock(s, base, forceBlock = false) {
+    function recordOrBlock(s, base) {
       pos++;
       const child = scope(s),
         fields = Object.create(null);
@@ -270,9 +275,7 @@
         ts[pos] &&
         (ts[pos].text === ".." ||
           (word.test(ts[pos].text) && !upper.test(ts[pos].text) &&
-            (ts[pos + 1]?.text === ":" ||
-              ts[pos + 1]?.text === "," ||
-              (!forceBlock && ts[pos + 1]?.text === "}"))));
+            (ts[pos + 1]?.text === ":" || ts[pos + 1]?.text === ",")));
       if (record) {
         while (pos < ts.length && !at("}")) {
           const before = pos,
@@ -310,7 +313,7 @@
       take("}");
       return variable;
     }
-    function atom(s, base, forceBlock = false) {
+    function atom(s, base) {
       const t = ts[pos];
       if (!t) return variable;
       if (t.type === "string") {
@@ -344,16 +347,16 @@
         return variable;
       }
       if (t.text === "|") return lambda(s, base);
-      if (t.text === "{") return recordOrBlock(s, base, forceBlock);
+      if (t.text === "{") return recordOrBlock(s, base);
       if (t.text === "match") return match(s, base);
       if (t.text === "if") {
         pos++;
         expression(s, ts[pos] || base, ["{"]);
-        const result = expression(s, ts[pos] || base, ["else"], true);
-        if (take("else")) expression(s, ts[pos] || base, [], true);
+        const result = expression(s, ts[pos] || base, ["else"]);
+        if (take("else")) expression(s, ts[pos] || base);
         return result;
       }
-      if (t.text === "for") {
+      if (t.text === "for" || t.text === "for!") {
         pos++;
         const child = scope(s);
         pattern(child, "variable", ["in", "}"]);
@@ -380,12 +383,12 @@
       if (word.test(t.text) && t.type !== "keyword") return reference(t, s);
       return variable;
     }
-    function expression(s, base, extraStops = [], forceBlock = false) {
+    function expression(s, base, extraStops = []) {
       if (!base || depth++ > 160) {
         depth--;
         return variable;
       }
-      let shape = atom(s, base, forceBlock);
+      let shape = atom(s, base);
       let binary = false;
       while (pos < ts.length) {
         const t = ts[pos];
@@ -396,13 +399,16 @@
           boundary(t, base)
         )
           break;
-        if (t.text === "." && word.test(ts[pos + 1]?.text || "")) {
-          pos++;
+        const memberOffset = ts[pos + 1]?.text === "?" ? 2 : 1;
+        if (t.text === "." && word.test(ts[pos + memberOffset]?.text || "")) {
+          pos += memberOffset;
           const name = ts[pos++];
           const namespace = shape.module;
           shape = member(shape, name.text);
-          mark(name, namespace && shape !== variable ? shape.kind : "property");
-          if (at("(") && name.end === ts[pos].start) mark(name, "function");
+          mark(name, namespace && shape !== variable ? shape.kind :
+            upper.test(name.text) ? "enumMember" : "property");
+          if (!upper.test(name.text) && at("(") && name.end === ts[pos].start)
+            mark(name, "function");
         } else if (t.text === "(" && ts[pos - 1]?.end === t.start) {
           const previous = ts[pos - 1];
           if (previous && previous.type === "variable")
@@ -418,7 +424,10 @@
           shape = shape.result || variable;
         } else if (t.text === ":") {
           pos++;
-          annotation(base);
+          annotation(base, s);
+        } else if (t.text === "?" && ts[pos - 1]?.end === t.start) {
+          pos++;
+          shape = variable;
         } else if (t.type === "operator" || ["and", "or"].includes(t.text)) {
           pos++;
           shape = atom(s, ts[pos] || base);
@@ -431,6 +440,7 @@
     function imports(s, base) {
       pos++;
       const start = ts[pos];
+      const file = start?.type === "string";
       let moduleName = "";
       while (
         pos < ts.length &&
@@ -445,7 +455,9 @@
       }
       const alias = take("as") ? ts[pos++] : start;
       if (alias)
-        bind(s, alias, { kind: "namespace", module: moduleName }, "namespace");
+        bind(s, alias, file ? variable : { kind: "namespace", module: moduleName },
+          file ? "variable" : "namespace");
+      if (file && take(":")) annotation(base, s);
       if (take("exposing")) {
         const close = take("[") ? "]" : take("(") ? ")" : null;
         while (
@@ -466,8 +478,17 @@
       let result = variable;
       while (pos < ts.length && !at(close)) {
         const before = pos,
-          t = ts[pos];
+          t = ts[pos],
+          aliasEnd = ts[pos + 1]?.text === "." ? whereAliasEnd(pos) : null;
         if (t.text === "import") imports(s, t);
+        else if (aliasEnd !== null) {
+          for (let i = pos; i <= aliasEnd; i++) {
+            if (word.test(ts[i].text))
+              mark(ts[i], i === pos + 2 ? "type" : "typeParameter", i === pos + 2);
+          }
+          pos = aliasEnd + 2;
+          annotation(t, s);
+        }
         else if (t.text === "var" && word.test(ts[pos + 1]?.text || "")) {
           pos++;
           const name = ts[pos++];
@@ -504,7 +525,7 @@
             bind(s, t, { kind: "type" }, "type");
             typeAnnotation(s, t);
           } else {
-            let shape = separator === ":" ? annotation(t) : variable;
+            let shape = separator === ":" ? annotation(t, s) : variable;
             if (separator === "=" || take("=")) {
               // A declaration is not visible in its own RHS except a lambda,
               // whose identity can be known before walking its body.
@@ -525,7 +546,7 @@
       return result;
     }
     function typeAnnotation(s, base) {
-      annotation(base);
+      annotation(base, s);
       if (at(".") && ts[pos + 1]?.text === "{") {
         pos += 2;
         sequence(scope(s), "}");
@@ -540,6 +561,13 @@
           return [":", ":=", "::"].includes(ts[i + 1]?.text) ? i : null;
       }
       return null;
+    }
+    function whereAliasEnd(start) {
+      if (!word.test(ts[start].text) || !upper.test(ts[start + 2]?.text || ""))
+        return null;
+      const end = ts[start + 3]?.text === "(" ? typeDeclarationEnd(start + 2) : start + 2;
+      return end !== null && ts[end + 1]?.text === ":" && ts[end + 2]?.text === "where"
+        ? end : null;
     }
     function patternDeclarationEnd(start) {
       let nesting = 0;
