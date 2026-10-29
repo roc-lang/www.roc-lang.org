@@ -22,16 +22,16 @@ pre > code.roc-highlight,
 ::highlight(roc-o) { color: #6633bf; }
 ::highlight(roc-d),
 ::highlight(roc-f),
-::highlight(roc-p),
-::highlight(roc-parameter),
-::highlight(roc-property),
-::highlight(roc-namespace) { color: #4d5670; }
+::highlight(roc-p) { color: #4d5670; }
 ::highlight(roc-u),
 ::highlight(roc-type),
 ::highlight(roc-enumMember),
 ::highlight(roc-typeParameter) { color: #245ca6; }
 ::highlight(roc-v),
-::highlight(roc-function) { color: #202746; }
+::highlight(roc-function),
+::highlight(roc-parameter),
+::highlight(roc-property),
+::highlight(roc-namespace) { color: #202746; }
 ::highlight(roc-e) { color: #b42338; }
 
 @media (prefers-color-scheme: dark) {
@@ -52,16 +52,16 @@ pre > code.roc-highlight,
     ::highlight(roc-o) { color: #a17cf3; }
     ::highlight(roc-d),
     ::highlight(roc-f),
-    ::highlight(roc-p),
-    ::highlight(roc-parameter),
-    ::highlight(roc-property),
-    ::highlight(roc-namespace) { color: #b9c1d5; }
+    ::highlight(roc-p) { color: #b9c1d5; }
     ::highlight(roc-u),
     ::highlight(roc-type),
     ::highlight(roc-enumMember),
     ::highlight(roc-typeParameter) { color: #9ecbff; }
     ::highlight(roc-v),
-    ::highlight(roc-function) { color: white; }
+    ::highlight(roc-function),
+    ::highlight(roc-parameter),
+    ::highlight(roc-property),
+    ::highlight(roc-namespace) { color: white; }
     ::highlight(roc-e) { color: hsl(0, 96%, 67%); }
 }
 

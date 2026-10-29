@@ -999,7 +999,10 @@ code .lowerident,
 }
 
 ::highlight(roc-v),
-::highlight(roc-function) {
+::highlight(roc-function),
+::highlight(roc-parameter),
+::highlight(roc-property),
+::highlight(roc-namespace) {
     color: white;
 }
 
@@ -1916,10 +1919,7 @@ code .dim,
     }
 }
 
-/* Supporting names recede; nominal names stay distinct from literal data. */
-::highlight(roc-parameter),
-::highlight(roc-property),
-::highlight(roc-namespace) { color: #b9c1d5; }
+/* Named types and constructors stay distinct from literal data. */
 ::highlight(roc-type),
 ::highlight(roc-enumMember),
 ::highlight(roc-typeParameter) { color: #9ecbff; }
