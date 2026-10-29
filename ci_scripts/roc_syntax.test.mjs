@@ -337,3 +337,37 @@ test("interpolation boundaries share a role while ordinary braces stay brackets"
   ]);
   assert.deepEqual(actual.filter(t => t.text === "{").map(t => t.type), ["bracket"]);
 });
+
+test("word operators retain their lexical role and access dots are operators", () => {
+  const source = 'choose = |a, b, c| a and b or c\nresult = items.map(choose)\nfield = item.name\ntext = "and.or"';
+  for (const name of ["and", "or"])
+    assert.deepEqual(roles(source, name), ["operator"]);
+  assert.deepEqual(roles(source, "."), ["operator", "operator"]);
+  assert.deepEqual(roles(source, "map"), ["function"]);
+  assert.deepEqual(roles(source, "and.or"), ["string"]);
+});
+
+test("nominal method bodies contain expressions and bindings rather than annotations", () => {
+  const source = `ItemKind := [Text, Other].{
+ encoder_for : encoding -> (ItemKind, state -> state)
+ encoder_for = |_encoding| {
+  Encoding : encoding
+  |ItemKind.(item_kind), state| {
+   u32 = match item_kind { Text => 1 Other => 2 }
+   Encoding.encode_u32(u32, state)
+  }
+ }
+ allowed = |a, b| a and b or a
+}
+after = |x| x`;
+  assert.deepEqual(roles(source, "ItemKind"), ["type", "type", "type"]);
+  assert.deepEqual(roles(source, "encoder_for"), ["function", "function"]);
+  assert.deepEqual(roles(source, "_encoding"), ["parameter"]);
+  assert.deepEqual(roles(source, "Encoding"), ["type", "type"]);
+  assert.deepEqual(roles(source, "item_kind"), ["parameter", "parameter"]);
+  assert.deepEqual(roles(source, "u32"), ["variable", "variable"]);
+  assert.deepEqual(roles(source, "Text"), ["enumMember", "enumMember"]);
+  assert.deepEqual(roles(source, "and"), ["operator"]);
+  assert.deepEqual(roles(source, "or"), ["operator"]);
+  assert.deepEqual(roles(source, "after"), ["function"]);
+});

@@ -58,9 +58,10 @@
           if (range.type === "k" && (value === "${" || value === "}"))
             type = "operator";
           else if ("(){}[]|".includes(value)) type = "bracket";
-          else if (value === "," || value === ":" || value === ".")
+          else if (value === "." || value === "?") type = "operator";
+          else if (value === "," || value === ":")
             type = "punctuation";
-          else if (word.test(value) && range.type !== "k")
+          else if (word.test(value) && range.type !== "k" && range.type !== "o")
             type = upper.test(value) ? "enumMember" : "variable";
         }
         all.push({
@@ -90,7 +91,7 @@
       return null;
     }
     function mark(t, type, declaration = false) {
-      if (t && t.text !== "\0") {
+      if (t && t.text !== "\0" && t.type !== "operator" && t.type !== "keyword") {
         t.type = type;
         t.modifiers = declaration ? ["declaration"] : [];
       }
@@ -156,6 +157,7 @@
         if (
           nesting === 0 &&
           (t.text === "=" ||
+            (t.text === "." && ts[pos + 1]?.text === "{") ||
             boundary(t, base) ||
             (t.text === base.text && ts[pos + 1]?.text === "="))
         )
@@ -215,7 +217,8 @@
           t.type !== "keyword" &&
           t.text !== "_"
         ) {
-          if (upper.test(t.text)) mark(t, "enumMember");
+          if (upper.test(t.text))
+            mark(t, lookup(s, t.text)?.kind === "type" ? "type" : "enumMember");
           else if (at(":")) {
             mark(t, "property");
             pos++;
@@ -265,10 +268,11 @@
       const record =
         !declaration &&
         ts[pos] &&
-        (ts[pos + 1]?.text === ":" ||
-          ts[pos]?.text === ".." ||
-          ts[pos + 1]?.text === "," ||
-          (!forceBlock && ts[pos + 1]?.text === "}"));
+        (ts[pos].text === ".." ||
+          (word.test(ts[pos].text) && !upper.test(ts[pos].text) &&
+            (ts[pos + 1]?.text === ":" ||
+              ts[pos + 1]?.text === "," ||
+              (!forceBlock && ts[pos + 1]?.text === "}"))));
       if (record) {
         while (pos < ts.length && !at("}")) {
           const before = pos,
@@ -489,7 +493,7 @@
           }
           take(")");
           pos++;
-          annotation(t);
+          typeAnnotation(s, t);
         } else if (
           word.test(t.text) &&
           ["=", ":", ":=", "::"].includes(ts[pos + 1]?.text)
@@ -498,7 +502,7 @@
           const separator = ts[pos++].text;
           if (upper.test(t.text)) {
             bind(s, t, { kind: "type" }, "type");
-            annotation(t);
+            typeAnnotation(s, t);
           } else {
             let shape = separator === ":" ? annotation(t) : variable;
             if (separator === "=" || take("=")) {
@@ -519,6 +523,14 @@
         if (pos === before) pos++;
       }
       return result;
+    }
+    function typeAnnotation(s, base) {
+      annotation(base);
+      if (at(".") && ts[pos + 1]?.text === "{") {
+        pos += 2;
+        sequence(scope(s), "}");
+        take("}");
+      }
     }
     function typeDeclarationEnd(start) {
       let nesting = 0;
