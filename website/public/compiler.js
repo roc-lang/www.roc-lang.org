@@ -198,7 +198,7 @@ const M = 15, X = 16, B = 128, G = 256;
 const Z = 0, ER = 9, EE = 25, U = 17, L = 82, NUM = 19, S = 4, SE = 20;
 const K = 5, KE = 21, P = 6, PE = 22, F = 38, D = 7, DE = 23, O = 8;
 const OF = 40, CO = 520, DL = 210, DU = 145, DN = 147, DO = 136;
-const DER = 153, DD = 264, CM = 10;
+const DER = 153, CM = 10;
 
 const TWO_BYTE_TOKENS = {
   0x213d: O, // !=
@@ -237,7 +237,7 @@ const ONE_BYTE_TOKENS = {
 };
 
 const KWDS =
-  /^(app|as|crash|dbg|else|expect|exposes|exposing|for|generates|has|hosted|if|implements|import|imports|in|interface|match|module|package|packages|platform|provides|requires|return|targets|var|where|while|with|break)$/;
+  /^(app|as|crash|dbg|else|expect|exposes|exposing|for!?|generates|has|hosted|if|implements|import|imports|in|interface|match|module|package|packages|platform|provides|requires|return|targets|var|where|while|with|break)$/;
 const SUF =
   /^(dec|f32|f64|i128|i16|i32|i64|i8|nat|u128|u16|u32|u64|u8)$/;
 
@@ -400,6 +400,11 @@ class RocTokenizer {
     const c = this.pk();
     if (c == null) {
       return hypothesis;
+    }
+    // Dotted suffixes are type names, including user-defined number types.
+    if (c === 46 && up(this.at(1))) {
+      this.p += 1;
+      return this.ident() ? hypothesis : keepError(hypothesis, EE);
     }
     const isIdentChar =
       lo(c) ||
@@ -715,6 +720,7 @@ class RocTokenizer {
 
     const tag = ONE_BYTE_TOKENS[b];
     if (tag != null) {
+      if (b === 123 && this.s.length) this.s.at(-1).depth++;
       this.p += 1;
       this.push(tag, start);
       return true;
@@ -748,11 +754,13 @@ class RocTokenizer {
         }
       } else if (b === 125) {
         this.p += 1;
-        if (this.s.length > 0) {
-          const last = this.s.pop();
+        const frame = this.s.at(-1);
+        if (frame && frame.depth === 0) {
+          this.s.pop();
           this.push(KE, start);
-          this.stringBody(last);
+          this.stringBody(frame.kind);
         } else {
+          if (frame) frame.depth--;
           this.push(PE, start);
         }
       } else if (this.symbol(start, b)) {
@@ -804,16 +812,16 @@ class RocTokenizer {
     } else if (next === 46) {
       if (this.at(2) === 46) {
         this.p += 3;
-        this.push(P, start);
+        this.push(O, start);
       } else if (this.at(2) === 60) {
         this.p += 3;
-        this.push(DD, start);
+        this.push(O, start);
       } else if (this.at(2) === 61) {
         this.p += 3;
-        this.push(DD, start);
+        this.push(O, start);
       } else {
         this.p += 2;
-        this.push(P, start);
+        this.push(O, start);
       }
     } else if (dig(next)) {
       this.p += 1;
@@ -962,7 +970,7 @@ class RocTokenizer {
         const dollarStart = this.p;
         this.p += 2;
         this.push(K, dollarStart);
-        this.s.push(kind);
+        this.s.push({ kind, depth: 0 });
         return;
       } else if (c === 10) {
         this.push(stringPartTag, start);
