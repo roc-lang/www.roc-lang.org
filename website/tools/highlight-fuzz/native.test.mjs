@@ -53,3 +53,40 @@ test("checked builtin snapshot resolves exported function values", () => {
   const tokens = candidate()("callback = List.map\nother = Str.trim");
   assert.ok(tokens.filter((x) => x.type === "function").length >= 4);
 });
+
+// This input previously reached an unnecessary post-check lowering pass and aborted.
+test("reference stops at checking before post-check finalization", async () => {
+  const reference = new Reference(10000, () =>
+    spawn(executable, [], { stdio: ["pipe", "pipe", "pipe"] }),
+  );
+  const source = `module [result]
+result : I64
+result = if True (|(v1, v1b)| 93)(({
+ v2 = Str.is_empty
+ if v2("😀") (|(v3, v3b)| if True v3b else v3b((1 + 33), if True 84 else 2)) else {
+    v6 = {
+    v7 = 24
+    86
+}
+    if True 71 else v6
+}
+}, {
+ v9 = Str.is_empty
+ if v9("😀") match if True 0 else 44 {
+ v10 => {
+    v12 = 88
+    v10
+}
+} else (|{ amount: v13 }| if True v13 else 49)({ amount: match 64 {
+ v15 => v15
+} })
+})) else 9
+`;
+  try {
+    const result = await reference.evaluate(source);
+    assert.ok(result.lexical.length > 0);
+    assert.ok(result.semantic.length > 0);
+  } finally {
+    reference.stop();
+  }
+});
