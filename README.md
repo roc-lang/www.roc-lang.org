@@ -163,3 +163,24 @@ The single-page tutorial is `website/content/tutorial/index.md`, imported from
 recorded in its opening comment. When refreshing it, preserve the prose and code,
 use `roc` fences instead of GitHub's `ruby` fallback, retain heading anchors and
 the contents list, and make links to this website relative.
+
+## Website content in documentation search
+
+With a compiler that generates `search-index.html`, full and cached website builds
+add every enabled example's title, description, Markdown, and Roc source to the
+“Guides & examples” search category. Results link to the published README page.
+The generated FAQ is also indexed, with question and subsection headings linking
+to their anchors. FAQ results use full-page navigation, like examples.
+Disabled examples are excluded. Missing source or destination pages fail indexing.
+When the compiler source provides `docs/search.tsv`, the build also passes it to
+the generator to include curated operators and aliases.
+The website owns this integration; the compiler has no dependency on its content.
+Older compilers without prose search print a notice and retain their API search.
+
+To refresh the index after generating the example pages:
+
+```sh
+cd website
+python3 examples.py search examples.json content/examples build/examples build/docs/main/search-index.html
+python3 search.py build/faq.html build/docs/main/search-index.html
+```
