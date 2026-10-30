@@ -95,8 +95,8 @@ full_clean_build! = |compiler| {
 	ensure_fonts_present!()?
 	ensure_repl_present!()?
 	ensure_builtins_present!(compiler)?
-	patch_builtins_html!()?
 	generate_site!(compiler.bin)?
+	patch_builtins_html!()?
 	path(".cache").create_all!() ?? {}
 	write_cache_millis!(cache_marker_path)?
 
@@ -119,7 +119,6 @@ build_with_cache! = |compiler| {
 	ensure_fonts_present!()?
 	ensure_repl_present!()?
 	ensure_builtins_present!(compiler)?
-	patch_builtins_html!()?
 
 	latest_content_millis = max_mtime_in_dirs_millis!(["content"]) ?? 0
 	latest_public_millis = max_mtime_in_dirs_millis!(["public"]) ?? 0
@@ -145,6 +144,7 @@ build_with_cache! = |compiler| {
 		Stdout.line!("No content, public asset, generator, or compiler-pin changes detected.")?
 	}
 
+	patch_builtins_html!()?
 	optimize_compiler_wasm!()?
 
 	Ok({})
@@ -502,7 +502,7 @@ patch_builtins_html! = || {
 		css_patch,
 	)?
 
-	run!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/docs/main"])?
+	run!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/docs/main", "../../build/community.html"])?
 	Ok({})
 }
 

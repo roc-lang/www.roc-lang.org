@@ -1,0 +1,120 @@
+/* Only the roc-lang.org build loads these shell overrides. */
+body.website-docs {
+    grid-template-rows: auto minmax(0, 1fr);
+}
+.website-docs > #top-bar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+}
+.website-docs > main {
+    grid-row: 2;
+    min-height: 0;
+}
+.website-docs > #sidebar-nav {
+    grid-row: 2;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) auto;
+}
+@media only screen and (max-width: 768px) {
+    body.website-docs {
+        height: auto;
+        overflow: visible;
+    }
+    .website-docs > #sidebar-nav {
+        top: 0;
+    }
+    body.website-docs > main {
+        min-height: calc(100dvh - var(--site-header-height, 96px));
+        padding-top: 0;
+        overflow: visible;
+    }
+    .website-docs #module-search-form {
+        position: sticky;
+        top: 0;
+        flex-shrink: 0;
+    }
+    html:has(body.website-docs) {
+        overflow-x: clip;
+        scroll-padding-top: var(--module-search-form-height);
+    }
+}
+
+/* The docs home uses the same content area and streamed navigation as API pages. */
+body.website-docs.docs-index .index-guide-links { display: none; }
+body.website-docs.docs-index main::before { content: none; }
+body.website-docs.docs-index main > .main-content { grid-row: 3; }
+.getting-started { padding: 8px 0 40px; }
+.getting-started h1 { margin-bottom: 16px; }
+.docs-start-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 32px 0;
+}
+.getting-started .docs-start-card {
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    border: 1px solid var(--violet-border-subtle);
+    border-radius: 0;
+    color: var(--text-color);
+    text-decoration: none;
+    background: var(--violet-bg);
+}
+.getting-started .docs-start-card:hover {
+    border-color: var(--link-color);
+    text-decoration: none;
+}
+.getting-started .docs-start-card h2 { margin: 12px 0 0; font-size: 1.35rem; }
+.getting-started .docs-start-card p { margin: 12px 0 24px; }
+.getting-started .docs-card-link { margin-top: auto; color: var(--link-color); }
+.getting-started .docs-api-links { padding-left: 24px; }
+.getting-started #builtin-types { scroll-margin-top: var(--module-search-form-height); }
+@media (max-width: 1000px) {
+    .docs-start-grid { grid-template-columns: 1fr; }
+}
+
+.getting-started h1, .getting-started h2 { font-family: var(--font-sans); }
+body.website-docs.docs-index #getting-started-link { font-weight: 700; color: var(--link-color); }
+
+/* Give the search field the same initial top inset as the sidebar label.
+   The margin scrolls away; sticky positioning keeps its normal compact inset. */
+.website-docs #module-search-form { margin-top: 26px; }
+section.getting-started { padding: 8px 8px 40px; }
+section.getting-started h1,
+section.getting-started h2,
+section.getting-started p { padding-left: 0; padding-right: 0; }
+body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
+
+/* Place the home branding slightly left of the desktop sidebar labels. */
+@media (min-width: 769px) {
+    .website-docs #top-bar .home-link-text { display: inline; }
+    .website-docs #top-bar nav {
+        max-width: none;
+        display: grid;
+        grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+        padding-right: 0;
+    }
+    .website-docs #nav-home-link {
+        justify-self: start;
+        margin-left: 36px; /* 16px left of the sidebar labels, minus link padding. */
+    }
+    .website-docs #top-bar-links { justify-self: center; }
+}
+
+@media (max-width: 768px) {
+    /* The search form is in main's flow now, so it already shares its inset. */
+    .website-docs #module-search-form { padding-left: 0; padding-right: 0; }
+    .website-docs main:has(.getting-started) #module-search-form {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+    .website-docs .menu-toggle { margin-right: 0; }
+}
+
+/* Long qualified type names must not widen the page beyond their code block. */
+.website-docs .entry-type-def,
+.website-docs .entry-signature-pre {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
