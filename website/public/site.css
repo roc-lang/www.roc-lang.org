@@ -290,53 +290,12 @@ h3 {
     font-size: 1.5rem;
 }
 
-#top-bar,
-#top-bar nav {
-    background-color: var(--gray-bg);
-}
-
-#top-bar {
-    box-sizing: border-box;
-    width: 100%;
-}
-
-#top-bar nav {
-    max-width: var(--body-max-width);
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    padding-right: 9px;
-}
-
-#nav-home-link {
-    display: inline-block;
-    color: var(--top-bar-fg);
-    font-size: 1.8rem;
-    padding: 4px;
-}
-
 #tutorial-toc-toggle:checked + #tutorial-toc {
     display: block;
 }
 
-.home-link-text {
-    padding: 8px;
-    font-size: 24px;
-    position: relative;
-    top: -0.6rem;
-}
-
 .home-examples-title {
     margin-bottom: 4px;
-}
-
-#top-bar-links a,
-#top-bar-links label {
-    box-sizing: border-box;
-    color: var(--top-bar-fg);
-    display: inline-block;
-    padding: 12px 16px;
-    margin: 0 2px;
 }
 
 main {
@@ -641,10 +600,6 @@ details {
         padding: 6px 0;
     }
 
-    .home-link-text {
-        display: none; /* Don't show "Roc" in the header next to the logo, to save space */
-    }
-
     h1 code,
     h2 code,
     h3 code,
@@ -714,33 +669,6 @@ details {
         width: auto;
     }
 
-    #top-bar-links {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr; /* Three equal-width columns */
-        grid-template-rows: auto auto; /* Two rows */
-    }
-
-    /* Left-align the first link in each row, right-align the last one, and center the middle one. */
-    #top-bar-links > :nth-child(3n + 1) {
-        text-align: left;
-    }
-
-    #top-bar-links > :nth-child(3n + 2) {
-        text-align: center;
-    }
-
-    #top-bar-links > :nth-child(3n + 3) {
-        text-align: right;
-    }
-
-    #top-bar-links a,
-    #top-bar-links label {
-        font-size: 1.2rem;
-        padding: 12px 0.5rem;
-        margin: 0;
-    }
-
     #homepage-repl-container #repl {
         max-width: none;
     }
@@ -770,36 +698,6 @@ details {
             format("woff2"),
         url("/fonts/permanent-marker-v16-latin/permanent-marker-v16-latin-regular.woff")
             format("woff");
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-        U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
-        U+2215, U+FEFF, U+FFFD;
-}
-
-/* latin-ext */
-@font-face {
-    font-family: "Lato";
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src:
-        url("/fonts/lato-v23-latin-ext_latin/lato-v23-latin-ext_latin-regular.woff2")
-            format("woff2"),
-        url("/fonts/lato-v23-latin-ext_latin/lato-v23-latin-ext_latin-regular.woff")
-            format("woff");
-    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
-        U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-/* latin */
-@font-face {
-    font-family: "Lato";
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src:
-        url("/fonts/lato-v23-latin/lato-v23-latin-regular.woff2")
-            format("woff2"),
-        url("/fonts/lato-v23-latin/lato-v23-latin-regular.woff") format("woff");
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
         U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
         U+2215, U+FEFF, U+FFFD;

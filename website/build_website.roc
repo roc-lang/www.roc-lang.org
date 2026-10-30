@@ -1,6 +1,6 @@
 app [main!] {
 	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0/GddgvsGjiNXrHFW6au5i5dUDbTs8FinQdrgE2Gqmw53t.tar.zst",
-	roc: "nightly-2026-10-27-de79a0f",
+	roc: "nightly-2026-10-29-a0a9fc2",
 }
 
 import pf.Cmd
@@ -95,8 +95,8 @@ full_clean_build! = |compiler| {
 	ensure_fonts_present!()?
 	ensure_repl_present!()?
 	ensure_builtins_present!(compiler)?
-	patch_builtins_html!()?
 	generate_site!(compiler.bin)?
+	patch_builtins_html!()?
 	index_website_search!()?
 	path(".cache").create_all!() ?? {}
 	write_cache_millis!(cache_marker_path)?
@@ -120,7 +120,6 @@ build_with_cache! = |compiler| {
 	ensure_fonts_present!()?
 	ensure_repl_present!()?
 	ensure_builtins_present!(compiler)?
-	patch_builtins_html!()?
 
 	latest_content_millis = max_mtime_in_dirs_millis!(["content"]) ?? 0
 	latest_public_millis = max_mtime_in_dirs_millis!(["public"]) ?? 0
@@ -146,6 +145,7 @@ build_with_cache! = |compiler| {
 		Stdout.line!("No content, public asset, generator, or compiler-pin changes detected.")?
 	}
 
+	patch_builtins_html!()?
 	index_website_search!()?
 	optimize_compiler_wasm!()?
 
@@ -520,7 +520,7 @@ patch_builtins_html! = || {
 		css_patch,
 	)?
 
-	run!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/docs/main"])?
+	run!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/docs/main", "../../build/community.html"])?
 	Ok({})
 }
 
