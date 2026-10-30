@@ -1,4 +1,4 @@
-Compiler source: https://github.com/ageron/roc/tree/032fa951f1f83183d32c491b1040de029d2c0c64
+Compiler source: local docs-prose-search commit 4a1d6e840c5c5fb9fc76a17fbe0326c3bf91d419
 Compiler executable: Roc compiler version debug-aa881bb6
-Search JavaScript copied from the recorded source commit.
+Search JavaScript and stylesheet copied from the recorded source commit.
 Website header, examples, and FAQ are applied by the website build.

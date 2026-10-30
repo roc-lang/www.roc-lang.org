@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory() as directory:
     subprocess.run([str(compiler), 'docs', '--builtins', '--with-lang-ref',
                     f'--search-config={source / "docs/search.tsv"}', f'--output={docs}'], cwd=source, check=True)
     # Search assets can be refreshed without rebuilding the compiler executable.
-    for name in ('search.js', 'search-core.js'):
+    for name in ('search.js', 'search-core.js', 'styles.css'):
         shutil.copyfile(source / 'src/docs/static' / name, docs / name)
     with (output / 'docs.tar.gz').open('wb') as raw:
         with gzip.GzipFile(fileobj=raw, mode='wb', filename='', mtime=0) as compressed:
@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory() as directory:
 (output / 'SOURCE.txt').write_text(
     f'Compiler source: https://github.com/ageron/roc/tree/{commit}\n'
     f'Compiler executable: {version}\n'
-    'Search JavaScript copied from the recorded source commit.\n'
+    'Search JavaScript and stylesheet copied from the recorded source commit.\n'
     'Website header, examples, and FAQ are applied by the website build.\n'
 )
 print(f'Updated {output / "docs.tar.gz"}')
