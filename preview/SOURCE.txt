@@ -1,4 +1,4 @@
-Compiler source: local docs-prose-search commit 4a1d6e840c5c5fb9fc76a17fbe0326c3bf91d419
+Compiler source: local docs-prose-search commit 858af1d458b775fcf1c07ea7d14f38e1e137d3a4
 Compiler executable: Roc compiler version debug-aa881bb6
 Search JavaScript and stylesheet copied from the recorded source commit.
 Website header, examples, and FAQ are applied by the website build.
