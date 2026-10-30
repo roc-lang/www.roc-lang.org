@@ -95,8 +95,9 @@ full_clean_build! = |compiler| {
 	ensure_fonts_present!()?
 	ensure_repl_present!()?
 	ensure_builtins_present!(compiler)?
-	patch_builtins_html!()?
 	generate_site!(compiler.bin)?
+	patch_builtins_html!()?
+	index_website_search!()?
 	path(".cache").create_all!() ?? {}
 	write_cache_millis!(cache_marker_path)?
 
@@ -108,7 +109,7 @@ build_with_cache! = |compiler| {
 	path("build").create_all!() ?? {}
 
 	last_build_millis = read_cache_millis!(cache_marker_path) ?? 0
-	latest_compiler_pin_millis = max_mtime_in_dirs_millis!(["build_website.roc"]) ?? 0
+	latest_compiler_pin_millis = max_mtime_in_dirs_millis!(["build_website.roc", "../preview/docs.tar.gz"]) ?? 0
 	compiler_changed = latest_compiler_pin_millis > last_build_millis
 
 	if compiler_changed {
@@ -119,7 +120,6 @@ build_with_cache! = |compiler| {
 	ensure_fonts_present!()?
 	ensure_repl_present!()?
 	ensure_builtins_present!(compiler)?
-	patch_builtins_html!()?
 
 	latest_content_millis = max_mtime_in_dirs_millis!(["content"]) ?? 0
 	latest_public_millis = max_mtime_in_dirs_millis!(["public"]) ?? 0
@@ -145,9 +145,21 @@ build_with_cache! = |compiler| {
 		Stdout.line!("No content, public asset, generator, or compiler-pin changes detected.")?
 	}
 
+	patch_builtins_html!()?
+	index_website_search!()?
 	optimize_compiler_wasm!()?
 
 	Ok({})
+}
+
+index_website_search! : () => Try({}, _)
+index_website_search! = || {
+	if path("build/docs/main/search-index.html").is_file!()? {
+		run!("python3", ["examples.py", "search", "examples.json", "content/examples", "build/examples", "build/docs/main/search-index.html"])?
+		run!("python3", ["search.py", "build/faq.html", "build/docs/main/search-index.html"])
+	} else {
+		Stdout.line!("Website search requires a compiler with prose-search support; this compiler's docs only search API names.")
+	}
 }
 
 generate_site! : Str => Try({}, _)
@@ -381,24 +393,10 @@ ensure_compiler_ready! = |compiler| {
 }
 
 generate_builtins_docs! : CompilerInfo => Try({}, _)
-generate_builtins_docs! = |compiler| {
-	ensure_compiler_ready!(compiler)?
-
+# Preview-only: use docs from the modified generator; see ../preview/README.md.
+generate_builtins_docs! = |_compiler| {
 	path("build/docs/main").create_all!()?
-	path("docs/langref").delete_all!() ?? {}
-	path("docs/langref").create_all!()?
-	run!("cp", ["-R", "${compiler.src_dir}/docs/langref/.", "docs/langref"])?
-	run!(
-		compiler.bin,
-		[
-			"docs",
-			"--builtins",
-			"--output=build/docs/main",
-			"--with-lang-ref",
-		],
-	)?
-	path("docs").delete_all!()?
-	Ok({})
+	run!("tar", ["-xzf", "../preview/docs.tar.gz", "-C", "build/docs/main"])
 }
 
 ensure_pinned_compiler_downloaded! : CompilerInfo => Try({}, _)
@@ -502,7 +500,7 @@ patch_builtins_html! = || {
 		css_patch,
 	)?
 
-	run!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/docs/main"])?
+	run!("go", ["-C", "tools/docs-runtime-highlights", "run", ".", "../../build/docs/main", "../../build/community.html"])?
 	Ok({})
 }
 

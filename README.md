@@ -91,6 +91,29 @@ Preview the result with:
 python3 serve.py build 8080
 ```
 
+## Generated documentation header
+
+The website build adds its shared navigation header to `build/docs/main` after
+both the website and compiler documentation have been generated. The
+`docs-runtime-highlights` post-processor copies the header from the generated
+`community.html`, so navigation links have a single source in `static_site_gen.roc`.
+`site-header.css` is shared with ordinary website pages; `docs-site.css` and
+`docs-site.js` adapt the docs layout while retaining its sidebar and search.
+
+The docs landing content lives in
+`website/tools/docs-runtime-highlights/getting_started.html`. It is embedded by
+the post-processor inside the docs streaming-navigation boundaries.
+
+This is a website-only transformation. It does not change the compiler's API
+documentation generator. Running the post-processor without its optional
+`website-page` argument also retains the original package header.
+
+Run the post-processor tests with Go installed:
+
+```sh
+go -C website/tools/docs-runtime-highlights test ./...
+```
+
 ## Browser compiler updates
 
 `website/compiler-wasm.json` pins the homepage's browser compiler and checksum.
@@ -140,3 +163,24 @@ The single-page tutorial is `website/content/tutorial/index.md`, imported from
 recorded in its opening comment. When refreshing it, preserve the prose and code,
 use `roc` fences instead of GitHub's `ruby` fallback, retain heading anchors and
 the contents list, and make links to this website relative.
+
+## Website content in documentation search
+
+With a compiler that generates `search-index.html`, full and cached website builds
+add every enabled example's title, description, Markdown, and Roc source to the
+“Guides & examples” search category. Results link to the published README page.
+The generated FAQ is also indexed, with question and subsection headings linking
+to their anchors. FAQ results use full-page navigation, like examples.
+Disabled examples are excluded. Missing source or destination pages fail indexing.
+When the compiler source provides `docs/search.tsv`, the build also passes it to
+the generator to include curated operators and aliases.
+The website owns this integration; the compiler has no dependency on its content.
+Older compilers without prose search print a notice and retain their API search.
+
+To refresh the index after generating the example pages:
+
+```sh
+cd website
+python3 examples.py search examples.json content/examples build/examples build/docs/main/search-index.html
+python3 search.py build/faq.html build/docs/main/search-index.html
+```

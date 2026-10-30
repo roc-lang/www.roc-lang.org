@@ -163,6 +163,44 @@ def add_version_notes(manifest, versions, output):
         page.write_text(html, encoding="utf-8")
 
 
+SEARCH_START = "<!-- Website examples search start -->"
+SEARCH_END = "<!-- Website examples search end -->"
+
+
+def index_search(manifest, source, pages, index_path):
+    """Add published examples to the compiler's extensible HTML search index."""
+    source, pages, index_path = Path(source), Path(pages), Path(index_path)
+    original = index_path.read_text(encoding="utf-8")
+    entries = []
+    for example in enabled_examples(manifest):
+        directory = example["directory"]
+        root = source / directory
+        readme = root / "README.md"
+        destination = pages / directory / "README.html"
+        if not readme.is_file() or not destination.is_file():
+            raise ValueError(f"Cannot index unpublished example {directory}: README source or page missing")
+        files = sorted(path for path in root.rglob("*")
+                       if path.is_file() and path.suffix in {".md", ".roc"}
+                       and not any(part.startswith(".") for part in path.relative_to(root).parts))
+        text = example["description"] + "\n" + "\n".join(
+            path.read_text(encoding="utf-8") for path in files)
+        entries.append(
+            f'<article data-full-navigation data-category="guides" data-title="Examples › {escape(example["title"], quote=True)}" '
+            f'data-href="/examples/{directory}/README.html"><p>{escape(text)}</p></article>')
+    fragment = SEARCH_START + "\n" + "\n".join(entries) + "\n" + SEARCH_END
+    if SEARCH_START in original:
+        before, _, rest = original.partition(SEARCH_START)
+        _, separator, after = rest.partition(SEARCH_END)
+        if not separator:
+            raise ValueError("Incomplete website examples search section")
+        updated = before + fragment + after
+    else:
+        updated = original.rstrip() + "\n" + fragment + "\n"
+    if updated != original:
+        index_path.write_text(updated, encoding="utf-8")
+    return len(entries)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -180,10 +218,18 @@ def main():
     versions.add_argument("manifest")
     versions.add_argument("versions", help="tab-separated directory and nightly records")
     versions.add_argument("output")
+    search = commands.add_parser("search", help="index published examples in generated docs search")
+    search.add_argument("manifest")
+    search.add_argument("source")
+    search.add_argument("pages")
+    search.add_argument("index")
     args = parser.parse_args()
     try:
         manifest = load_manifest(args.manifest)
-        if args.command == "records":
+        if args.command == "search":
+            count = index_search(manifest, args.source, args.pages, args.index)
+            print(f"Indexed {count} published examples in documentation search")
+        elif args.command == "records":
             write_records(manifest, args.output)
         elif args.command == "images":
             copy_images(manifest, args.source, args.output)

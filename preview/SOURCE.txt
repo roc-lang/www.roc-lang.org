@@ -1,0 +1,5 @@
+Compiler source: https://github.com/ageron/roc/tree/b7d41617662c15a148a5450da325fa3910f88d4e
+Compiler executable: Roc compiler version debug-858af1d4
+Search JavaScript and stylesheet copied from the recorded source commit.
+Standalone table CSS from ageron/roc commit a26b77ba2deb947271d148b2753ef6abde6b5eba appended by preview/refresh.py.
+Website header, examples, and FAQ are applied by the website build.

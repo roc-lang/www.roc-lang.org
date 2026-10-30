@@ -25,6 +25,37 @@ class ExamplesTests(unittest.TestCase):
             path.write_text(json.dumps(manifest))
             return examples.load_manifest(path)
 
+    def test_search_indexes_source_and_removes_disabled_examples(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["examples"] = [entry for entry in manifest["examples"] if entry["directory"] == "FizzBuzz"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, pages = root / "source", root / "pages"
+            (source / "FizzBuzz").mkdir(parents=True)
+            (pages / "FizzBuzz").mkdir(parents=True)
+            (source / "FizzBuzz/README.md").write_text("FizzBuzz walkthrough")
+            (source / "FizzBuzz/main.roc").write_text('code_only_token = "<script>"')
+            (pages / "FizzBuzz/README.html").write_text("Published example")
+            index = root / "search-index.html"
+            index.write_text('<article data-category="api">Keep API docs</article>')
+            self.assertEqual(examples.index_search(manifest, source, pages, index), 1)
+            result = index.read_text()
+            self.assertIn('data-title="Examples › FizzBuzz"', result)
+            self.assertIn("<article data-full-navigation", result)
+            self.assertIn('data-href="/examples/FizzBuzz/README.html"', result)
+            self.assertIn("code_only_token", result)
+            self.assertIn("&lt;script&gt;", result)
+            examples.index_search(manifest, source, pages, index)
+            self.assertEqual(index.read_text(), result)
+            manifest["examples"][0]["enabled"] = False
+            examples.index_search(manifest, source, pages, index)
+            self.assertNotIn("FizzBuzz", index.read_text())
+            self.assertIn("Keep API docs", index.read_text())
+            manifest["examples"][0]["enabled"] = True
+            (pages / "FizzBuzz/README.html").unlink()
+            with self.assertRaisesRegex(ValueError, "unpublished example FizzBuzz"):
+                examples.index_search(manifest, source, pages, index)
+
     def test_each_enabled_example_has_one_link_and_build_record(self):
         rendered = examples.render_index(self.manifest)
         with tempfile.TemporaryDirectory() as directory:

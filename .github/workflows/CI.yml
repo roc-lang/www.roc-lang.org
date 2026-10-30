@@ -50,6 +50,8 @@ jobs:
 
       - name: Test examples manifest and category index
         run: python3 -m unittest discover -s ci_scripts -p 'test_examples.py'
+      - name: Test website search indexing
+        run: python3 -m unittest discover -s ci_scripts -p 'test_search.py'
 
       - run: roc version
 
