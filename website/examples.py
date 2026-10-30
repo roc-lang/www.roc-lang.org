@@ -1,11 +1,13 @@
 """Validate the examples manifest and render its categorized Markdown index."""
 
 import argparse
-from html import escape
+from html import escape, unescape
 import json
 from pathlib import Path
 import re
 import shutil
+import sys
+from urllib.parse import urljoin, urlsplit
 
 
 def single_line(value):
@@ -145,6 +147,42 @@ def copy_images(manifest, source, output):
                 shutil.copyfile(image, destination)
 
 
+def rewrite_readme_links(manifest, output):
+    """Translate cross-example README links into links to published pages."""
+    published = {f'/examples/{entry["directory"]}/README.md'
+                 for entry in enabled_examples(manifest)}
+    anchor = re.compile(
+        r"(<a\b[^>]*?\bhref=)([\"'])(.*?)(\2)([^>]*>)(.*?)</a>",
+        re.DOTALL | re.IGNORECASE,
+    )
+    for entry in enabled_examples(manifest):
+        page = Path(output) / entry["directory"] / "README.html"
+        base = f'/examples/{entry["directory"]}/README.html'
+
+        def replace(match):
+            href = unescape(match[3])
+            target = urlsplit(href)
+            if target.scheme or target.netloc or not target.path.endswith("/README.md"):
+                return match[0]
+            resolved = urlsplit(urljoin(base, href))
+            if not re.fullmatch(r"/examples/[^/]+/README\.md", resolved.path):
+                return match[0]
+            if resolved.path not in published:
+                print(f"Warning: {page}: unpublished example link {href}; keeping text only",
+                      file=sys.stderr)
+                return match[6]
+            destination = Path(output) / resolved.path.removeprefix("/examples/")
+            if not destination.with_suffix(".html").is_file():
+                raise ValueError(f"Missing published example page: {destination.with_suffix('.html')}")
+            url = resolved._replace(path=resolved.path[:-3] + ".html").geturl()
+            return f'{match[1]}{match[2]}{escape(url, quote=True)}{match[4]}{match[5]}{match[6]}</a>'
+
+        original = page.read_text(encoding="utf-8")
+        updated = anchor.sub(replace, original)
+        if updated != original:
+            page.write_text(updated, encoding="utf-8")
+
+
 def add_version_notes(manifest, versions, output):
     """Show the validated compiler version on each example's generated page."""
     for example in enabled_examples(manifest):
@@ -214,6 +252,9 @@ def main():
     images.add_argument("manifest")
     images.add_argument("source")
     images.add_argument("output")
+    links = commands.add_parser("links", help="rewrite cross-example README links")
+    links.add_argument("manifest")
+    links.add_argument("output")
     versions = commands.add_parser("versions", help="add compiler version notes to example pages")
     versions.add_argument("manifest")
     versions.add_argument("versions", help="tab-separated directory and nightly records")
@@ -233,6 +274,8 @@ def main():
             write_records(manifest, args.output)
         elif args.command == "images":
             copy_images(manifest, args.source, args.output)
+        elif args.command == "links":
+            rewrite_readme_links(manifest, args.output)
         elif args.command == "versions":
             versions = dict(line.split("\t") for line in Path(args.versions).read_text().splitlines())
             add_version_notes(manifest, versions, args.output)

@@ -1,6 +1,8 @@
 """Tests for the published examples manifest and index generation."""
 
 import copy
+from contextlib import redirect_stderr
+import io
 import importlib.util
 import json
 from pathlib import Path
@@ -24,6 +26,38 @@ class ExamplesTests(unittest.TestCase):
             path = Path(directory) / "examples.json"
             path.write_text(json.dumps(manifest))
             return examples.load_manifest(path)
+
+    def test_readme_links_follow_publication_and_preserve_other_links(self):
+        manifest = {"examples": [{"directory": "Sets"}, {"directory": "SafeMath"},
+                                 {"directory": "Disabled", "enabled": False}]}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ("Sets", "SafeMath"):
+                (root / name).mkdir()
+                (root / name / "README.html").write_text("<main></main>")
+            page = root / "Sets/README.html"
+            untouched = '<a href="https://github.com/example/README.md">external</a><a href="#local">local</a><a href="main.roc">source</a>'
+            page.write_text('<a class="example" href="../SafeMath/README.md?q=1&amp;x=2#output"><code>Math</code></a>'
+                            + '<a href="../CustomEquality/README.md">Custom Equality</a>'
+                            + '<a href="../Disabled/README.md">Disabled</a>' + untouched)
+            warnings = io.StringIO()
+            with redirect_stderr(warnings):
+                examples.rewrite_readme_links(manifest, root)
+            expected = '<a class="example" href="/examples/SafeMath/README.html?q=1&amp;x=2#output"><code>Math</code></a>Custom EqualityDisabled' + untouched
+            self.assertEqual(page.read_text(), expected)
+            self.assertIn("CustomEquality", warnings.getvalue())
+            self.assertIn("Disabled", warnings.getvalue())
+            examples.rewrite_readme_links(manifest, root)
+            self.assertEqual(page.read_text(), expected)
+
+    def test_readme_links_reject_missing_published_page(self):
+        manifest = {"examples": [{"directory": "Sets"}, {"directory": "SafeMath"}]}
+        with tempfile.TemporaryDirectory() as directory:
+            page = Path(directory) / "Sets/README.html"
+            page.parent.mkdir()
+            page.write_text('<a href="../SafeMath/README.md">Math</a>')
+            with self.assertRaisesRegex(ValueError, "Missing published example page"):
+                examples.rewrite_readme_links(manifest, directory)
 
     def test_search_indexes_source_and_removes_disabled_examples(self):
         manifest = copy.deepcopy(self.manifest)
