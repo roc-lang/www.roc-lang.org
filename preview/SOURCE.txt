@@ -1,4 +1,5 @@
 Compiler source: local docs-prose-search commit 858af1d458b775fcf1c07ea7d14f38e1e137d3a4
 Compiler executable: Roc compiler version debug-aa881bb6
 Search JavaScript and stylesheet copied from the recorded source commit.
+Standalone table CSS from ageron/roc commit a26b77ba2deb947271d148b2753ef6abde6b5eba appended by preview/refresh.py.
 Website header, examples, and FAQ are applied by the website build.

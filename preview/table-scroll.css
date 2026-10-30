@@ -1,0 +1,8 @@
+/* Standalone table fix: ageron/roc commit a26b77ba2deb947271d148b2753ef6abde6b5eba. */
+.entry-doc table,
+.module-doc table,
+.langref-article table {
+  display: block;
+  max-width: calc(100% - 32px);
+  overflow-x: auto;
+}

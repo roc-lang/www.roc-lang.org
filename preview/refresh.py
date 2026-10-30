@@ -24,6 +24,8 @@ with tempfile.TemporaryDirectory() as directory:
     # Search assets can be refreshed without rebuilding the compiler executable.
     for name in ('search.js', 'search-core.js', 'styles.css'):
         shutil.copyfile(source / 'src/docs/static' / name, docs / name)
+    with (docs / 'styles.css').open('a') as stylesheet:
+        stylesheet.write('\n' + (output / 'table-scroll.css').read_text())
     with (output / 'docs.tar.gz').open('wb') as raw:
         with gzip.GzipFile(fileobj=raw, mode='wb', filename='', mtime=0) as compressed:
             with tarfile.open(fileobj=compressed, mode='w') as archive:
@@ -38,9 +40,10 @@ with tempfile.TemporaryDirectory() as directory:
                     with path.open('rb') as content:
                         archive.addfile(info, content)
 (output / 'SOURCE.txt').write_text(
-    f'Compiler source: https://github.com/ageron/roc/tree/{commit}\n'
+    f'Compiler source: local docs-prose-search commit {commit}\n'
     f'Compiler executable: {version}\n'
     'Search JavaScript and stylesheet copied from the recorded source commit.\n'
+    'Standalone table CSS from ageron/roc commit a26b77ba2deb947271d148b2753ef6abde6b5eba appended by preview/refresh.py.\n'
     'Website header, examples, and FAQ are applied by the website build.\n'
 )
 print(f'Updated {output / "docs.tar.gz"}')
