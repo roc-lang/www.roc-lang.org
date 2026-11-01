@@ -161,6 +161,29 @@ class ExamplesTests(unittest.TestCase):
             self.assertNotIn("nightly-", html)
             self.assertFalse((Path(directory) / disabled["directory"]).exists())
 
+    def test_version_note_precedes_first_code_block_in_main(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["examples"] = [manifest["examples"][0]]
+        entry = manifest["examples"][0]
+        with tempfile.TemporaryDirectory() as directory:
+            page = Path(directory) / entry["directory"] / "README.html"
+            page.parent.mkdir()
+            for heading in ('<h2>Code</h2>', ''):
+                with self.subTest(heading=heading):
+                    page.write_text('<header><pre>Outside main</pre></header>'
+                                    '<main class="example"><h1>Example</h1>' + heading
+                                    + '<pre class="roc"><samp>main!</samp></pre>'
+                                    '<h2>Output</h2><pre>Output</pre>'
+                                    '<p class="example-version">Old note</p></main>')
+                    examples.add_version_notes(manifest, self.versions, directory)
+                    first = page.read_text()
+                    examples.add_version_notes(manifest, self.versions, directory)
+                    html = page.read_text()
+                    self.assertEqual(html.count('class="example-version"'), 1)
+                    self.assertIn('Validated with Roc <code>' + self.version + '</code>.</p>\n<pre class="roc">', html)
+                    self.assertIn('<header><pre>Outside main</pre></header>', html)
+                    self.assertEqual(first.strip(), html.strip())
+
     def test_invalid_metadata_is_rejected(self):
         invalid = [
             ("category", "missing"), ("category", []), ("description", ""),
