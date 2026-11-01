@@ -194,10 +194,15 @@ def add_version_notes(manifest, versions, output):
         else:
             message = "This example is not validated."
         note = f'<p class="example-version">{message}</p>'
-        html = re.sub(r'<p class="example-version">.*?</p>', "", html)
-        if "</main>" not in html:
+        html = re.sub(r'<p class="example-version">.*?</p>\n?', "", html)
+        main = re.search(r"<main\b[^>]*>(.*?)</main>", html, re.DOTALL)
+        if main is None:
             raise ValueError(f"No main content found in {page}")
-        html = html.replace("</main>", note + "\n</main>", 1)
+        code = re.search(r"<pre\b", main[1])
+        # Keep the version next to the first code block, including on pages
+        # without a Code heading. Prose-only pages retain the note at the end.
+        position = main.start(1) + (code.start() if code else len(main[1]))
+        html = html[:position] + note + "\n" + html[position:]
         page.write_text(html, encoding="utf-8")
 
 
