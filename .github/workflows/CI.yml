@@ -79,6 +79,9 @@ jobs:
             exit 1
           fi
 
+      - name: Check for whitespace right after <samp>
+        run: ci_scripts/check_samp_whitespace.sh "$RUNNER_TEMP/roc-website" website/build
+
       - name: Test interactive Roc widgets
         run: |
           ci_scripts/test_interactive_roc.sh
