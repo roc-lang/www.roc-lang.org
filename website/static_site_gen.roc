@@ -116,7 +116,7 @@ view_head = |page_path_str| {
 			Html.meta([charset("utf-8")]),
 			Html.title([], [Html.text(page_info.title)]),
 			Html.meta([name("description"), content(page_info.description)]),
-			Html.meta([name("viewport"), content("width=device-width")]),
+			Html.meta([name("viewport"), content("width=device-width, initial-scale=1")]),
 			Html.link([rel("icon"), href("/favicon.svg")]),
 			Html.link([rel("prefetch"), href("/repl/roc_repl_wasm.js")]),
 			Html.link([rel("stylesheet"), href("/site.css")]),
@@ -149,9 +149,10 @@ view_body = |page_path_str, html_content| {
 	Html.body(
 		body_attrs,
 		[
+			Html.a([class("skip-link"), href("#main-content")], [Html.text("Skip to content")]),
 			view_navbar(page_path_str),
 			# The repository's Markdown is trusted. Its rendered HTML must remain markup.
-			Html.main([], [Html.raw(html_content)]),
+			Html.main([id("main-content")], [Html.raw(html_content)]),
 			view_footer,
 		],
 	)
@@ -200,18 +201,31 @@ view_navbar = |page_path_str| {
 					Html.div(
 						[id("top-bar-links")],
 						[
-							Html.a([href("/tutorial/")], [Html.text("Tutorial")]),
-							Html.a([href("/install")], [Html.text("Install")]),
-							Html.a([href("/examples")], [Html.text("Examples")]),
-							Html.a([href("/community")], [Html.text("Community")]),
-							Html.a([href("/docs/main/")], [Html.text("Docs")]),
-							Html.a([href("/donate")], [Html.text("Donate")]),
+							nav_link("/tutorial/", "Tutorial", page_path_str.starts_with("/tutorial/")),
+							nav_link("/install", "Install", page_path_str.starts_with("/install/")),
+							nav_link("/examples", "Examples", page_path_str.starts_with("/examples/")),
+							nav_link("/community", "Community", page_path_str == "/community.html"),
+							nav_link("/docs/main/", "Docs", Bool.False),
+							nav_link("/donate", "Donate", page_path_str == "/donate.html"),
 						],
 					),
 				],
 			),
 		],
 	)
+}
+
+# Marks the link to the section the current page belongs to.
+nav_link : Str, Str, Bool -> Html.Node
+nav_link = |url, label, is_current| {
+	current_attrs =
+		if is_current {
+			[Html.attribute("aria-current")("page")]
+		} else {
+			[]
+		}
+
+	Html.a([href(url)].concat(current_attrs), [Html.text(label)])
 }
 
 roc_logo : Html.Node

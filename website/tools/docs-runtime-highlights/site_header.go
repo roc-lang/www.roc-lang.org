@@ -65,7 +65,9 @@ func applySiteHeader(doc, header *html.Node) bool {
 	if old := findID(doc, "top-bar"); old != nil {
 		old.Parent.RemoveChild(old)
 	}
-	body.InsertBefore(cloneNode(header), body.FirstChild)
+	siteHeader := cloneNode(header)
+	markDocsCurrent(siteHeader)
+	body.InsertBefore(siteHeader, body.FirstChild)
 	if logo := findElementWithClass(sidebar, "div", "pkg-and-logo"); logo != nil {
 		logo.Parent.RemoveChild(logo)
 	}
@@ -91,6 +93,25 @@ func applySiteHeader(doc, header *html.Node) bool {
 		head.AppendChild(node)
 	}
 	return true
+}
+
+// The header is copied from another page, so move its current-page marker to Docs.
+func markDocsCurrent(node *html.Node) {
+	if node.Type == html.ElementNode && node.Data == "a" {
+		kept := []html.Attribute{}
+		for _, a := range node.Attr {
+			if a.Key != "aria-current" {
+				kept = append(kept, a)
+			}
+		}
+		if attr(node, "href") == "/docs/main/" {
+			kept = append(kept, html.Attribute{Key: "aria-current", Val: "page"})
+		}
+		node.Attr = kept
+	}
+	for c := node.FirstChild; c != nil; c = c.NextSibling {
+		markDocsCurrent(c)
+	}
 }
 
 // Only adjust the top-level website links, leaving API and language entries intact.
