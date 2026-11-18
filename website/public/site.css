@@ -49,6 +49,14 @@
     --link-color: #6325db;
     --on-accent: #ffffff;
 
+    /* Homepage cards: dark like the code blocks in light mode, tinted
+       violet in dark mode. */
+    --card-bg: var(--code-bg);
+    --card-border: var(--code-bg);
+    --card-text: #e4e4ea;
+    --card-heading: #ffffff;
+    --card-accent: #b79df7;
+
     /* Code blocks are dark in both color schemes. */
     --code-bg: #202746;
     --code-color: #ffffff;
@@ -75,6 +83,12 @@
         --accent-bg: #241c3a;
         --accent-border: #4b3a80;
         --link-color: #b79df7;
+
+        --card-bg: var(--accent-bg);
+        --card-border: var(--accent-border);
+        --card-text: var(--text-color);
+        --card-heading: var(--heading-color);
+        --card-accent: var(--accent);
 
         --code-border: #323b66;
     }
@@ -740,21 +754,26 @@ footer {
     display: flex;
     flex-direction: column;
     padding: var(--space-5);
-    border: var(--border-width) solid var(--accent-border);
-    background: var(--accent-bg);
-    color: var(--text-color);
+    border: var(--border-width) solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--card-text);
     text-decoration: none;
 }
 
 .home-goals-content:hover {
-    border-color: var(--accent);
+    border-color: var(--card-accent);
+}
+
+.home-goals-content:focus-visible {
+    outline-color: var(--accent);
 }
 
 .home-goals-title {
     width: fit-content;
     margin: 0 0 var(--space-4);
     padding-bottom: var(--space-2);
-    border-bottom: var(--rule-width) solid var(--accent);
+    border-bottom: var(--rule-width) solid var(--card-accent);
+    color: var(--card-heading);
     font-size: 1.75rem;
 }
 
@@ -764,7 +783,7 @@ footer {
 
 .home-goals-learn-more {
     margin-top: auto;
-    color: var(--link-color);
+    color: var(--card-accent);
     font-size: var(--font-size-small);
     white-space: nowrap;
     text-decoration: underline;
