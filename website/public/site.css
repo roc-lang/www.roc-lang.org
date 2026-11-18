@@ -49,10 +49,9 @@
     --link-color: #6325db;
     --on-accent: #ffffff;
 
-    /* Homepage cards: dark like the code blocks in light mode, tinted
-       violet in dark mode. */
+    /* Homepage cards are dark like the code blocks in both color schemes. */
     --card-bg: var(--code-bg);
-    --card-border: var(--code-bg);
+    --card-border: var(--code-border);
     --card-text: #e4e4ea;
     --card-heading: #ffffff;
     --card-accent: #b79df7;
@@ -83,12 +82,6 @@
         --accent-bg: #241c3a;
         --accent-border: #4b3a80;
         --link-color: #b79df7;
-
-        --card-bg: var(--accent-bg);
-        --card-border: var(--accent-border);
-        --card-text: var(--text-color);
-        --card-heading: var(--heading-color);
-        --card-accent: var(--accent);
 
         --code-border: #323b66;
     }
