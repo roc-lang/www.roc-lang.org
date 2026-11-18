@@ -1102,6 +1102,74 @@ footer {
     white-space: pre-wrap;
 }
 
+/* ---- full-bleed boxes on narrow screens ---- */
+
+/* Boxes run to the screen edges; their padding keeps the content on the
+   same left and right edges as the surrounding text. */
+@media only screen and (max-width: 719px) {
+    main > pre,
+    main > aside,
+    main > blockquote,
+    main > .banner,
+    #first-code-sample,
+    .home-goals-container,
+    .roc-interactive .roc-source-editor,
+    .roc-interactive > pre.roc-source,
+    .roc-interactive .roc-output > pre,
+    .roc-interactive .roc-output > pre.roc-terminal {
+        margin-left: calc(-1 * var(--gutter));
+        margin-right: calc(-1 * var(--gutter));
+    }
+
+    /* Code blocks inside a list also have the list's indent to cross. */
+    main > ul > li > pre,
+    main > ol > li > pre {
+        margin-left: calc(-1 * (var(--gutter) + var(--space-5)));
+        margin-right: calc(-1 * var(--gutter));
+    }
+
+    main > pre,
+    main > ul > li > pre,
+    main > ol > li > pre,
+    #first-code-sample,
+    .home-goals-content,
+    .roc-interactive textarea.roc-source,
+    .roc-interactive .roc-source-highlight,
+    .roc-interactive > pre.roc-source,
+    .roc-interactive .roc-output > pre {
+        border-left-width: 0;
+        border-right-width: 0;
+    }
+
+    main > pre > samp,
+    main > pre > code,
+    main > ul > li > pre > samp,
+    main > ul > li > pre > code,
+    main > ol > li > pre > samp,
+    main > ol > li > pre > code,
+    #first-code-sample > samp,
+    .home-goals-content,
+    .roc-interactive textarea.roc-source,
+    .roc-interactive .roc-source-highlight,
+    .roc-interactive > pre.roc-source,
+    .roc-interactive .roc-output > pre,
+    .roc-interactive .roc-output > pre.roc-terminal {
+        padding-left: var(--gutter);
+        padding-right: var(--gutter);
+    }
+
+    #first-code-sample {
+        max-width: none;
+    }
+
+    main > aside,
+    main > blockquote,
+    main > .banner {
+        padding-left: calc(var(--gutter) - var(--rule-width));
+        padding-right: var(--gutter);
+    }
+}
+
 /* ---- motion ---- */
 
 @media (prefers-reduced-motion: no-preference) {
