@@ -34,8 +34,10 @@
     /* The same surface as the code blocks in site.css. */
     --top-bar-bg: #f5f4fb;
     --top-bar-fg: #1c1c21;
-    --top-bar-border: #dcd8ee;
+    --top-bar-border: #c4bbf2;
     --top-bar-accent: #7c38f5;
+    /* The same glow as the boxes in site.css. */
+    --top-bar-glow: 0 0 20px rgb(124 56 245 / 0.14);
     --top-bar-height: 56px;
     --top-bar-gutter: 24px;
     --top-bar-link-pad: 12px;
@@ -44,6 +46,7 @@
     width: 100%;
     background-color: var(--top-bar-bg);
     border-bottom: 1px solid var(--top-bar-border);
+    box-shadow: var(--top-bar-glow);
     font-family: "Lato", sans-serif;
     font-size: 18px;
     line-height: 24px;
@@ -149,7 +152,8 @@
     #top-bar {
         --top-bar-bg: #202746;
         --top-bar-fg: #e4e4ea;
-        --top-bar-border: #323b66;
+        --top-bar-border: #3d4fb3;
         --top-bar-accent: #b79df7;
+        --top-bar-glow: 0 0 20px rgb(88 108 255 / 0.25);
     }
 }

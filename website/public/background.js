@@ -242,7 +242,8 @@
     glowA.addColorStop(1, rgba(T.glowA[0], 0));
     bctx.fillStyle = glowA;
     bctx.fillRect(0, 0, W, H);
-    const glowB = bctx.createRadialGradient(W * 0.86, H * 0.9, 0, W * 0.86, H * 0.9, span * 0.55);
+    // Lights the top left, so the page is brightest where reading starts.
+    const glowB = bctx.createRadialGradient(W * 0.14, H * 0.1, 0, W * 0.14, H * 0.1, span * 0.55);
     glowB.addColorStop(0, rgba(T.glowB[0], T.glowB[1]));
     glowB.addColorStop(1, rgba(T.glowB[0], 0));
     bctx.fillStyle = glowB;

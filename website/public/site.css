@@ -51,9 +51,12 @@
 
     /* Code blocks sit on the surface color, and so do the header and the
        homepage cards. The syntax colors match the docs' light scheme. */
-    --code-bg: var(--surface-color);
+    --code-bg: rgb(245 244 251 / 0.85);
     --code-color: #202746;
-    --code-border: var(--border-color);
+    --code-border: #c4bbf2;
+    /* Boxes glow softly, and the translucent background lets the lattice through. */
+    --box-glow: 0 0 20px rgb(124 56 245 / 0.14);
+    --box-glow-hover: 0 0 24px rgb(124 56 245 / 0.28);
     --output-bg: var(--body-bg-color);
     --syntax-keyword: #6633bf;
     --syntax-literal: #087f78;
@@ -77,8 +80,11 @@
         --accent-border: #4b3a80;
         --link-color: #b79df7;
 
+        --code-bg: rgb(32 39 70 / 0.8);
         --code-color: #ffffff;
-        --code-border: #323b66;
+        --code-border: #3d4fb3;
+        --box-glow: 0 0 20px rgb(88 108 255 / 0.25), inset 0 0 24px rgb(88 108 255 / 0.07);
+        --box-glow-hover: 0 0 24px rgb(120 120 255 / 0.4), inset 0 0 24px rgb(88 108 255 / 0.1);
         --syntax-keyword: #b79df7;
         --syntax-literal: #4eefd9;
         --syntax-comment: #cccccc;
@@ -433,6 +439,7 @@ pre {
     box-sizing: border-box;
     border: var(--border-width) solid var(--code-border);
     background-color: var(--code-bg);
+    box-shadow: var(--box-glow);
     color: var(--code-color);
     font-size: var(--font-size-small);
     line-height: var(--line-height);
@@ -784,12 +791,14 @@ footer {
     padding: var(--space-5);
     border: var(--border-width) solid var(--code-border);
     background: var(--code-bg);
+    box-shadow: var(--box-glow);
     color: var(--text-color);
     text-decoration: none;
 }
 
 .home-goals-content:hover {
     border-color: var(--accent);
+    box-shadow: var(--box-glow-hover);
 }
 
 .home-goals-content:focus-visible {
@@ -1033,6 +1042,7 @@ footer {
     pointer-events: none;
     overflow: hidden;
     background: var(--code-bg);
+    box-shadow: var(--box-glow);
     color: var(--code-color);
 }
 
@@ -1169,6 +1179,7 @@ footer {
         transition:
             color 0.1s ease,
             background-color 0.1s ease,
-            border-color 0.1s ease;
+            border-color 0.1s ease,
+            box-shadow 0.2s ease;
     }
 }
