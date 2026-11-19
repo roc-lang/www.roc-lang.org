@@ -127,6 +127,7 @@ view_head = |page_path_str| {
 			# Remove no-js before the body renders to avoid a flash of hidden content.
 			Html.script([], [Html.text("document.documentElement.className = document.documentElement.className.replace('no-js', '');")]),
 			Html.script([src("/compiler.js")], []),
+			Html.script([src("/background.js"), Html.attribute("defer")("")], []),
 		],
 	)
 }

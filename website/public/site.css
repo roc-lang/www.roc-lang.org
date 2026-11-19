@@ -155,6 +155,41 @@ blockquote {
     max-width: var(--text-width);
 }
 
+/* Decorative triangle lattice drawn by background.js, behind all content. */
+#bg-backdrop,
+#bg-pattern {
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100vh;
+    height: 100lvh; /* the largest viewport, so toolbars don't resize it */
+    pointer-events: none;
+}
+
+#bg-backdrop {
+    z-index: -2;
+}
+
+#bg-pattern {
+    z-index: -1;
+    opacity: 0.5;
+}
+
+@media (prefers-color-scheme: dark) {
+    #bg-pattern {
+        opacity: 0.3;
+    }
+}
+
+@media print {
+    #bg-backdrop,
+    #bg-pattern {
+        display: none;
+    }
+}
+
 @media only screen and (min-width: 720px) {
     body > #top-bar {
         position: sticky;
