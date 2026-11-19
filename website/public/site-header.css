@@ -34,10 +34,10 @@
     /* The same surface as the code blocks in site.css. */
     --top-bar-bg: #f5f4fb;
     --top-bar-fg: #1c1c21;
-    --top-bar-border: #c4bbf2;
+    --top-bar-border: #d0daee;
     --top-bar-accent: #7c38f5;
-    /* The same glow as the boxes in site.css. */
-    --top-bar-glow: 0 0 20px rgb(124 56 245 / 0.14);
+    /* The same edge as the boxes in site.css. */
+    --top-bar-glow: 0 1px 0 #e3edff, 0 2px 10px rgb(70 90 160 / 0.07);
     --top-bar-height: 56px;
     --top-bar-gutter: 24px;
     --top-bar-link-pad: 12px;

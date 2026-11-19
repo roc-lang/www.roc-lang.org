@@ -49,14 +49,19 @@
     --link-color: #6325db;
     --on-accent: #ffffff;
 
-    /* Code blocks sit on the surface color, and so do the header and the
-       homepage cards. The syntax colors match the docs' light scheme. */
-    --code-bg: rgb(245 244 251 / 0.85);
+    /* Code blocks sit on a cool tint and the homepage cards on near white.
+       The syntax colors match the docs' light scheme. */
+    --code-bg: #f6f9fd;
+    --card-bg: rgb(252 253 255 / 0.92);
     --code-color: #202746;
-    --code-border: #c4bbf2;
-    /* Boxes glow softly, and the translucent background lets the lattice through. */
-    --box-glow: 0 0 20px rgb(124 56 245 / 0.14);
-    --box-glow-hover: 0 0 24px rgb(124 56 245 / 0.28);
+    --code-border: #d0daee;
+    /* A violet to blue gradient border, drawn over --code-border. */
+    --box-border-image: linear-gradient(135deg, #b9a3f6, #c8d4f0 50%, #9cc4ee) 1;
+    --box-border-image-hover: linear-gradient(135deg, #8f6cf2, #b4c2ee 50%, #6aa6e8) 1;
+    /* Boxes get a pale blue outer line, a white inner line and a soft shadow.
+       The translucent background lets the lattice through. */
+    --box-glow: 0 0 0 1px #e3edff, inset 0 0 0 1px rgb(255 255 255 / 0.9), 0 2px 10px rgb(70 90 160 / 0.07);
+    --box-glow-hover: 0 0 0 1px #d6e2ff, inset 0 0 0 1px rgb(255 255 255 / 0.9), 0 4px 16px rgb(70 90 160 / 0.12);
     --output-bg: var(--body-bg-color);
     --syntax-keyword: #6633bf;
     --syntax-literal: #087f78;
@@ -81,6 +86,9 @@
         --link-color: #b79df7;
 
         --code-bg: rgb(32 39 70 / 0.8);
+        --card-bg: var(--code-bg);
+        --box-border-image: none;
+        --box-border-image-hover: none;
         --code-color: #ffffff;
         --code-border: #3d4fb3;
         --box-glow: 0 0 20px rgb(88 108 255 / 0.25), inset 0 0 24px rgb(88 108 255 / 0.07);
@@ -440,6 +448,7 @@ pre {
     border: var(--border-width) solid var(--code-border);
     background-color: var(--code-bg);
     box-shadow: var(--box-glow);
+    border-image: var(--box-border-image);
     color: var(--code-color);
     font-size: var(--font-size-small);
     line-height: var(--line-height);
@@ -790,14 +799,16 @@ footer {
     flex-direction: column;
     padding: var(--space-5);
     border: var(--border-width) solid var(--code-border);
-    background: var(--code-bg);
+    background: var(--card-bg);
     box-shadow: var(--box-glow);
+    border-image: var(--box-border-image);
     color: var(--text-color);
     text-decoration: none;
 }
 
 .home-goals-content:hover {
     border-color: var(--accent);
+    border-image: var(--box-border-image-hover);
     box-shadow: var(--box-glow-hover);
 }
 
@@ -1019,6 +1030,7 @@ footer {
     z-index: 1;
     min-height: 100%;
     resize: vertical;
+    border-color: transparent; /* the highlight underneath draws the border */
     background: transparent;
     color: transparent;
     caret-color: var(--code-color);
@@ -1043,6 +1055,7 @@ footer {
     overflow: hidden;
     background: var(--code-bg);
     box-shadow: var(--box-glow);
+    border-image: var(--box-border-image);
     color: var(--code-color);
 }
 
