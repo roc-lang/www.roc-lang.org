@@ -31,11 +31,11 @@
 /* Shared by website pages and the website-only generated docs shell, so this
    file must not depend on the custom properties of site.css. */
 #top-bar {
-    /* Dark like the code blocks, in both color schemes. */
-    --top-bar-bg: #202746;
-    --top-bar-fg: #e4e4ea;
-    --top-bar-border: #323b66;
-    --top-bar-accent: #b79df7;
+    /* The same surface as the code blocks in site.css. */
+    --top-bar-bg: #f5f4fb;
+    --top-bar-fg: #1c1c21;
+    --top-bar-border: #dcd8ee;
+    --top-bar-accent: #7c38f5;
     --top-bar-height: 56px;
     --top-bar-gutter: 24px;
     --top-bar-link-pad: 12px;
@@ -142,5 +142,14 @@
 
     #top-bar-links > :nth-child(3n + 3) {
         justify-content: flex-end;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    #top-bar {
+        --top-bar-bg: #202746;
+        --top-bar-fg: #e4e4ea;
+        --top-bar-border: #323b66;
+        --top-bar-accent: #b79df7;
     }
 }
