@@ -68,6 +68,7 @@
     --syntax-comment: #596078;
     --syntax-faded: #3e496d;
     --syntax-error: #b42338;
+    --line-number-color: #75799a; /* decorative, so below AA on purpose */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -98,6 +99,7 @@
         --syntax-comment: #cccccc;
         --syntax-faded: #aeb4c6;
         --syntax-error: #fc5a5a;
+        --line-number-color: #8294c9;
     }
 }
 
@@ -577,6 +579,76 @@ code .dim,
     opacity: 0.55;
 }
 
+/* ---- line numbers ---- */
+
+/* Added by JS to the homepage code. --code-inset is the space left of the
+   numbers; the code then starts --line-numbers-width further in. */
+.has-line-numbers,
+.roc-interactive .roc-source-editor {
+    --code-inset: var(--space-5);
+    --line-numbers-width: calc(2ch + var(--space-5));
+}
+
+.line-numbers {
+    box-sizing: content-box;
+    width: 2ch;
+    padding-left: var(--code-inset);
+    color: var(--line-number-color);
+    opacity: 0.6;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
+    text-align: right;
+    white-space: pre;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.line-numbers > span {
+    display: block;
+}
+
+pre.has-line-numbers {
+    display: flex;
+}
+
+/* Code blocks can set their own text size, e.g. the larger hero sample. */
+pre.has-line-numbers > .line-numbers {
+    flex: none;
+    font-size: inherit;
+    line-height: inherit;
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+}
+
+pre.has-line-numbers > samp,
+pre.has-line-numbers > code {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#first-code-sample.has-line-numbers > samp {
+    padding-left: var(--space-5);
+}
+
+/* The numbers sit inside the highlight's border, under the transparent
+   textarea; JS moves them with its scroll position. */
+.roc-interactive .roc-source-editor .line-numbers {
+    position: absolute;
+    top: var(--border-width);
+    bottom: var(--border-width);
+    left: var(--border-width);
+    z-index: 0;
+    padding-top: var(--space-4);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.roc-interactive .roc-source-editor textarea.roc-source,
+.roc-interactive .roc-source-editor .roc-source-highlight {
+    padding-left: calc(var(--code-inset) + var(--line-numbers-width));
+}
+
 /* ---- copy button on example pages ---- */
 
 .button-container {
@@ -657,6 +729,32 @@ code .dim,
     cursor: default;
 }
 
+/* A lighter button for the second choice in a .btn-row. */
+.btn-small.btn-secondary {
+    background: transparent;
+    color: var(--link-color);
+}
+
+.btn-small.btn-secondary:hover {
+    background: var(--accent-bg);
+}
+
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+}
+
+.btn-row > .btn-small {
+    margin: 0;
+}
+
+/* Separates the closing call to action from the editor's Run button. */
+.home-next-steps {
+    margin-top: var(--space-7);
+}
+
 /* White on the lighter dark-scheme violet would be too faint. */
 @media (prefers-color-scheme: dark) {
     .btn-small,
@@ -673,6 +771,15 @@ code .dim,
         display: flex;
         width: fit-content;
         margin-left: auto;
+    }
+
+    .btn-row {
+        justify-content: flex-end;
+    }
+
+    .btn-row > .btn-small {
+        display: inline-flex;
+        margin: 0;
     }
 }
 
@@ -1178,6 +1285,23 @@ footer {
     main > .banner {
         padding-left: calc(var(--gutter) - var(--rule-width));
         padding-right: var(--gutter);
+    }
+}
+
+/* Line numbers follow the full-bleed text edge. */
+@media only screen and (max-width: 719px) {
+    .has-line-numbers,
+    .roc-interactive .roc-source-editor {
+        --code-inset: var(--gutter);
+        --line-numbers-width: calc(2ch + var(--space-4));
+    }
+
+    #first-code-sample.has-line-numbers > samp {
+        padding-left: var(--space-4);
+    }
+
+    .roc-interactive .roc-source-editor .line-numbers {
+        left: 0;
     }
 }
 
