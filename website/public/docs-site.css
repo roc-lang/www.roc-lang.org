@@ -86,20 +86,20 @@ section.getting-started h2,
 section.getting-started p { padding-left: 0; padding-right: 0; }
 body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
 
-/* Place the home branding slightly left of the desktop sidebar labels. */
+/* Line the home branding up with the desktop sidebar labels. */
 @media (min-width: 769px) {
     .website-docs #top-bar .home-link-text { display: inline; }
     .website-docs #top-bar nav {
         max-width: none;
         display: grid;
         grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-        padding-right: 0;
+        padding: 0;
     }
     .website-docs #nav-home-link {
         justify-self: start;
-        margin-left: 36px; /* 16px left of the sidebar labels, minus link padding. */
+        margin-left: 56px; /* The left edge of the sidebar labels. */
     }
-    .website-docs #top-bar-links { justify-self: center; }
+    .website-docs #top-bar-links { justify-self: center; margin-right: 0; }
 }
 
 @media (max-width: 768px) {
@@ -117,4 +117,11 @@ body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
 .website-docs .entry-signature-pre {
     min-width: 0;
     overflow-wrap: anywhere;
+}
+
+/* The website has no rounded corners, so the docs shell has none either. */
+.website-docs *,
+.website-docs *::before,
+.website-docs *::after {
+    border-radius: 0 !important;
 }

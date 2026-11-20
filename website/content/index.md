@@ -59,11 +59,12 @@ main! = |_args| {
 <button class="roc-run">Enable JS to Run</button>
 </div>
 
-<a class="btn-small" href="/examples">Examples</a>
+<p class="home-next-steps">To get started with the language, try the tutorial or browse more examples.</p>
 
-To get started with the language, try the [tutorial](/tutorial/)!
-
+<div class="btn-row">
 <a class="btn-small" href="/tutorial/">Tutorial</a>
+<a class="btn-small btn-secondary" href="/examples">Examples</a>
+</div>
 
 ## [Sponsors](#sponsors) {#sponsors}
 

@@ -23,7 +23,7 @@ func TestSiteHeaderPreservesDocsAndIsIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	headerDoc, _ := html.Parse(strings.NewReader(`<header id="top-bar"><nav aria-label="primary"><a href="/">Roc</a></nav></header>`))
+	headerDoc, _ := html.Parse(strings.NewReader(`<header id="top-bar"><nav aria-label="primary"><a href="/">Roc</a><a href="/community" aria-current="page">Community</a><a href="/docs/main/">Docs</a></nav></header>`))
 	header := findID(headerDoc, "top-bar")
 	sidebar, main, search := findID(doc, "sidebar-nav"), findElement(doc, "main"), findID(doc, "module-search-form")
 	if !applySiteHeader(doc, header) {
@@ -54,6 +54,9 @@ func TestSiteHeaderPreservesDocsAndIsIdempotent(t *testing.T) {
 		t.Fatal("Getting Started is not the first sidebar entry")
 	}
 	first := renderTest(t, doc)
+	if strings.Contains(first, `<a href="/community" aria-current="page">`) || !strings.Contains(first, `<a href="/docs/main/" aria-current="page">Docs</a>`) {
+		t.Fatal("Docs is not the current header link")
+	}
 	applySiteHeader(doc, header)
 	if second := renderTest(t, doc); second != first {
 		t.Fatal("not idempotent")

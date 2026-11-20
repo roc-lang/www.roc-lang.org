@@ -1416,6 +1416,37 @@ window.rocSyntax = {
   clear: clearRocSyntaxHighlights,
 };
 
+// Line numbers are decorative: hidden from screen readers and not selectable.
+function createLineNumbers() {
+  const element = document.createElement("div");
+  element.className = "line-numbers";
+  element.setAttribute("aria-hidden", "true");
+  const numbers = document.createElement("span");
+  element.appendChild(numbers);
+  let shown = 0;
+  return {
+    element,
+    setCount(count) {
+      if (count === shown) return;
+      shown = count;
+      numbers.textContent = Array.from({ length: count }, (_, i) => i + 1).join("\n");
+    },
+    scrollTo(top) {
+      numbers.style.transform = top ? `translateY(${-top}px)` : "";
+    },
+  };
+}
+
+function addLineNumbers(pre) {
+  const code = pre.querySelector(":scope > samp, :scope > code");
+  if (!code) return;
+  const numbers = createLineNumbers();
+  // innerText turns <br> into line breaks, which textContent would drop.
+  numbers.setCount(code.innerText.replace(/\n$/, "").split("\n").length);
+  pre.classList.add("has-line-numbers");
+  pre.prepend(numbers.element);
+}
+
 function setupHighlight(textarea, highlight) {
   const updateHighlight = () => {
     highlight.textContent = textarea.value || " ";
@@ -1446,7 +1477,7 @@ function setup(div) {
 
   const textarea = document.createElement("textarea");
   textarea.value = source;
-  textarea.rows = Math.min(source.split("\n").length + 2, 18);
+  textarea.rows = Math.min(source.split("\n").length, 18);
   textarea.spellcheck = false;
   textarea.wrap = "off";
   textarea.className = "roc-source";
@@ -1531,10 +1562,20 @@ function setup(div) {
     runButton.disabled = false;
   });
 
+  const lineNumbers = createLineNumbers();
+  const updateLineNumbers = () => {
+    lineNumbers.setCount(textarea.value.split("\n").length);
+    lineNumbers.scrollTo(textarea.scrollTop);
+  };
+  textarea.addEventListener("input", updateLineNumbers);
+  textarea.addEventListener("scroll", updateLineNumbers);
+
   sourceEditor.appendChild(sourceHighlight);
+  sourceEditor.appendChild(lineNumbers.element);
   sourceEditor.appendChild(textarea);
   div.appendChild(sourceEditor);
   setupHighlight(textarea, sourceHighlight);
+  updateLineNumbers();
   div.appendChild(runButton);
   div.appendChild(outputArea);
 }
@@ -1583,6 +1624,7 @@ function setupCopyButtons() {
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
   setupCopyButtons();
+  document.querySelectorAll("#first-code-sample").forEach(addLineNumbers);
 
   const interactiveWidgets = document.querySelectorAll(".roc-interactive");
   interactiveWidgets.forEach(setup);
