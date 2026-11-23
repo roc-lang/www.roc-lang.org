@@ -1,4 +1,4 @@
-app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.16.0/8TC9CBHaqfmhhovuvKHKFYfLffwmZN4XpSF2jPHTw1Nm.tar.zst" }
+app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.16.1/4VEduWR78R5y4SVypbTF1xBX52J8JxWTw1ufoPpzVcYg.tar.zst" }
 
 import pf.SSG
 import pf.Path

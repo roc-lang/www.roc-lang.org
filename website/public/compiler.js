@@ -1580,9 +1580,21 @@ function setupCopyButtons() {
   });
 }
 
+function prepareStaticRocHighlights() {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return;
+
+  document.querySelectorAll("pre > samp.language-roc").forEach((snippet) => {
+    // The generator supplies token spans for the CSS fallback. Give the runtime
+    // tokenizer a single text node so it can read the whole block in context.
+    snippet.textContent = snippet.textContent;
+    snippet.classList.add("roc-highlight");
+  });
+}
+
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
   setupCopyButtons();
+  prepareStaticRocHighlights();
 
   const interactiveWidgets = document.querySelectorAll(".roc-interactive");
   interactiveWidgets.forEach(setup);
