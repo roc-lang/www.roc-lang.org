@@ -72,6 +72,7 @@ jobs:
           test -f build/examples/HelloWorld/README.html
           grep -q 'Hello, World!' build/examples/index.html
           grep -q 'Hello, World!' build/examples/HelloWorld/README.html
+          grep -Fq 'class="language-roc"' build/examples/HelloWorld/README.html
           examples_sha="$(<content/examples/.source-revision)"
           grep -q "github.com/roc-lang/examples/tree/$examples_sha/examples/HelloWorld" build/examples/HelloWorld/README.html
           if grep -R -q 'file:main.roc' build/examples; then
