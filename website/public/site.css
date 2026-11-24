@@ -21,6 +21,7 @@
     --space-6: 32px;
     --space-7: 48px;
     --space-8: 64px;
+    --space-9: 128px;
 
     /* The header, main content and footer share these edges. */
     --page-width: 1024px;
@@ -60,13 +61,13 @@
        bottom right. */
     --box-glow: -2px -2px 10px rgb(124 56 245 / 0.18), 2px 2px 10px rgb(40 130 245 / 0.22);
     --box-glow-hover: -2.5px -2.5px 12.5px rgb(124 56 245 / 0.31), 2.5px 2.5px 12.5px rgb(40 130 245 / 0.37);
-    --output-bg: var(--body-bg-color);
     --syntax-keyword: #6633bf;
     --syntax-literal: #087f78;
     --syntax-comment: #596078;
     --syntax-faded: #3e496d;
     --syntax-error: #b42338;
     --line-number-color: #75799a; /* decorative, so below AA on purpose */
+    --scrollbar-thumb: #b6bad2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -97,6 +98,7 @@
         --syntax-faded: #aeb4c6;
         --syntax-error: #fc5a5a;
         --line-number-color: #8294c9;
+        --scrollbar-thumb: var(--line-number-color);
     }
 }
 
@@ -341,8 +343,7 @@ svg {
 
 /* Notes and asides share one callout style. */
 aside,
-blockquote,
-.banner {
+blockquote {
     box-sizing: border-box;
     padding: var(--space-3) var(--space-4);
     border-left: var(--rule-width) solid var(--accent);
@@ -351,7 +352,6 @@ blockquote,
 
 aside > :last-child,
 blockquote > :last-child,
-.banner > :last-child,
 section p:last-child {
     margin-bottom: 0;
 }
@@ -577,9 +577,8 @@ code .dim,
 
 /* ---- line numbers ---- */
 
-/* Added by JS to the homepage code. --code-inset is the space left of the
-   numbers; the code then starts --line-numbers-width further in. */
-.has-line-numbers,
+/* --code-inset is the space left of the numbers; the code then starts
+   --line-numbers-width further in. */
 .roc-interactive .roc-source-editor {
     --code-inset: var(--space-5);
     --line-numbers-width: calc(2ch + var(--space-5));
@@ -602,29 +601,6 @@ code .dim,
 
 .line-numbers > span {
     display: block;
-}
-
-pre.has-line-numbers {
-    display: flex;
-}
-
-/* Code blocks can set their own text size, e.g. the larger hero sample. */
-pre.has-line-numbers > .line-numbers {
-    flex: none;
-    font-size: inherit;
-    line-height: inherit;
-    padding-top: var(--space-4);
-    padding-bottom: var(--space-4);
-}
-
-pre.has-line-numbers > samp,
-pre.has-line-numbers > code {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-#first-code-sample.has-line-numbers > samp {
-    padding-left: var(--space-5);
 }
 
 /* The numbers sit inside the highlight's border, under the transparent
@@ -736,11 +712,6 @@ pre.has-line-numbers > code {
     margin: 0;
 }
 
-/* Separates the closing call to action from the editor's Run button. */
-.home-next-steps {
-    margin-top: var(--space-7);
-}
-
 /* White on the lighter dark-scheme violet would be too faint. */
 @media (prefers-color-scheme: dark) {
     .btn-small,
@@ -750,22 +721,22 @@ pre.has-line-numbers > code {
     }
 }
 
-/* Right-align the buttons so they fall under the thumb on mobile. */
-@media only screen and (max-width: 719px) {
-    .btn-small,
+/* The Run button is outlined, in the same color as the heading underlines. */
+.roc-interactive button.roc-run {
+    --run-color: #7c38f5;
+    border-color: var(--run-color);
+    background: transparent;
+    color: var(--run-color);
+}
+
+.roc-interactive button.roc-run:hover:not(:disabled) {
+    border-color: var(--run-color);
+    background: color-mix(in srgb, var(--run-color) 15%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
     .roc-interactive button.roc-run {
-        display: flex;
-        width: fit-content;
-        margin-left: auto;
-    }
-
-    .btn-row {
-        justify-content: flex-end;
-    }
-
-    .btn-row > .btn-small {
-        display: inline-flex;
-        margin: 0;
+        --run-color: #9c7cea; /* the dark-scheme --accent */
     }
 }
 
@@ -782,6 +753,11 @@ footer {
 
 #gh-link {
     display: flex;
+}
+
+/* On the home page the footer lines up with the sponsors section. */
+#homepage-main #gh-link {
+    margin-left: max(0px, calc((100% - var(--text-width)) / 2));
 }
 
 #gh-centered-link {
@@ -831,16 +807,17 @@ footer {
 }
 
 #homepage-intro-outer {
-    padding: var(--space-8) 0;
+    padding: var(--space-9) 0;
 }
 
-/* Logo and title on the left edge, code sample on the right edge. */
+/* Logo and title, centered as one block. */
 #homepage-intro-box {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto auto;
+    justify-content: center;
     grid-template-areas:
-        "logo title code"
-        "logo tagline code";
+        "logo title"
+        "logo tagline";
     column-gap: var(--space-5);
     align-items: center;
 }
@@ -867,14 +844,6 @@ footer {
     font-size: 1.25rem;
 }
 
-#first-code-sample {
-    grid-area: code;
-    justify-self: end;
-    max-width: 100%;
-    margin: 0;
-    font-size: var(--font-size-normal);
-}
-
 .home-goals-container {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -883,6 +852,24 @@ footer {
 
 .home-goals-column {
     display: flex;
+}
+
+/* The get-started cards below the editor. */
+.home-start-cards {
+    margin-top: var(--space-9);
+}
+
+.home-editor-intro {
+    margin-top: var(--space-9);
+}
+
+/* The intro, editor and output form one block centered in the page. */
+.home-editor-intro,
+.roc-interactive.front-page {
+    width: 100%;
+    max-width: var(--text-width);
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .home-goals-content {
@@ -922,7 +909,6 @@ footer {
 .home-goals-learn-more {
     margin-top: auto;
     color: var(--link-color);
-    font-size: var(--font-size-small);
     white-space: nowrap;
     text-decoration: underline;
     text-decoration-thickness: 1px;
@@ -935,6 +921,13 @@ footer {
 
 #homepage-main h2 {
     margin-top: var(--space-8);
+}
+
+/* Everything below the cards lines up with the left edge of the centered
+   editor block. */
+#homepage-main main > .home-start-cards ~ * {
+    max-width: var(--text-width);
+    margin-left: max(0px, calc((100% - var(--text-width)) / 2));
 }
 
 #sponsor-logos {
@@ -989,15 +982,14 @@ footer {
 
 @media only screen and (max-width: 899px) {
     #homepage-intro-outer {
-        padding: var(--space-7) 0;
+        padding: var(--space-9) 0;
     }
 
     #homepage-intro-box {
-        grid-template-columns: auto 1fr;
+        grid-template-columns: auto auto;
         grid-template-areas:
             "logo title"
-            "logo tagline"
-            "code code";
+            "logo tagline";
         column-gap: var(--space-4);
     }
 
@@ -1012,12 +1004,6 @@ footer {
     #homepage-tagline {
         margin-top: var(--space-1);
         font-size: var(--font-size-normal);
-    }
-
-    #first-code-sample {
-        justify-self: stretch;
-        margin-top: var(--space-6);
-        font-size: var(--font-size-small);
     }
 
     .home-goals-container {
@@ -1120,7 +1106,7 @@ footer {
     position: relative;
     z-index: 1;
     min-height: 100%;
-    resize: vertical;
+    resize: none;
     border-color: transparent; /* the highlight underneath draws the border */
     background: transparent;
     color: transparent;
@@ -1147,6 +1133,18 @@ footer {
     background: var(--code-bg);
     box-shadow: var(--box-glow);
     color: var(--code-color);
+}
+
+/* The Run button floats over the editor's bottom right corner, so it stays
+   visible when the code is wider than the editor and scrolls sideways. */
+.roc-interactive .roc-source-editor > button.roc-run {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    display: inline-flex;
+    width: auto;
+    margin: 0;
 }
 
 /* Shown only when JS is disabled — the script replaces it with the textarea above. */
@@ -1177,7 +1175,7 @@ footer {
     margin: 0;
     padding: var(--space-4) var(--space-5);
     border-color: var(--code-border);
-    background-color: var(--output-bg);
+    background-color: var(--code-bg);
     color: var(--syntax-keyword);
     font: inherit;
     line-height: 1.35;
@@ -1203,89 +1201,27 @@ footer {
     text-decoration: underline;
 }
 
-/* ---- full-bleed boxes on narrow screens ---- */
+/* ---- scrollbars ---- */
 
-/* Boxes run to the screen edges; their padding keeps the content on the
-   same left and right edges as the surrounding text. */
-@media only screen and (max-width: 719px) {
-    main > pre,
-    main > aside,
-    main > blockquote,
-    main > .banner,
-    #first-code-sample,
-    .home-goals-container,
-    .roc-interactive .roc-source-editor,
-    .roc-interactive > pre.roc-source,
-    .roc-interactive .roc-output > pre,
-    .roc-interactive .roc-output > pre.roc-terminal {
-        margin-left: calc(-1 * var(--gutter));
-        margin-right: calc(-1 * var(--gutter));
-    }
-
-    /* Code blocks inside a list also have the list's indent to cross. */
-    main > ul > li > pre,
-    main > ol > li > pre {
-        margin-left: calc(-1 * (var(--gutter) + var(--space-5)));
-        margin-right: calc(-1 * var(--gutter));
-    }
-
-    main > pre,
-    main > ul > li > pre,
-    main > ol > li > pre,
-    #first-code-sample,
-    .home-goals-content,
-    .roc-interactive textarea.roc-source,
-    .roc-interactive .roc-source-highlight,
-    .roc-interactive > pre.roc-source,
-    .roc-interactive .roc-output > pre {
-        border-left-width: 0;
-        border-right-width: 0;
-    }
-
-    main > pre > samp,
-    main > pre > code,
-    main > ul > li > pre > samp,
-    main > ul > li > pre > code,
-    main > ol > li > pre > samp,
-    main > ol > li > pre > code,
-    #first-code-sample > samp,
-    .home-goals-content,
-    .roc-interactive textarea.roc-source,
-    .roc-interactive .roc-source-highlight,
-    .roc-interactive > pre.roc-source,
-    .roc-interactive .roc-output > pre,
-    .roc-interactive .roc-output > pre.roc-terminal {
-        padding-left: var(--gutter);
-        padding-right: var(--gutter);
-    }
-
-    #first-code-sample {
-        max-width: none;
-    }
-
-    main > aside,
-    main > blockquote,
-    main > .banner {
-        padding-left: calc(var(--gutter) - var(--rule-width));
-        padding-right: var(--gutter);
-    }
+/* Square thumbs. Styling the scrollbar makes browsers draw it with these
+   shapes instead of their rounded defaults. */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
 }
 
-/* Line numbers follow the full-bleed text edge. */
-@media only screen and (max-width: 719px) {
-    .has-line-numbers,
-    .roc-interactive .roc-source-editor {
-        --code-inset: var(--gutter);
-        --line-numbers-width: calc(2ch + var(--space-4));
-    }
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
 
-    #first-code-sample.has-line-numbers > samp {
-        padding-left: var(--space-4);
-    }
+::-webkit-scrollbar-thumb {
+    border-radius: 0;
+    background: var(--scrollbar-thumb);
+}
 
-    .roc-interactive .roc-source-editor .line-numbers {
-        left: 0;
-    }
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
 }
 
 /* ---- motion ---- */

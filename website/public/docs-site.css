@@ -125,3 +125,43 @@ body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
 .website-docs *::after {
     border-radius: 0 !important;
 }
+
+/* Square scrollbar thumbs. The generated docs style their scrollbars with
+   scrollbar-color, which browsers draw with rounded thumbs, so use the
+   pseudo-elements instead where they exist. */
+@supports selector(::-webkit-scrollbar) {
+    .website-docs,
+    .website-docs * {
+        scrollbar-color: auto !important;
+        scrollbar-width: auto !important;
+    }
+
+    .website-docs ::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+
+    .website-docs ::-webkit-scrollbar-track,
+    .website-docs ::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+
+    .website-docs ::-webkit-scrollbar-thumb {
+        border-radius: 0;
+        background: #b6bad2;
+    }
+
+    .website-docs ::-webkit-scrollbar-thumb:hover {
+        background: var(--violet);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .website-docs ::-webkit-scrollbar-thumb {
+            background: #8294c9;
+        }
+
+        .website-docs ::-webkit-scrollbar-thumb:hover {
+            background: var(--violet);
+        }
+    }
+}

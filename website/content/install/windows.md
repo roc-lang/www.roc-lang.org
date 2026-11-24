@@ -1,5 +1,7 @@
 # Windows
 
+[Install on other OS](/install?all)
+
 ## How to install Roc
 
 1. Open a  **PowerShell Terminal** (you can press **Win + X → Terminal**).

@@ -1437,16 +1437,6 @@ function createLineNumbers() {
   };
 }
 
-function addLineNumbers(pre) {
-  const code = pre.querySelector(":scope > samp, :scope > code");
-  if (!code) return;
-  const numbers = createLineNumbers();
-  // innerText turns <br> into line breaks, which textContent would drop.
-  numbers.setCount(code.innerText.replace(/\n$/, "").split("\n").length);
-  pre.classList.add("has-line-numbers");
-  pre.prepend(numbers.element);
-}
-
 function setupHighlight(textarea, highlight) {
   const updateHighlight = () => {
     highlight.textContent = textarea.value || " ";
@@ -1575,8 +1565,8 @@ function setup(div) {
   sourceEditor.appendChild(textarea);
   div.appendChild(sourceEditor);
   setupHighlight(textarea, sourceHighlight);
+  sourceEditor.appendChild(runButton);
   updateLineNumbers();
-  div.appendChild(runButton);
   div.appendChild(outputArea);
 }
 
@@ -1624,7 +1614,6 @@ function setupCopyButtons() {
 // run the setup, when the DOM is finished loading
 document.addEventListener("DOMContentLoaded", () => {
   setupCopyButtons();
-  document.querySelectorAll("#first-code-sample").forEach(addLineNumbers);
 
   const interactiveWidgets = document.querySelectorAll(".roc-interactive");
   interactiveWidgets.forEach(setup);

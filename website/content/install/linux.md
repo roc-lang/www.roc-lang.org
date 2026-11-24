@@ -1,5 +1,7 @@
 # Linux
 
+[Install on other OS](/install?all)
+
 ## How to install Roc
 
 1. Download the roc install script and execute it:

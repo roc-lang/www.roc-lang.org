@@ -143,6 +143,25 @@
     padding: 0 var(--top-bar-link-pad);
 }
 
+/* Wide screens: the links are centered in the bar, the home link stays left.
+   The docs lay out their own header (see docs-site.css), so skip them. */
+@media only screen and (min-width: 720px) {
+    :not(.website-docs) > #top-bar nav {
+        position: relative;
+        justify-content: center;
+    }
+
+    :not(.website-docs) > #top-bar #nav-home-link {
+        position: absolute;
+        left: var(--top-bar-gutter);
+        top: 0;
+    }
+
+    :not(.website-docs) > #top-bar #top-bar-links {
+        margin-right: 0;
+    }
+}
+
 /* Narrow screens: links in three columns whose outer edges meet the gutters. */
 @media only screen and (max-width: 719px) {
     #top-bar {

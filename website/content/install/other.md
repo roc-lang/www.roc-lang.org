@@ -1,5 +1,7 @@
 # Other Systems
 
+[Install on other OS](/install?all)
+
 Note: if your system is in this "other" category, that means we did not test Roc on your system. The steps below may still work if zig works on your system.
 
 1. [Build Roc from source](https://github.com/roc-lang/roc/blob/main/BUILDING_FROM_SOURCE.md)

@@ -1,5 +1,7 @@
 # macOS
 
+[Install on other OS](/install?all)
+
 ## How to install Roc
 
 1. Install Roc using [Homebrew](https://brew.sh/):

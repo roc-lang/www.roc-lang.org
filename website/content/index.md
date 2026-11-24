@@ -5,8 +5,6 @@
 </svg>
 
 <p id="homepage-tagline">A fast, friendly, functional language.</p>
-<pre id="first-code-sample"><samp class="code-snippet">credits <span class="kw">=</span> songs<span class="punctuation section">.</span>map<span class="punctuation section">(</span><span class="kw">|</span>song<span class="kw">|</span>
-    <span class="string">"Performed by </span><span class="kw">${</span>song<span class="punctuation section">.</span>artist<span class="kw">}</span><span class="string">"</span><br><span class="punctuation section">)</span></samp></pre>
 </div>
 </div>
 
@@ -35,9 +33,7 @@
     </div>
 </section>
 
-## [Examples](#examples) {#examples}
-
-You can run the full compiler in the browser without a backend server!
+<p class="home-editor-intro">You can run the full compiler in the browser without a backend server!</p>
 <div class="roc-interactive front-page">
 <pre class="roc-source">print_remaining! = |todos|
     todos
@@ -57,12 +53,29 @@ main! = |_args| {
 <button class="roc-run">Enable JS to Run</button>
 </div>
 
-<p class="home-next-steps">To get started with the language, try the tutorial or browse more examples.</p>
-
-<div class="btn-row">
-<a class="btn-small" href="/tutorial/">Tutorial</a>
-<a class="btn-small" href="/examples">Examples</a>
-</div>
+<section class="home-goals-container home-start-cards" aria-label="Get started with Roc">
+    <div role="presentation" class="home-goals-column">
+        <a href="/tutorial/" class="home-goals-content">
+            <h3 class="home-goals-title">Tutorial</h3>
+            <p class="home-goals-description">Learn the essentials: functions, collections, pattern matching, types, and platforms.</p>
+            <p class="home-goals-learn-more">Learn Roc →</p>
+        </a>
+    </div>
+    <div role="presentation" class="home-goals-column">
+        <a href="/examples/" class="home-goals-content">
+            <h3 class="home-goals-title">Examples</h3>
+            <p class="home-goals-description">Learn from small, runnable programs organized by topic.</p>
+            <p class="home-goals-learn-more">Browse examples →</p>
+        </a>
+    </div>
+    <div role="presentation" class="home-goals-column">
+        <a href="/docs/main/" class="home-goals-content">
+            <h3 class="home-goals-title">Docs</h3>
+            <p class="home-goals-description">TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO</p>
+            <p class="home-goals-learn-more">TODO</p>
+        </a>
+    </div>
+</section>
 
 ## [Sponsors](#sponsors) {#sponsors}
 
