@@ -54,14 +54,12 @@
     --code-bg: #f6f9fd;
     --card-bg: rgb(252 253 255 / 0.92);
     --code-color: #202746;
-    --code-border: #d0daee;
-    /* A violet to blue gradient border, drawn over --code-border. */
-    --box-border-image: linear-gradient(135deg, #b9a3f6, #c8d4f0 50%, #9cc4ee) 1;
-    --box-border-image-hover: linear-gradient(135deg, #8f6cf2, #b4c2ee 50%, #6aa6e8) 1;
-    /* Boxes get a pale blue outer line, a white inner line and a soft shadow.
-       The translucent background lets the lattice through. */
-    --box-glow: 0 0 0 1px #e3edff, inset 0 0 0 1px rgb(255 255 255 / 0.9), 0 2px 10px rgb(70 90 160 / 0.07);
-    --box-glow-hover: 0 0 0 1px #d6e2ff, inset 0 0 0 1px rgb(255 255 255 / 0.9), 0 4px 16px rgb(70 90 160 / 0.12);
+    --code-border: transparent;
+    --card-hover-border: transparent;
+    /* No borders: a glow that goes from violet at the top left to blue at the
+       bottom right. */
+    --box-glow: -2px -2px 10px rgb(124 56 245 / 0.18), 2px 2px 10px rgb(40 130 245 / 0.22);
+    --box-glow-hover: -2.5px -2.5px 12.5px rgb(124 56 245 / 0.31), 2.5px 2.5px 12.5px rgb(40 130 245 / 0.37);
     --output-bg: var(--body-bg-color);
     --syntax-keyword: #6633bf;
     --syntax-literal: #087f78;
@@ -88,8 +86,7 @@
 
         --code-bg: rgb(32 39 70 / 0.8);
         --card-bg: var(--code-bg);
-        --box-border-image: none;
-        --box-border-image-hover: none;
+        --card-hover-border: var(--accent);
         --code-color: #ffffff;
         --code-border: #3d4fb3;
         --box-glow: 0 0 20px rgb(88 108 255 / 0.25), inset 0 0 24px rgb(88 108 255 / 0.07);
@@ -264,7 +261,7 @@ h1 {
 h2 {
     width: fit-content;
     margin: var(--space-7) 0 var(--space-5);
-    padding-bottom: var(--space-2);
+    padding-bottom: var(--space-1);
     border-bottom: var(--rule-width) solid var(--accent);
     font-size: clamp(1.625rem, 1.25rem + 1.5vw, 2rem);
 }
@@ -450,7 +447,6 @@ pre {
     border: var(--border-width) solid var(--code-border);
     background-color: var(--code-bg);
     box-shadow: var(--box-glow);
-    border-image: var(--box-border-image);
     color: var(--code-color);
     font-size: var(--font-size-small);
     line-height: var(--line-height);
@@ -729,16 +725,6 @@ pre.has-line-numbers > code {
     cursor: default;
 }
 
-/* A lighter button for the second choice in a .btn-row. */
-.btn-small.btn-secondary {
-    background: transparent;
-    color: var(--link-color);
-}
-
-.btn-small.btn-secondary:hover {
-    background: var(--accent-bg);
-}
-
 .btn-row {
     display: flex;
     flex-wrap: wrap;
@@ -908,14 +894,12 @@ footer {
     border: var(--border-width) solid var(--code-border);
     background: var(--card-bg);
     box-shadow: var(--box-glow);
-    border-image: var(--box-border-image);
     color: var(--text-color);
     text-decoration: none;
 }
 
 .home-goals-content:hover {
-    border-color: var(--accent);
-    border-image: var(--box-border-image-hover);
+    border-color: var(--card-hover-border);
     box-shadow: var(--box-glow-hover);
 }
 
@@ -926,7 +910,7 @@ footer {
 .home-goals-title {
     width: fit-content;
     margin: 0 0 var(--space-4);
-    padding-bottom: var(--space-2);
+    padding-bottom: var(--space-1);
     border-bottom: var(--rule-width) solid var(--accent);
     font-size: 1.75rem;
 }
@@ -1162,7 +1146,6 @@ footer {
     overflow: hidden;
     background: var(--code-bg);
     box-shadow: var(--box-glow);
-    border-image: var(--box-border-image);
     color: var(--code-color);
 }
 

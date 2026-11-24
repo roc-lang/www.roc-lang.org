@@ -37,8 +37,6 @@
 
 ## [Examples](#examples) {#examples}
 
-Browse [examples built and tested with the same Roc compiler as this website](/examples).
-
 You can run the full compiler in the browser without a backend server!
 <div class="roc-interactive front-page">
 <pre class="roc-source">print_remaining! = |todos|
@@ -63,7 +61,7 @@ main! = |_args| {
 
 <div class="btn-row">
 <a class="btn-small" href="/tutorial/">Tutorial</a>
-<a class="btn-small btn-secondary" href="/examples">Examples</a>
+<a class="btn-small" href="/examples">Examples</a>
 </div>
 
 ## [Sponsors](#sponsors) {#sponsors}
