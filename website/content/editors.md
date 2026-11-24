@@ -2,7 +2,7 @@
 
 ## VS Code
 
-Install the official [Roc extension for VS Code](https://github.com/roc-lang/roc-vscode).
+Install the official [Roc extension for VS Code](https://marketplace.visualstudio.com/items?itemName=roclang.roc).
 
 ## Zed
 
