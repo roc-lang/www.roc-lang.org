@@ -1,58 +1,19 @@
 #!/usr/bin/env sh
-# Roc Nightly Installer
+# Roc Installer
 # Works on Linux and macOS, on x86_64 and ARM64 architectures.
 # This script downloads, verifies, and sets up Roc for your system.
 
 set -eu
 
 # ---- Configuration ----
-VERSION_DATE="2026-11-15"
-BUILD_ID="f25da45"
-BASE_URL="https://github.com/roc-lang/nightlies/releases/download/nightly-2026-11-15-f25da45"
+VERSION="0.1.0_RC1"
+BASE_URL="https://github.com/roc-lang/roc/releases/download/${VERSION}"
 
 # Known SHA256 checksums for file verification
-SHA_LINUX_ARM64="dfc97c6ddf897d7717cb95a19e0c0a98d1d4afae4f259e691f8959870f379176"
-SHA_LINUX_X86_64="986360348a6bbf4f27696f6b3d73f0260293813346712a3f72e736452671e994"
-SHA_MACOS_ARM64="3bbdc4d4c70c3446f6e59504c7f0e122cae1de27d6f94be74c41ed7218fe0896"
-SHA_MACOS_X86_64="804510f5fd252261c2163d2e6105c69a19208075d35926ee22b59e04f9c00afb"
-
-# ---- Warn if this installer is stale ----
-# The release above is hardcoded into this script. If it is more than two weeks
-# old, a newer Roc release is probably available and the user should grab the
-# latest installer instead of installing an outdated build.
-# Set ROC_CONTINUE_IF_STALE=y to skip this check (e.g. in CI).
-RELEASE_EPOCH=""
-if RELEASE_EPOCH=$(date -d "$VERSION_DATE" +%s 2>/dev/null); then
-    : # GNU date (Linux)
-elif RELEASE_EPOCH=$(date -j -f "%Y-%m-%d" "$VERSION_DATE" +%s 2>/dev/null); then
-    : # BSD date (macOS)
-else
-    RELEASE_EPOCH=""
-fi
-
-if [ -n "$RELEASE_EPOCH" ]; then
-    AGE_DAYS=$(( ( $(date +%s) - RELEASE_EPOCH ) / 86400 ))
-    if [ "$AGE_DAYS" -gt 14 ]; then
-        echo "⚠️  This installer is hardcoded to the Roc release from ${VERSION_DATE}, which is ${AGE_DAYS} days old." >&2
-        echo "   A newer release is probably available." >&2
-        echo "   We recommend downloading the latest installer:" >&2
-        echo "       https://roc-lang.org/install_roc.sh" >&2
-        echo >&2
-        STALE_ANSWER="${ROC_CONTINUE_IF_STALE:-}"
-        if [ -z "$STALE_ANSWER" ]; then
-            if { true </dev/tty; } 2>/dev/null; then
-                printf 'Continue with this older version anyway? [y/N] '
-                read -r STALE_ANSWER </dev/tty || STALE_ANSWER="n"
-            else
-                STALE_ANSWER="n"
-            fi
-        fi
-        case "$STALE_ANSWER" in
-            y|Y) echo ;;
-            *) echo "Aborting. Please download the latest installer from https://roc-lang.org/install_roc.sh" >&2; exit 1 ;;
-        esac
-    fi
-fi
+SHA_LINUX_ARM64="b3e0a9dbc922f3802702a55a1869ad2c2e4f4dc935d8a9d1b26c3612668dff43"
+SHA_LINUX_X86_64="043c426ea85dcdbd427951eaed246f0c10c171d988f2598782233a6dae43379d"
+SHA_MACOS_ARM64="e8228040c701e130254c72539a1d0f1b150d78c00058747edb0edae51ba5dbc8"
+SHA_MACOS_X86_64="ea9b38b5e4708cbe42c92077e816f5241299da1aa3f4c46e8cb933b1aa2af858"
 
 # ---- Detect your operating system and CPU type ----
 OS="$(uname -s)"
@@ -82,7 +43,7 @@ case "$ARCH" in
 esac
 
 # ---- Figure out which file to download ----
-FILE="roc_nightly-${PLATFORM}_${ARCH_NAME}-${VERSION_DATE}-${BUILD_ID}.tar.gz"
+FILE="roc-${PLATFORM}_${ARCH_NAME}-${VERSION}.tar.gz"
 URL="${BASE_URL}/${FILE}"
 
 # ---- Choose the right SHA256 value ----
@@ -124,7 +85,7 @@ fi
 # ---- Extract the archive ----
 echo "📦 Step 3: Extracting files..."
 tar -xf "$FILE"
-DIR_NAME="roc_nightly-${PLATFORM}_${ARCH_NAME}-${VERSION_DATE}-${BUILD_ID}"
+DIR_NAME="roc-${PLATFORM}_${ARCH_NAME}-${VERSION}"
 EXTRACT_DIR="$PWD/$DIR_NAME"
 echo "✅ Roc was extracted to: $EXTRACT_DIR"
 
