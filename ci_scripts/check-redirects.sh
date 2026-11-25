@@ -64,6 +64,8 @@ EXPECTED=(
     "/docs/main/builtins/ /docs/main/"
     "/install/unix /install/"
     "/install/unix/ /install/"
+    "/install/nix /install/"
+    "/install/nix/ /install/"
     "/platforms /docs/main/langref/platforms/"
     "/platforms/ /docs/main/langref/platforms/"
     "/builtins/main/Str/ /docs/main/Str/"

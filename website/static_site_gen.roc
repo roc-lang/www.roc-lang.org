@@ -59,17 +59,17 @@ page_data = Dict.empty()
 	.insert("/repl/index.html", { title: "REPL | Roc", description: "Try the Roc programming language in an online REPL." })
 	.insert("/examples/index.html", { title: "Examples | Roc", description: "Explore Roc examples by topic, from language basics and error handling to packages, platforms, and complete programs." })
 	.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
-	.insert("/install/other.html", { title: "Getting started on other systems | Roc", description: "Roc installation guide for other systems" })
-	.insert("/install/linux.html", { title: "Getting started on Linux | Roc", description: "Roc installation guide for Linux" })
-	.insert("/install/macos.html", { title: "Getting started on macOS | Roc", description: "Roc installation guide for macOS" })
-	.insert("/install/windows.html", { title: "Getting started on Windows | Roc", description: "Roc installation guide for Windows" })
-	.insert("/install/nix.html", { title: "Getting started with Nix | Roc", description: "Roc installation guide for Nix" })
+	.insert("/install/other.html", { title: "Install Roc on other systems | Roc", description: "Roc installation guide for other systems" })
+	.insert("/install/linux.html", { title: "Install Roc on Linux | Roc", description: "Roc installation guide for Linux" })
+	.insert("/install/macos.html", { title: "Install Roc on macOS | Roc", description: "Roc installation guide for macOS" })
+	.insert("/install/windows.html", { title: "Install Roc on Windows | Roc", description: "Roc installation guide for Windows" })
 	.insert("/install/getting_started.html", { title: "Getting started | Roc", description: "How to get started with Roc" })
 	.insert("/installnew/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
 	.insert("/installnew/other.html", { title: "Install on other systems | Roc", description: "Roc installation guide for other systems" })
 	.insert("/installnew/unix.html", { title: "Install on Unix | Roc", description: "Roc installation guide for Unix" })
 	.insert("/installnew/windows.html", { title: "Install on Windows | Roc", description: "Roc installation guide for Windows" })
 	.insert("/installnew/nix.html", { title: "Usage on Nix | Roc", description: "Roc usage guide for Nix" })
+	.insert("/license/index.html", { title: "License | Roc", description: "The software license for the code in the Roc programming language." })
 	.insert("/404.html", { title: "Page Not Found | Roc", description: "The page you requested could not be found." })
 
 get_page_info : Str -> PageInfo
@@ -91,6 +91,24 @@ get_page_info = |page_path_str|
 				crash "Web page ${page_path_str} did not have a title and description specified in page_data. Please add one to website/static_site_gen.roc."
 			}
 	}
+
+# The address a page is served at: without "index.html" or ".html".
+page_url : Str -> Str
+page_url = |page_path_str| {
+	path =
+		if page_path_str.ends_with("/index.html") {
+			page_path_str.drop_suffix("index.html")
+		} else {
+			page_path_str.drop_suffix(".html")
+		}
+
+	"https://www.roc-lang.org${path}"
+}
+
+# For link previews on social media and in chat apps.
+social_meta : Str, Str -> Html.Node
+social_meta = |property, value|
+	Html.meta([Html.attribute("property")(property), content(value)])
 
 transform : Str, Str -> Str
 transform = |page_path_str, html_content|
@@ -117,8 +135,17 @@ view_head = |page_path_str| {
 			Html.title([], [Html.text(page_info.title)]),
 			Html.meta([name("description"), content(page_info.description)]),
 			Html.meta([name("viewport"), content("width=device-width, initial-scale=1")]),
+			social_meta("og:type", "website"),
+			social_meta("og:site_name", "Roc"),
+			social_meta("og:title", page_info.title),
+			social_meta("og:description", page_info.description),
+			social_meta("og:url", page_url(page_path_str)),
+			social_meta("og:image", "https://www.roc-lang.org/social-card.png"),
+			social_meta("og:image:width", "1200"),
+			social_meta("og:image:height", "630"),
+			social_meta("og:image:alt", "The Roc logo, a purple origami bird, next to the name Roc and the tagline: a fast, friendly, functional language."),
+			Html.meta([name("twitter:card"), content("summary_large_image")]),
 			Html.link([rel("icon"), href("/favicon.svg")]),
-			Html.link([rel("prefetch"), href("/repl/roc_repl_wasm.js")]),
 			Html.link([rel("stylesheet"), href("/site.css")]),
 			Html.link([rel("stylesheet"), href("/site-header.css")]),
 			# Safari ignores rel="icon" and only respects rel="mask-icon". It renders the
@@ -166,13 +193,17 @@ view_footer = Html.footer(
 		Html.div(
 			[id("footer")],
 			[
-				Html.div(
-					[id("gh-link")],
+				Html.nav(
+					[id("footer-links"), aria_label("footer")],
 					[
 						Html.a(
-							[id("gh-centered-link"), href("https://github.com/roc-lang/roc")],
-							[gh_logo, Html.span([id("gh-link-text")], [Html.text("roc-lang/roc")])],
+							[href("https://github.com/roc-lang/roc")],
+							[gh_logo, Html.text("roc-lang/roc")],
 						),
+						Html.a([href("https://roc.zulipchat.com/")], [Html.text("Zulip chat")]),
+						Html.a([href("/faq")], [Html.text("FAQ")]),
+						Html.a([href("/foundation")], [Html.text("Foundation")]),
+						Html.a([href("/license/")], [Html.text("License")]),
 					],
 				),
 			],
@@ -258,7 +289,7 @@ gh_logo = Html.element("svg")(
 		Html.attribute("xmlns")("http://www.w3.org/2000/svg"),
 		Html.attribute("fill-rule")("evenodd"),
 		Html.attribute("clip-rule")("evenodd"),
-		Html.attribute("role")("img"),
+		aria_hidden("true"), # decorative: the link text names it
 		id("gh-logo"),
 	],
 	[

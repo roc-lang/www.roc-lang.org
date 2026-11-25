@@ -1,4 +1,4 @@
-# Windows
+# Install Roc on Windows
 
 [Install on other OS](/install?all)
 

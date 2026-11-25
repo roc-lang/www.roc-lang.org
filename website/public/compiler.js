@@ -1455,6 +1455,8 @@ function setupHighlight(textarea, highlight) {
   syncScroll();
 }
 
+let editorCount = 0;
+
 function setup(div) {
   // The Run button is added statically in the markup (so it shows even before
   // this script loads). Pull it out before reading the source so its label
@@ -1480,9 +1482,25 @@ function setup(div) {
   sourceHighlight.className = "roc-source-highlight";
   sourceHighlight.setAttribute("aria-hidden", "true");
 
-  // Keep Tab from leaving the textarea
+  // Tab indents, so it would trap keyboard users in the editor. Shift+Tab
+  // always leaves it, and Tab does too right after Escape.
+  const hintId = `roc-editor-hint-${++editorCount}`;
+  const hint = document.createElement("p");
+  hint.id = hintId;
+  hint.className = "roc-editor-hint";
+  hint.textContent = "Tab indents. Press Esc, then Tab, to leave the editor.";
+  textarea.setAttribute("aria-describedby", hintId);
+
+  let escaped = false;
+  textarea.addEventListener("blur", () => { escaped = false; });
   textarea.addEventListener("keydown", (e) => {
-    if (e.key === "Tab") {
+    if (e.key === "Escape") {
+      escaped = true;
+      return;
+    }
+    const leave = escaped || e.shiftKey;
+    if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) escaped = false;
+    if (e.key === "Tab" && !leave && !e.ctrlKey && !e.altKey && !e.metaKey) {
       e.preventDefault();
       const ta = e.target;
       const s = ta.selectionStart;
@@ -1492,10 +1510,12 @@ function setup(div) {
     }
   });
 
-  runButton.textContent = "Run \u25b6";
+  // The arrow is decoration; screen readers only need "Run".
+  runButton.innerHTML = 'Run&nbsp;<span aria-hidden="true">\u25b6</span>';
 
   const outputArea = document.createElement("div");
   outputArea.className = "roc-output";
+  outputArea.setAttribute("role", "status"); // announce results when they arrive
 
   runButton.addEventListener("click", async () => {
     // ---- 1. lazy-load compiler on first click ----
@@ -1567,7 +1587,21 @@ function setup(div) {
   setupHighlight(textarea, sourceHighlight);
   sourceEditor.appendChild(runButton);
   updateLineNumbers();
+  div.appendChild(hint);
   div.appendChild(outputArea);
+
+  // A horizontal scrollbar takes its height out of the textarea, which would
+  // then also scroll vertically. Grow it so every line still fits.
+  const fitHeight = () => {
+    textarea.style.height = "";
+    if (textarea.value.split("\n").length > textarea.rows) return;
+    const hidden = textarea.scrollHeight - textarea.clientHeight;
+    if (hidden > 0) textarea.style.height = `${textarea.offsetHeight + hidden}px`;
+  };
+  fitHeight();
+  textarea.addEventListener("input", fitHeight);
+  window.addEventListener("resize", fitHeight);
+  document.fonts?.ready.then(fitHeight);
 }
 
 function setupCopyButtons() {
@@ -1632,4 +1666,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (interactiveWidgets.length > 0) preloadCompiler();
+
+  // On wide screens the tutorial's contents list is a sidebar, so show it open.
+  const contents = document.querySelector("details.tutorial-contents");
+  if (contents) {
+    const wide = window.matchMedia("(min-width: 1024px)");
+    const sync = () => { contents.open = wide.matches; };
+    sync();
+    wide.addEventListener("change", sync);
+  }
 });

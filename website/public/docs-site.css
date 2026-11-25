@@ -110,6 +110,9 @@ body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
         padding-right: 8px;
     }
     .website-docs .menu-toggle { margin-right: 0; }
+    /* The docs bleed code blocks 24px into an 18px page gutter, which would
+       make the page scroll sideways. */
+    .website-docs main pre { margin-right: -18px; }
 }
 
 /* Long qualified type names must not widen the page beyond their code block. */
@@ -139,6 +142,13 @@ body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
     .website-docs ::-webkit-scrollbar {
         width: 12px;
         height: 12px;
+    }
+
+    /* Slimmer under a line of code, as in site.css. */
+    .website-docs pre::-webkit-scrollbar,
+    .website-docs pre ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
     }
 
     .website-docs ::-webkit-scrollbar-track,

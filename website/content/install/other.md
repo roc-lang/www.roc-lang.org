@@ -1,4 +1,4 @@
-# Other Systems
+# Install Roc on other systems
 
 [Install on other OS](/install?all)
 
