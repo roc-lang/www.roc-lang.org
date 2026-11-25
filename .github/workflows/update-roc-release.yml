@@ -1,10 +1,10 @@
 name: Update Roc Release
 
 on:
-  schedule:
-    # Run daily at 12 PM UTC. The release follows the nightly that the latest
-    # roc-lang/examples commit pins, so it moves once the examples were upgraded.
-    - cron: '0 12 * * *'
+  # Scheduled runs are disabled: the install scripts now use the stable
+  # roc-lang/roc 0.1.0_RC1 release, which this script would overwrite with a nightly.
+  # schedule:
+  #   - cron: '0 12 * * *'
   workflow_dispatch: # Allow manual triggering
 
 permissions:
