@@ -10,6 +10,14 @@
     curl --proto '=https' --tlsv1.2 -sSf https://roc-lang.org/install_roc.sh | sh
     ```
 
+    Or install Roc from [nixpkgs](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/ro/roc/package.nix) using [Nix](https://nixos.org/download/):
+
+    ```sh
+    nix-env -f channel:nixpkgs-unstable -iA roc
+    ```
+
+    Stable NixOS releases still contain the old Roc compiler, so use `nixpkgs-unstable` or `nixos-unstable`.
+
 1. In a new terminal, download and run hello world:
 
     ```sh
@@ -19,7 +27,7 @@
 
 ## Next Steps
 
-<!-- TODO - [editor setup](https://www.roc-lang.org/install#editor-extensions)  -->
+- [Editor Setup](/editors)
 - [Tutorial](/tutorial/)
 - [Examples](https://www.roc-lang.org/examples)
 - [Frequently Asked Questions](https://www.roc-lang.org/faq)

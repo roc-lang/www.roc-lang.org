@@ -33,5 +33,3 @@
 <a class="btn-small" href="/install/other">Other</a>
 </div>
 
-<!-- TODO mention editor plugins once they are up to date  -->
-

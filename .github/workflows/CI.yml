@@ -72,6 +72,7 @@ jobs:
           test -f build/examples/HelloWorld/README.html
           grep -q 'Hello, World!' build/examples/index.html
           grep -q 'Hello, World!' build/examples/HelloWorld/README.html
+          grep -Fq 'class="language-roc"' build/examples/HelloWorld/README.html
           examples_sha="$(<content/examples/.source-revision)"
           grep -q "github.com/roc-lang/examples/tree/$examples_sha/examples/HelloWorld" build/examples/HelloWorld/README.html
           if grep -R -q 'file:main.roc' build/examples; then
@@ -112,11 +113,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract ROC_NIGHTLY_VERSION from install script
+      - name: Extract ROC_VERSION from install script
         run: |
-          VERSION_DATE=$(grep '^VERSION_DATE=' website/public/install_roc.sh | cut -d'"' -f2)
-          BUILD_ID=$(grep '^BUILD_ID=' website/public/install_roc.sh | cut -d'"' -f2)
-          echo "ROC_NIGHTLY_VERSION=${VERSION_DATE}-${BUILD_ID}" >> "$GITHUB_ENV"
+          VERSION=$(grep '^VERSION=' website/public/install_roc.sh | cut -d'"' -f2)
+          echo "ROC_VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - name: Test install script (answer no to PATH)
         run: |
@@ -126,7 +126,7 @@ jobs:
       - name: Verify installation (no PATH)
         run: |
           cd website/public
-          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          DIR_NAME="roc-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_VERSION }}"
           if [ ! -d "$DIR_NAME" ]; then
             echo "Error: Installation directory $DIR_NAME not found"
             exit 1
@@ -135,13 +135,13 @@ jobs:
       - name: Test roc binary (no PATH)
         run: |
           cd website/public
-          DIR_NAME="roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          DIR_NAME="roc-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_VERSION }}"
           "$DIR_NAME/roc" version
 
       - name: Clean up for second test
         run: |
           cd website/public
-          rm -rf roc_nightly-*
+          rm -rf roc-*
 
       - name: Test install script (answer yes to PATH)
         run: |
@@ -162,7 +162,7 @@ jobs:
             PROFILE="$HOME/.profile"
           fi
 
-          if ! grep -q "roc_nightly-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}" "$PROFILE"; then
+          if ! grep -q "roc-${{ matrix.platform }}_${{ matrix.arch }}-${{ env.ROC_VERSION }}" "$PROFILE"; then
             echo "Error: PATH not updated in $PROFILE"
             exit 1
           fi
@@ -189,13 +189,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract ROC_NIGHTLY_VERSION from install script
+      - name: Extract ROC_VERSION from install script
         shell: pwsh
         run: |
           $content = Get-Content website/public/install_roc.sh -Raw
-          $versionDate = [regex]::Match($content, 'VERSION_DATE="([^"]+)"').Groups[1].Value
-          $buildId = [regex]::Match($content, 'BUILD_ID="([^"]+)"').Groups[1].Value
-          echo "ROC_NIGHTLY_VERSION=${versionDate}-${buildId}" >> $env:GITHUB_ENV
+          $version = [regex]::Match($content, '(?m)^VERSION="([^"]+)"').Groups[1].Value
+          echo "ROC_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Test install script (answer no to PATH)
         shell: pwsh
@@ -210,7 +209,7 @@ jobs:
         shell: pwsh
         run: |
           Set-Location website/public
-          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          $dirName = "roc-windows_${{ matrix.arch }}-${{ env.ROC_VERSION }}"
           if (-not (Test-Path $dirName)) {
             Write-Error "❌ Installation directory $dirName not found"
           } else {
@@ -222,7 +221,7 @@ jobs:
         shell: pwsh
         run: |
           Set-Location website/public
-          $dirName = "roc_nightly-windows_x86_64-${{ env.ROC_NIGHTLY_VERSION }}"
+          $dirName = "roc-windows_x86_64-${{ env.ROC_VERSION }}"
           $rocPath = Join-Path $dirName "roc.exe"
           if (-not (Test-Path $rocPath)) {
             Write-Host "❌ roc.exe not found at $rocPath"
@@ -238,7 +237,7 @@ jobs:
         shell: pwsh
         run: |
           Set-Location website/public
-          Get-Item .\roc_nightly-* -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
+          Get-Item .\roc-* -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
           Write-Host "🧹 Cleaned up previous installation directories"
 
       - name: Test install script (answer yes to PATH)
@@ -255,7 +254,7 @@ jobs:
         env:
           PROCESSOR_ARCHITECTURE: ${{ matrix.proc_arch }}
         run: |
-          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          $dirName = "roc-windows_${{ matrix.arch }}-${{ env.ROC_VERSION }}"
 
           # The script uses SetEnvironmentVariable("Path", "User")
           $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
@@ -275,7 +274,7 @@ jobs:
       - name: Test roc binary (after PATH update)
         shell: pwsh
         run: |
-          $dirName = "roc_nightly-windows_${{ matrix.arch }}-${{ env.ROC_NIGHTLY_VERSION }}"
+          $dirName = "roc-windows_${{ matrix.arch }}-${{ env.ROC_VERSION }}"
           $rocPath = Join-Path $PWD "website/public\$dirName\roc.exe"
 
           # Pull the updated user PATH and merge into current session

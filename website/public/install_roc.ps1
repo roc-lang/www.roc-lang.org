@@ -1,42 +1,15 @@
-# Roc Nightly Installer for Windows
+# Roc Installer for Windows
 # Downloads, verifies, extracts, and (optionally) adds Roc to the user PATH.
-# Based on your 2026-04-10 nightly.
 
 $ErrorActionPreference = "Stop"
 
 # ---- Configuration ----
-$VersionDate = "2026-11-15"
-$BuildId     = "f25da45"
-$BaseUrl     = "https://github.com/roc-lang/nightlies/releases/download/nightly-2026-11-15-f25da45"
+$Version = "0.1.0_RC1"
+$BaseUrl = "https://github.com/roc-lang/roc/releases/download/$Version"
 
-# Known SHA256 checksums for Windows
-# The arm64 build is temporarily unavailable, so $Sha_Windows_arm64 is currently
-# unused (the arm64 branch below exits early). Both are refreshed automatically by
-# ci_scripts/update_roc_release.py once the arm64 build is restored.
-$Sha_Windows_x86_64 = "1951dfcb816bee7f04e3e0b064e14b189a9812c4f1925febf54863a2d21ca0d1"
-$Sha_Windows_arm64  = "0e80fee64f9480b2256541e9900389789db6492617dbfb79ee3f7b434a636c92"
-
-# ---- Warn if this installer is stale ----
-# The release above is hardcoded into this script. If it is more than two weeks
-# old, a newer Roc release is probably available and the user should grab the
-# latest installer instead of installing an outdated build.
-# Set ROC_CONTINUE_IF_STALE=y to skip this check (e.g. in CI).
-$releaseDate = [DateTime]::ParseExact($VersionDate, "yyyy-MM-dd", [System.Globalization.CultureInfo]::InvariantCulture)
-$ageDays = [int]((Get-Date) - $releaseDate).TotalDays
-if ($ageDays -gt 14) {
-    Write-Host "⚠️  This installer is hardcoded to the Roc release from $VersionDate, which is $ageDays days old."
-    Write-Host "   A newer release is probably available."
-    Write-Host "   We recommend downloading the latest installer:"
-    Write-Host "       https://roc-lang.org/install_roc.ps1"
-    Write-Host ""
-    $staleAnswer = $env:ROC_CONTINUE_IF_STALE
-    if ([string]::IsNullOrEmpty($staleAnswer)) {
-        $staleAnswer = Read-Host "Continue with this older version anyway? [y/N]"
-    }
-    if ($staleAnswer -notmatch '^(y|Y)$') {
-        throw "Aborting. Please download the latest installer from https://roc-lang.org/install_roc.ps1"
-    }
-}
+# Known SHA256 checksum for Windows
+# There is no Windows arm64 build in this release.
+$Sha_Windows_x86_64 = "3a91205c33c1df1174808f39b64b2ca919d00147e2828710469f40ce7c206719"
 
 # ---- Detect architecture ----
 $arch = $env:PROCESSOR_ARCHITECTURE
@@ -50,7 +23,7 @@ $Platform = "windows"
 
 # ---- Pick the right file ----
 if ($ArchName -eq "x86_64") {
-    $File = "roc_nightly-windows_x86_64-$VersionDate-$BuildId.zip"
+    $File = "roc-windows_x86_64-$Version.zip"
     $ExpectedSha = $Sha_Windows_x86_64
 } elseif ($ArchName -eq "arm64") {
     Write-Host "The Windows arm64 build of Roc is temporarily unavailable."
@@ -86,7 +59,7 @@ if ($actualHash -ne $ExpectedSha.ToLower()) {
 # ---- Extract ----
 Write-Host "Step 3: Extracting files..."
 
-$extractDirName = "roc_nightly-$Platform`_$ArchName-$VersionDate-$BuildId"
+$extractDirName = "roc-$Platform`_$ArchName-$Version"
 $extractDir     = Join-Path $PWD $extractDirName
 
 Expand-Archive -Path $downloadPath -DestinationPath $PWD -Force

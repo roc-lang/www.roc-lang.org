@@ -527,6 +527,7 @@ samp .meta.path,
 code .meta.path,
 samp .upperident,
 code .upperident,
+samp.language-roc :is(.str, .number),
 .roc-interactive .roc-output .n {
     color: var(--syntax-literal);
 }
@@ -558,6 +559,7 @@ samp .delimiter,
 code .delimiter,
 samp .punctuation,
 code .punctuation,
+samp.language-roc :is(.paren, .bracket, .brace, .comma),
 .roc-interactive .roc-output .k {
     color: var(--syntax-keyword);
 }

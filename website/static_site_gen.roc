@@ -1,4 +1,4 @@
-app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.16.0/8TC9CBHaqfmhhovuvKHKFYfLffwmZN4XpSF2jPHTw1Nm.tar.zst" }
+app [main!] { pf: platform "https://github.com/lukewilliamboswell/basic-ssg/releases/download/0.16.1/4VEduWR78R5y4SVypbTF1xBX52J8JxWTw1ufoPpzVcYg.tar.zst" }
 
 import pf.SSG
 import pf.Path
@@ -49,6 +49,7 @@ page_data = Dict.empty()
 	.insert("/bdfn.html", { title: "Governance | Roc", description: "Learn about the governance model of the Roc programming language." })
 	.insert("/community.html", { title: "Community | Roc", description: "Connect with the community of the Roc programming language." })
 	.insert("/donate.html", { title: "Donate | Roc", description: "Support the Roc programming language by donating or sponsoring." })
+	.insert("/editors.html", { title: "Editors | Roc", description: "Set up your editor for the Roc programming language." })
 	.insert("/faq.html", { title: "FAQ | Roc", description: "Frequently asked questions about the Roc programming language." })
 	.insert("/fast.html", { title: "Fast | Roc", description: "What does it mean that the Roc programming language is fast?" })
 	.insert("/friendly.html", { title: "Friendly | Roc", description: "What does it mean that the Roc programming language is friendly?" })
