@@ -1091,6 +1091,12 @@ footer {
         height: 3rem;
     }
 
+    /* "Functional" is a wide title, which leaves its drawing less room. */
+    .home-goals-content[href="/functional"] .home-goals-art {
+        top: var(--space-4);
+        height: 2.25rem;
+    }
+
     .home-goals-content .nowrap,
     .home-goals-learn-more {
         white-space: normal;
