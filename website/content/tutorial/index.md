@@ -18,8 +18,6 @@
 
 </details>
 
-Roc 0.1 is an early release, so expect missing features and bugs. This tutorial is also a work in progress.
-
 Helpful resources:
 - [Standard library docs](/docs/main/)
 - [Examples](/examples/)

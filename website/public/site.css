@@ -797,12 +797,8 @@ footer {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     column-gap: var(--space-5);
-}
-
-/* On the home page the footer lines up with the sponsors section. */
-#homepage-main #footer-links {
-    margin-left: max(0px, calc((100% - var(--text-width)) / 2));
 }
 
 #footer-links a {
@@ -907,6 +903,7 @@ footer {
 
 .home-editor-intro {
     margin-top: var(--space-9);
+    text-align: center;
 }
 
 /* The intro, editor and output form one block centered in the page. */
