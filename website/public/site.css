@@ -68,6 +68,10 @@
     --syntax-error: #b42338;
     --line-number-color: #75799a; /* decorative, so below AA on purpose */
     --scrollbar-thumb: #b6bad2;
+
+    /* The line drawing beside a homepage card title. */
+    --art-line: #6a72e0;
+    --art-opacity: 0.8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -99,6 +103,9 @@
         --syntax-error: #fc5a5a;
         --line-number-color: #8294c9;
         --scrollbar-thumb: var(--line-number-color);
+
+        --art-line: #6f86ff;
+        --art-opacity: 0.8;
     }
 }
 
@@ -922,6 +929,37 @@ footer {
     box-shadow: var(--box-glow);
     color: var(--text-color);
     text-decoration: none;
+    /* Anchors .home-goals-art. */
+    position: relative;
+}
+
+/* A one-color blueprint drawing in the space right of the title. It is taller
+   than the title and centered on it. */
+.home-goals-art {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-5);
+    width: auto;
+    height: 4rem;
+    opacity: var(--art-opacity);
+    pointer-events: none;
+    fill: none;
+    stroke: var(--art-line);
+    /* Wider than 1px: a 1px diagonal looks stepped on standard-density screens. */
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    shape-rendering: geometricPrecision;
+}
+
+.home-goals-art path {
+    vector-effect: non-scaling-stroke;
+}
+
+/* Center and dimension lines are thinner and fainter than the object. */
+.home-goals-art .art-guide {
+    stroke-width: 1.25;
+    opacity: 0.6;
 }
 
 .home-goals-content:hover {
@@ -1045,6 +1083,12 @@ footer {
 
     .home-goals-content {
         padding: var(--space-4);
+    }
+
+    .home-goals-art {
+        top: var(--space-3);
+        right: var(--space-4);
+        height: 3rem;
     }
 
     .home-goals-content .nowrap,
