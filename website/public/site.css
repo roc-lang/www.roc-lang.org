@@ -974,6 +974,59 @@ footer {
     font-size: 1.75rem;
 }
 
+/* A title with a drawing that the underline runs into. --art-join is how far
+   from the drawing's left edge the underline ends, --art-drop how far the
+   drawing reaches below the underline. */
+.home-goals-heading {
+    --art-height: 2rem;
+    /* The heart's bottom point is centred in its viewBox. */
+    --art-join: calc(var(--art-height) * 0.5704);
+    --art-drop: 0px;
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: var(--space-4);
+}
+
+.home-goals-heading .home-goals-title {
+    margin-bottom: 0;
+    padding-right: calc(var(--space-4) + var(--art-join));
+}
+
+/* A line drawing beside a card title, stroked like the title's underline. */
+.home-goals-art {
+    flex: none;
+    width: auto;
+    height: var(--art-height);
+    margin-left: calc(-1 * var(--art-join));
+    margin-bottom: calc(-1 * var(--art-drop));
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: var(--rule-width);
+    stroke-linejoin: miter;
+    stroke-miterlimit: 10; /* keeps the bolt's points sharp */
+}
+
+/* The underline becomes the hyphen of a `->`, running into the tip of the ">".
+   The viewBox is in CSS pixels, with the underline's centre line at y = 0. */
+.home-goals-heading-arrow {
+    --art-height: 30px;
+    --art-join: 17px;
+    --art-drop: 13px;
+}
+
+/* A `=>`: past the title a short second line starts above the underline, and
+   both run into a ">" centred between them. The viewBox is in CSS pixels, with
+   the underline's centre line at y = 0 and its end at x = 0. */
+.home-goals-heading-double {
+    --art-height: 24px;
+    --art-join: 28px;
+    --art-drop: 6px;
+}
+
+.home-goals-art * {
+    vector-effect: non-scaling-stroke;
+}
+
 .home-goals-description {
     margin-bottom: var(--space-5);
 }

@@ -12,21 +12,30 @@
 <section class="home-goals-container" aria-label="Roc's Design: Fast, Friendly, Functional">
     <div role="presentation" class="home-goals-column">
         <a href="/fast" class="home-goals-content">
-            <h2 class="home-goals-title">Fast</h2>
+            <div role="presentation" class="home-goals-heading home-goals-heading-arrow">
+                <h2 class="home-goals-title">Fast</h2>
+                <svg class="home-goals-art" aria-hidden="true" focusable="false" viewBox="-4 -15 24 30" xmlns="http://www.w3.org/2000/svg"><polyline points="0,-10 13,0 0,10"/></svg>
+            </div>
             <p class="home-goals-description">Roc code is designed to build fast and <span class="nowrap">run fast</span>. It compiles to machine code or WebAssembly.</p>
             <p class="home-goals-learn-more">What does <i>fast</i> mean here?</p>
         </a>
     </div>
     <div role="presentation" class="home-goals-column">
         <a href="/friendly" class="home-goals-content">
-            <h2 class="home-goals-title">Friendly</h2>
+            <div role="presentation" class="home-goals-heading">
+                <h2 class="home-goals-title">Friendly</h2>
+                <svg class="home-goals-art" aria-hidden="true" focusable="false" viewBox="-4.5 -4.5 57.28 50.21" xmlns="http://www.w3.org/2000/svg"><polygon points="24.14,41.21 0,17.07 0,7.07 7.07,0 17.07,0 24.14,7.07 31.21,0 41.21,0 48.28,7.07 48.28,17.07"/></svg>
+            </div>
             <p class="home-goals-description">Roc's syntax, semantics, and included toolset all prioritize user-friendliness.</p>
             <p class="home-goals-learn-more">What does <i>friendly</i> mean here?</p>
         </a>
     </div>
     <div role="presentation" class="home-goals-column">
         <a href="/functional" class="home-goals-content">
-            <h2 class="home-goals-title">Functional</h2>
+            <div role="presentation" class="home-goals-heading home-goals-heading-double">
+                <h2 class="home-goals-title">Functional</h2>
+                <svg class="home-goals-art" aria-hidden="true" focusable="false" viewBox="-28 -16 37 24" xmlns="http://www.w3.org/2000/svg"><path d="M-26 -8H0M-7.8 -14L5.2 -4L-7.8 6"/></svg>
+            </div>
             <p class="home-goals-description">
              Roc has a small number of simple language primitives. It's a single-paradigm <span class="nowrap">functional language.</span></p>
             <p class="home-goals-learn-more">What does <i>functional</i> mean here?</p>
