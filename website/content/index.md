@@ -14,7 +14,7 @@
         <a href="/fast" class="home-goals-content">
             <div role="presentation" class="home-goals-heading home-goals-heading-arrow">
                 <h2 class="home-goals-title">Fast</h2>
-                <svg class="home-goals-art" aria-hidden="true" focusable="false" viewBox="-4 -15 24 30" xmlns="http://www.w3.org/2000/svg"><polyline points="0,-10 13,0 0,10"/></svg>
+                <svg class="home-goals-art" aria-hidden="true" focusable="false" viewBox="-4 -15 24 30" xmlns="http://www.w3.org/2000/svg"><clipPath id="art-arrow-cut"><rect x="0" y="-15" width="20" height="30"/></clipPath><polyline clip-path="url(#art-arrow-cut)" points="-3.9,-13 13,0 -3.9,13"/></svg>
             </div>
             <p class="home-goals-description">Roc code is designed to build fast and <span class="nowrap">run fast</span>. It compiles to machine code or WebAssembly.</p>
             <p class="home-goals-learn-more">What does <i>fast</i> mean here?</p>
@@ -34,7 +34,7 @@
         <a href="/functional" class="home-goals-content">
             <div role="presentation" class="home-goals-heading home-goals-heading-double">
                 <h2 class="home-goals-title">Functional</h2>
-                <svg class="home-goals-art" aria-hidden="true" focusable="false" viewBox="-28 -16 37 24" xmlns="http://www.w3.org/2000/svg"><path d="M-26 -8H0M-7.8 -14L5.2 -4L-7.8 6"/></svg>
+                <svg class="home-goals-art" aria-hidden="true" focusable="false" viewBox="-28 -16 33 24" xmlns="http://www.w3.org/2000/svg"><path d="M-26 -8H-4M-11.8 -14L1.2 -4L-11.8 6"/></svg>
             </div>
             <p class="home-goals-description">
              Roc has a small number of simple language primitives. It's a single-paradigm <span class="nowrap">functional language.</span></p>

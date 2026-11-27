@@ -981,6 +981,10 @@ footer {
     --art-height: 2rem;
     /* The heart's bottom point is centred in its viewBox. */
     --art-join: calc(var(--art-height) * 0.5704);
+    /* From the drawing's left edge to its leftmost inked pixel. */
+    /* Its left side minus half the stroke, plus a 0.5px nudge left set by eye
+       against the I's stem. */
+    --art-ink: calc(var(--art-height) * 0.0896 - 1.5px);
     --art-drop: 0px;
     display: flex;
     align-items: flex-end;
@@ -989,7 +993,9 @@ footer {
 
 .home-goals-heading .home-goals-title {
     margin-bottom: 0;
-    padding-right: calc(var(--space-4) + var(--art-join));
+    /* The drawing's leftmost pixel sits where a following " I" would start
+       (0.2825em past the end of the text), which spaced it out by eye. */
+    padding-right: calc(var(--art-join) - var(--art-ink) + 0.2825em);
 }
 
 /* A line drawing beside a card title, stroked like the title's underline. */
@@ -1011,6 +1017,8 @@ footer {
 .home-goals-heading-arrow {
     --art-height: 30px;
     --art-join: 17px;
+    /* The arms are cut off vertically at x = 0, like the I's stem. */
+    --art-ink: 4px;
     --art-drop: 13px;
 }
 
@@ -1019,7 +1027,8 @@ footer {
    the underline's centre line at y = 0 and its end at x = 0. */
 .home-goals-heading-double {
     --art-height: 24px;
-    --art-join: 28px;
+    --art-join: 24px;
+    --art-ink: 2px;
     --art-drop: 6px;
 }
 
