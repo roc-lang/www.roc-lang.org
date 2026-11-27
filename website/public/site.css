@@ -68,6 +68,11 @@
     --syntax-error: #b42338;
     --line-number-color: #75799a; /* decorative, so below AA on purpose */
     --scrollbar-thumb: #b6bad2;
+
+    /* The homepage logo's outline, matching the lattice in background.js. */
+    --logo-line: #8088e2;
+    --logo-star: #8b5cf6;
+    --logo-star-core: #6d28d9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -99,6 +104,10 @@
         --syntax-error: #fc5a5a;
         --line-number-color: #8294c9;
         --scrollbar-thumb: var(--line-number-color);
+
+        --logo-line: #4860ff;
+        --logo-star: #9650ff;
+        --logo-star-core: #d6b4ff;
     }
 }
 
@@ -862,6 +871,33 @@ footer {
     display: block;
     width: 112px;
     height: auto;
+    overflow: visible; /* corner glows reach past the viewBox */
+}
+
+/* Glowing corners, only seen while the logo animates in. */
+#homepage-logo .logo-star {
+    opacity: 0;
+}
+
+#logo-star-glow stop {
+    stop-color: var(--logo-star);
+}
+
+/* The glow only works on the dark background. */
+@media (prefers-color-scheme: light) {
+    .logo-glow {
+        display: none;
+    }
+}
+
+.logo-flare {
+    stroke: var(--logo-star);
+    stroke-opacity: 0.4;
+    vector-effect: non-scaling-stroke;
+}
+
+.logo-core {
+    fill: var(--logo-star-core);
 }
 
 #homepage-h1 {
@@ -1311,5 +1347,38 @@ body ::-webkit-scrollbar {
             background-color 0.1s ease,
             border-color 0.1s ease,
             box-shadow 0.2s ease;
+    }
+
+    /* The homepage logo starts as an outline with glowing corners, like the
+       background lattice, then fills in face by face. --i is the step at which
+       a face fills or a corner fades. */
+    #homepage-logo > path,
+    #homepage-logo .logo-star {
+        animation: logo-face 0.45s ease-out backwards;
+        animation-delay: calc(0.6s + var(--i) * 0.26s);
+    }
+
+    #homepage-logo > path {
+        stroke: var(--logo-line);
+        stroke-opacity: 0;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+    }
+
+    #homepage-logo .logo-star {
+        animation-name: logo-star;
+    }
+
+    @keyframes logo-face {
+        from {
+            fill-opacity: 0;
+            stroke-opacity: 1;
+        }
+    }
+
+    @keyframes logo-star {
+        from {
+            opacity: 1;
+        }
     }
 }
