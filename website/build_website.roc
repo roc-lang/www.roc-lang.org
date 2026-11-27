@@ -46,7 +46,8 @@ CompilerInfo : {
 
 main! : List(OsStr) => Try({}, _)
 main! = |raw_args| {
-	args = raw_args.drop_first(1).map(OsStr.display)
+	# The platform passes only the arguments, without the program name.
+	args = raw_args.map(OsStr.display)
 	use_cache = args.any(|arg| arg == "--cache")
 	use_minify = args.any(|arg| arg == "--minify")
 	examples_only = args.any(|arg| arg == "--examples-only")
