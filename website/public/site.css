@@ -50,10 +50,10 @@
     --link-color: #6325db;
     --on-accent: #ffffff;
 
-    /* Code blocks sit on a cool tint and the homepage cards on near white.
+    /* Code blocks and the homepage cards sit on near white.
        The syntax colors match the docs' light scheme. */
-    --code-bg: #f6f9fd;
     --card-bg: rgb(252 253 255 / 0.92);
+    --code-bg: var(--card-bg);
     --code-color: #202746;
     --code-border: transparent;
     --card-hover-border: transparent;
