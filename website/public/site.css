@@ -1105,8 +1105,11 @@ footer {
     white-space: nowrap;
 }
 
+/* The deploy's HTML minifier strips the whitespace between the items, so the
+   space that lets the list wrap must come from here. */
 #individual-sponsors li::after {
-    content: ",";
+    content: ", ";
+    white-space: normal;
 }
 
 #individual-sponsors li:last-child::after {
