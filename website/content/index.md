@@ -45,11 +45,14 @@
 
 <p class="home-editor-intro">You can run the full compiler in the browser without a backend server!</p>
 <div class="roc-interactive front-page">
-<pre class="roc-source">print_remaining! = |todos|
+<button class="roc-run" disabled>Enable JS to Run</button>
+
+```roc
+print_remaining! = |todos|
     todos
         .keep_if(|todo| todo.status != Done)
         .for_each!(|todo| echo!("- ${todo.name}\n"))
-<!--  -->
+
 main! = |_args| {
     todos = [
         { name: "Learn Roc",       status: Done },
@@ -59,8 +62,9 @@ main! = |_args| {
     ]
     print_remaining!(todos)
     Ok({})
-}</pre>
-<button class="roc-run">Enable JS to Run</button>
+}
+```
+
 </div>
 
 <section class="home-goals-container home-start-cards" aria-label="Get started with Roc">

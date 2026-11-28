@@ -1458,11 +1458,12 @@ function setupHighlight(textarea, highlight) {
 let editorCount = 0;
 
 function setup(div) {
-  // The Run button is added statically in the markup (so it shows even before
-  // this script loads). Pull it out before reading the source so its label
-  // doesn't end up in the Roc code, then reuse it below.
+  // The Run button is in the markup, disabled and asking for JS, for visitors
+  // without it. Pull it out before reading the source so its label doesn't end
+  // up in the Roc code, then reuse it below.
   const runButton = div.querySelector("button.roc-run");
   runButton.remove();
+  runButton.disabled = false;
 
   const source = div.textContent.trim();
   div.textContent = "";
@@ -1679,7 +1680,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (interactiveWidgets.length > 0) preloadCompiler();
 
-  // On wide screens the tutorial's contents list is a sidebar, so show it open.
+  // The tutorial's contents list is open in the markup, for visitors without
+  // JS. It is a sidebar on wide screens; elsewhere it starts out collapsed.
   const contents = document.querySelector("details.tutorial-contents");
   if (contents) {
     const wide = window.matchMedia("(min-width: 1024px)");

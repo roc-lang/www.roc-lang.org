@@ -26,7 +26,7 @@ function run(source) {
 const homepage = await readFile(fileURLToPath(new URL('../website/content/index.md', import.meta.url)), 'utf8');
 const blocks = [...homepage.matchAll(/<div class="roc-interactive[^\"]*">([\s\S]*?)<\/div>/g)];
 assert.equal(blocks.length, 1, 'Update the expected outputs when adding homepage widgets');
-const source = blocks[0][1].replace(/<button[^>]*>[\s\S]*?<\/button>/g, '').replace(/<!--[\s\S]*?-->/g, '').replace(/<\/?pre[^>]*>/g, '');
+const source = blocks[0][1].replace(/<button[^>]*>[\s\S]*?<\/button>/g, '').replace(/^```.*$/gm, '');
 function checkExample() {
   const result = run(source);
   assert.equal(result.code, 0, result.stderr);

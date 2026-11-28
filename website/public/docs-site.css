@@ -86,6 +86,10 @@ section.getting-started h2,
 section.getting-started p { padding-left: 0; padding-right: 0; }
 body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
 
+/* Without JS a <noscript> is a box of its own, which would join these layouts. */
+.website-docs noscript { display: contents; }
+.website-docs .sidebar-close { display: none; }
+
 /* Line the home branding up with the desktop sidebar labels. */
 @media (min-width: 769px) {
     .website-docs #top-bar .home-link-text { display: inline; }
@@ -110,6 +114,16 @@ body.website-docs.docs-index footer { padding-left: 8px; padding-right: 8px; }
         padding-right: 8px;
     }
     .website-docs .menu-toggle { margin-right: 0; }
+    /* Without JS the menu button is a link to the sidebar. */
+    .website-docs #sidebar-nav:target { left: 0; }
+    .website-docs .sidebar-close {
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 12px; /* clear of the scrollbar */
+        z-index: 1;
+        padding: 16px;
+    }
     /* The docs bleed code blocks 24px into an 18px page gutter, which would
        make the page scroll sideways. */
     .website-docs main pre { margin-right: -18px; }

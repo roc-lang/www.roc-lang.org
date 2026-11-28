@@ -72,6 +72,7 @@ func applySiteHeader(doc, header *html.Node) bool {
 		logo.Parent.RemoveChild(logo)
 	}
 	updateSiteSidebar(sidebar)
+	addNoScriptSidebarToggle(doc, sidebar)
 	if hasClass(body, "docs-index") {
 		applyGettingStarted(doc)
 	}
@@ -159,6 +160,27 @@ func updateSiteSidebar(sidebar *html.Node) {
 		links.RemoveChild(faq)
 		links.AppendChild(faq)
 	}
+}
+
+// The sidebar toggle needs JS. Without it, small screens get a link to the
+// sidebar instead, which docs-site.css shows while it is the link's target.
+func addNoScriptSidebarToggle(doc, sidebar *html.Node) {
+	toggle := findElementWithClass(doc, "button", "menu-toggle")
+	if toggle == nil || findID(doc, "sidebar-toggle-nojs") != nil {
+		return
+	}
+	var icon bytes.Buffer
+	for c := toggle.FirstChild; c != nil; c = c.NextSibling {
+		html.Render(&icon, c)
+	}
+	// The parser keeps <noscript> content as text, so it is added as text.
+	noScript := func(id, content string) *html.Node {
+		node := &html.Node{Type: html.ElementNode, Data: "noscript", Attr: []html.Attribute{{Key: "id", Val: id}}}
+		node.AppendChild(&html.Node{Type: html.TextNode, Data: content})
+		return node
+	}
+	insertAfter(toggle.Parent, noScript("sidebar-toggle-nojs", `<style>button.menu-toggle{display:none}</style><a class="menu-toggle" href="#sidebar-nav" aria-label="Open sidebar">`+icon.String()+`</a>`), toggle)
+	sidebar.InsertBefore(noScript("sidebar-close-nojs", `<a class="sidebar-close" href="#module-search-form">Close</a>`), sidebar.FirstChild)
 }
 
 func applyGettingStarted(doc *html.Node) {

@@ -2,7 +2,7 @@
 
 # Tutorial
 
-<details class="tutorial-contents">
+<details class="tutorial-contents" open>
 <summary>On this page</summary>
 
 - [Hello, World](#hello-world)

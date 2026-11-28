@@ -5,14 +5,10 @@ set -euo pipefail
 # actually compiles and runs with the current Roc compiler -- the same nightly
 # used to build the docs.
 #
-# Each widget stores its source inside a `<pre class="roc-source">` element,
-# alongside a static `<button class="roc-run">`. In the browser, compiler.js
-# removes that button and then reads the div's `textContent` -- so the `<pre>`
-# tags and the `<!-- -->` comment that separates the top-level definitions from
-# `main!` never reach the compiler. We reconstruct the exact program the visitor
-# runs by stripping the `<pre>`/`</pre>` tags, replacing the comment lines with
-# blank lines (the comment node contributes nothing to `textContent`, but the
-# surrounding newlines stay), and skipping the Run button line.
+# Each widget stores its source in a fenced `roc` code block, alongside a
+# static `<button class="roc-run">`. In the browser, compiler.js removes that
+# button and then reads the div's `textContent`. We reconstruct the program the
+# visitor runs by skipping the button and the fence lines.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONTENT_DIR="$ROOT_DIR/website/content"
@@ -30,15 +26,13 @@ while IFS= read -r md_file; do
   base="$(basename "$md_file" .md)"
 
   # Split each `<div class="roc-interactive ...">` ... `</div>` block into its
-  # own `.roc` file, turning the `<!-- -->` comment separators into blank lines.
+  # own `.roc` file.
   awk -v out_dir="$work_dir" -v base="$base" '
     /<div class="roc-interactive/ { in_block = 1; n++; next }
     in_block && /<\/div>/         { in_block = 0; next }
     in_block {
-      if ($0 ~ /^[[:space:]]*<!--.*-->[[:space:]]*$/) { print "" > (out_dir "/" base "_" n ".roc"); next }
       if ($0 ~ /<button class="roc-run"/) next
-      gsub(/<pre class="roc-source">/, "")
-      gsub(/<\/pre>/, "")
+      if ($0 ~ /^```/) next
       print > (out_dir "/" base "_" n ".roc")
     }
   ' "$md_file"

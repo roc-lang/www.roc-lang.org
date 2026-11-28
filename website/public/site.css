@@ -392,7 +392,7 @@ details[open] > summary {
 /* ---- tutorial contents ---- */
 
 /* Wide screens have a free column right of the text: the contents list goes
-   there and follows the scroll. compiler.js opens it at this width. */
+   there and follows the scroll. compiler.js collapses it below this width. */
 @media only screen and (min-width: 1024px) {
     .tutorial-contents {
         float: right;
@@ -1251,8 +1251,7 @@ footer {
 /* The transparent textarea sits exactly on top of the highlighted copy of its
    text, so these two must always share the same box and font metrics. */
 .roc-interactive textarea.roc-source,
-.roc-interactive .roc-source-highlight,
-.roc-interactive pre.roc-source {
+.roc-interactive .roc-source-highlight {
     display: block;
     box-sizing: border-box;
     width: 100%;
@@ -1303,6 +1302,7 @@ footer {
 
 /* The Run button floats over the editor's bottom right corner, so it stays
    visible when the code is wider than the editor and scrolls sideways. */
+.roc-interactive > button.roc-run,
 .roc-interactive .roc-source-editor > button.roc-run {
     position: absolute;
     z-index: 2;
@@ -1313,11 +1313,19 @@ footer {
     margin: 0;
 }
 
-/* Shown only when JS is disabled — the script replaces it with the textarea above. */
-.roc-interactive pre.roc-source {
-    margin-bottom: var(--space-4);
+/* Without JS the widget is its highlighted code block, with the button asking
+   for JS in the same corner. The script replaces both with the editor above. */
+.roc-interactive:has(> pre) {
+    position: relative;
+}
+
+.roc-interactive > pre {
+    margin: 0 0 var(--space-5);
+}
+
+.roc-interactive > button.roc-run:disabled {
+    opacity: 1;
     background: var(--code-bg);
-    color: var(--code-color);
 }
 
 .roc-interactive .roc-output {

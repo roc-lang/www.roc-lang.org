@@ -19,7 +19,7 @@ func renderTest(t *testing.T, doc *html.Node) string {
 	return out.String()
 }
 func TestSiteHeaderPreservesDocsAndIsIdempotent(t *testing.T) {
-	doc, err := html.Parse(strings.NewReader(`<html><head></head><body class="docs-index"><nav id="sidebar-nav"><div class="pkg-and-logo">Old logo</div><div class="module-links-container"><ul class="module-links"><li><a href="/examples/">Examples</a></li><li><a href="/tutorial/">Tutorial</a></li><li id="faq-entry"><a href="/faq">FAQ</a></li><li><a data-module-name="Str" href="/docs/main/Str/">Str</a></li><li><a href="/docs/main/langref/">Language Reference</a></li></ul></div></nav><main><form id="module-search-form"></form><div class="main-content"><!--!` + "\x00" + `--><section>API</section><!--!` + "\x1e" + `--></div></main></body></html>`))
+	doc, err := html.Parse(strings.NewReader(`<html><head></head><body class="docs-index"><nav id="sidebar-nav"><div class="pkg-and-logo">Old logo</div><div class="module-links-container"><ul class="module-links"><li><a href="/examples/">Examples</a></li><li><a href="/tutorial/">Tutorial</a></li><li id="faq-entry"><a href="/faq">FAQ</a></li><li><a data-module-name="Str" href="/docs/main/Str/">Str</a></li><li><a href="/docs/main/langref/">Language Reference</a></li></ul></div></nav><main><form id="module-search-form"><button class="menu-toggle"><svg></svg></button></form><div class="main-content"><!--!` + "\x00" + `--><section>API</section><!--!` + "\x1e" + `--></div></main></body></html>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,6 +56,9 @@ func TestSiteHeaderPreservesDocsAndIsIdempotent(t *testing.T) {
 	first := renderTest(t, doc)
 	if strings.Contains(first, `<a href="/community" aria-current="page">`) || !strings.Contains(first, `<a href="/docs/main/" aria-current="page">Docs</a>`) {
 		t.Fatal("Docs is not the current header link")
+	}
+	if !strings.Contains(first, `<noscript id="sidebar-toggle-nojs"><style>button.menu-toggle{display:none}</style><a class="menu-toggle" href="#sidebar-nav" aria-label="Open sidebar"><svg></svg></a></noscript>`) || !strings.Contains(first, `<nav id="sidebar-nav"><noscript id="sidebar-close-nojs">`) {
+		t.Fatal("missing the sidebar links for visitors without JS")
 	}
 	applySiteHeader(doc, header)
 	if second := renderTest(t, doc); second != first {
