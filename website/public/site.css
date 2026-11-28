@@ -955,6 +955,39 @@ footer {
     box-shadow: var(--box-glow);
     color: var(--text-color);
     text-decoration: none;
+    /* For a background drawing, which sits above the card's own background. */
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+/* A large, faint line drawing centred behind a card's text. */
+.home-goals-bg-art {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    /* Sized by the card's height, so it fits wide, short cards too. The width
+       follows from the viewBox. */
+    height: 85%;
+    width: auto;
+    transform: translate(-50%, -50%);
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8px;
+    stroke-linejoin: miter;
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    .home-goals-bg-art {
+        opacity: 0.08;
+    }
+}
+
+.home-goals-bg-art * {
+    vector-effect: non-scaling-stroke;
 }
 
 .home-goals-content:hover {
@@ -972,68 +1005,6 @@ footer {
     padding-bottom: var(--space-1);
     border-bottom: var(--rule-width) solid var(--accent);
     font-size: 1.75rem;
-}
-
-/* A title with a drawing that the underline runs into. --art-join is how far
-   from the drawing's left edge the underline ends, --art-drop how far the
-   drawing reaches below the underline. */
-.home-goals-heading {
-    --art-height: 2rem;
-    /* The heart's bottom point is centred in its viewBox. */
-    --art-join: calc(var(--art-height) * 0.5704);
-    /* From the drawing's left edge to its leftmost inked pixel. */
-    /* Its left side minus half the stroke, plus a 0.5px nudge left set by eye
-       against the I's stem. */
-    --art-ink: calc(var(--art-height) * 0.0896 - 1.5px);
-    --art-drop: 0px;
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: var(--space-4);
-}
-
-.home-goals-heading .home-goals-title {
-    margin-bottom: 0;
-    /* The drawing's leftmost pixel sits where a following " I" would start
-       (0.2825em past the end of the text), which spaced it out by eye. */
-    padding-right: calc(var(--art-join) - var(--art-ink) + 0.2825em);
-}
-
-/* A line drawing beside a card title, stroked like the title's underline. */
-.home-goals-art {
-    flex: none;
-    width: auto;
-    height: var(--art-height);
-    margin-left: calc(-1 * var(--art-join));
-    margin-bottom: calc(-1 * var(--art-drop));
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: var(--rule-width);
-    stroke-linejoin: miter;
-    stroke-miterlimit: 10; /* keeps the bolt's points sharp */
-}
-
-/* The underline becomes the hyphen of a `->`, running into the tip of the ">".
-   The viewBox is in CSS pixels, with the underline's centre line at y = 0. */
-.home-goals-heading-arrow {
-    --art-height: 30px;
-    --art-join: 17px;
-    /* The arms are cut off vertically at x = 0, like the I's stem. */
-    --art-ink: 4px;
-    --art-drop: 13px;
-}
-
-/* A `=>`: past the title a short second line starts above the underline, and
-   both run into a ">" centred between them. The viewBox is in CSS pixels, with
-   the underline's centre line at y = 0 and its end at x = 0. */
-.home-goals-heading-double {
-    --art-height: 24px;
-    --art-join: 24px;
-    --art-ink: 2px;
-    --art-drop: 6px;
-}
-
-.home-goals-art * {
-    vector-effect: non-scaling-stroke;
 }
 
 .home-goals-description {
