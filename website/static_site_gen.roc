@@ -60,16 +60,17 @@ page_data = Dict.empty()
 	.insert("/repl/index.html", { title: "REPL | Roc", description: "Try the Roc programming language in an online REPL." })
 	.insert("/examples/index.html", { title: "Examples | Roc", description: "Explore Roc examples by topic, from language basics and error handling to packages, platforms, and complete programs." })
 	.insert("/install/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
-	.insert("/install/other.html", { title: "Getting started on other systems | Roc", description: "Roc installation guide for other systems" })
-	.insert("/install/linux.html", { title: "Getting started on Linux | Roc", description: "Roc installation guide for Linux" })
-	.insert("/install/macos.html", { title: "Getting started on macOS | Roc", description: "Roc installation guide for macOS" })
-	.insert("/install/windows.html", { title: "Getting started on Windows | Roc", description: "Roc installation guide for Windows" })
+	.insert("/install/other.html", { title: "Install Roc on other systems | Roc", description: "Roc installation guide for other systems" })
+	.insert("/install/linux.html", { title: "Install Roc on Linux | Roc", description: "Roc installation guide for Linux" })
+	.insert("/install/macos.html", { title: "Install Roc on macOS | Roc", description: "Roc installation guide for macOS" })
+	.insert("/install/windows.html", { title: "Install Roc on Windows | Roc", description: "Roc installation guide for Windows" })
 	.insert("/install/getting_started.html", { title: "Getting started | Roc", description: "How to get started with Roc" })
 	.insert("/installnew/index.html", { title: "Install | Roc", description: "How to install the Roc programming language." })
 	.insert("/installnew/other.html", { title: "Install on other systems | Roc", description: "Roc installation guide for other systems" })
 	.insert("/installnew/unix.html", { title: "Install on Unix | Roc", description: "Roc installation guide for Unix" })
 	.insert("/installnew/windows.html", { title: "Install on Windows | Roc", description: "Roc installation guide for Windows" })
 	.insert("/installnew/nix.html", { title: "Usage on Nix | Roc", description: "Roc usage guide for Nix" })
+	.insert("/license/index.html", { title: "License | Roc", description: "The software license for the code in the Roc programming language." })
 	.insert("/404.html", { title: "Page Not Found | Roc", description: "The page you requested could not be found." })
 
 get_page_info : Str -> PageInfo
@@ -91,6 +92,24 @@ get_page_info = |page_path_str|
 				crash "Web page ${page_path_str} did not have a title and description specified in page_data. Please add one to website/static_site_gen.roc."
 			}
 	}
+
+# The address a page is served at: without "index.html" or ".html".
+page_url : Str -> Str
+page_url = |page_path_str| {
+	path =
+		if page_path_str.ends_with("/index.html") {
+			page_path_str.drop_suffix("index.html")
+		} else {
+			page_path_str.drop_suffix(".html")
+		}
+
+	"https://www.roc-lang.org${path}"
+}
+
+# For link previews on social media and in chat apps.
+social_meta : Str, Str -> Html.Node
+social_meta = |property, value|
+	Html.meta([Html.attribute("property")(property), content(value)])
 
 transform : Str, Str -> Str
 transform = |page_path_str, html_content|
@@ -116,9 +135,18 @@ view_head = |page_path_str| {
 			Html.meta([charset("utf-8")]),
 			Html.title([], [Html.text(page_info.title)]),
 			Html.meta([name("description"), content(page_info.description)]),
-			Html.meta([name("viewport"), content("width=device-width")]),
+			Html.meta([name("viewport"), content("width=device-width, initial-scale=1")]),
+			social_meta("og:type", "website"),
+			social_meta("og:site_name", "Roc"),
+			social_meta("og:title", page_info.title),
+			social_meta("og:description", page_info.description),
+			social_meta("og:url", page_url(page_path_str)),
+			social_meta("og:image", "https://www.roc-lang.org/social-card.png"),
+			social_meta("og:image:width", "1200"),
+			social_meta("og:image:height", "630"),
+			social_meta("og:image:alt", "The Roc logo, a purple origami bird, next to the name Roc and the tagline: a fast, friendly, functional language."),
+			Html.meta([name("twitter:card"), content("summary_large_image")]),
 			Html.link([rel("icon"), href("/favicon.svg")]),
-			Html.link([rel("prefetch"), href("/repl/roc_repl_wasm.js")]),
 			Html.link([rel("stylesheet"), href("/site.css")]),
 			Html.link([rel("stylesheet"), href("/site-header.css")]),
 			# Safari ignores rel="icon" and only respects rel="mask-icon". It renders the
@@ -127,6 +155,7 @@ view_head = |page_path_str| {
 			# Remove no-js before the body renders to avoid a flash of hidden content.
 			Html.script([], [Html.text("document.documentElement.className = document.documentElement.className.replace('no-js', '');")]),
 			Html.script([src("/compiler.js")], []),
+			Html.script([src("/background.js"), Html.attribute("defer")("")], []),
 		],
 	)
 }
@@ -149,9 +178,10 @@ view_body = |page_path_str, html_content| {
 	Html.body(
 		body_attrs,
 		[
+			Html.a([class("skip-link"), href("#main-content")], [Html.text("Skip to content")]),
 			view_navbar(page_path_str),
 			# The repository's Markdown is trusted. Its rendered HTML must remain markup.
-			Html.main([], [Html.raw(html_content)]),
+			Html.main([id("main-content")], [Html.raw(html_content)]),
 			view_footer,
 		],
 	)
@@ -164,13 +194,13 @@ view_footer = Html.footer(
 		Html.div(
 			[id("footer")],
 			[
-				Html.div(
-					[id("gh-link")],
+				Html.nav(
+					[id("footer-links"), aria_label("footer")],
 					[
-						Html.a(
-							[id("gh-centered-link"), href("https://github.com/roc-lang/roc")],
-							[gh_logo, Html.span([id("gh-link-text")], [Html.text("roc-lang/roc")])],
-						),
+						Html.a([href("https://github.com/roc-lang/roc")], [Html.text("roc-lang/roc")]),
+						Html.a([href("https://roc.zulipchat.com/")], [Html.text("Group chat")]),
+						Html.a([href("/foundation")], [Html.text("Foundation")]),
+						Html.a([href("/license/")], [Html.text("License")]),
 					],
 				),
 			],
@@ -200,18 +230,31 @@ view_navbar = |page_path_str| {
 					Html.div(
 						[id("top-bar-links")],
 						[
-							Html.a([href("/tutorial/")], [Html.text("Tutorial")]),
-							Html.a([href("/install")], [Html.text("Install")]),
-							Html.a([href("/examples")], [Html.text("Examples")]),
-							Html.a([href("/community")], [Html.text("Community")]),
-							Html.a([href("/docs/main/")], [Html.text("Docs")]),
-							Html.a([href("/donate")], [Html.text("Donate")]),
+							nav_link("/tutorial/", "Tutorial", page_path_str.starts_with("/tutorial/")),
+							nav_link("/install", "Install", page_path_str.starts_with("/install/")),
+							nav_link("/examples", "Examples", page_path_str.starts_with("/examples/")),
+							nav_link("/community", "Community", page_path_str == "/community.html"),
+							nav_link("/docs/main/", "Docs", Bool.False),
+							nav_link("/donate", "Donate", page_path_str == "/donate.html"),
 						],
 					),
 				],
 			),
 		],
 	)
+}
+
+# Marks the link to the section the current page belongs to.
+nav_link : Str, Str, Bool -> Html.Node
+nav_link = |url, label, is_current| {
+	current_attrs =
+		if is_current {
+			[Html.attribute("aria-current")("page")]
+		} else {
+			[]
+		}
+
+	Html.a([href(url)].concat(current_attrs), [Html.text(label)])
 }
 
 roc_logo : Html.Node
@@ -235,21 +278,3 @@ roc_logo = Html.element("svg")(
 	],
 )
 
-gh_logo : Html.Node
-gh_logo = Html.element("svg")(
-	[
-		Html.attribute("viewBox")("0 0 98 96"),
-		Html.attribute("height")("25"),
-		Html.attribute("xmlns")("http://www.w3.org/2000/svg"),
-		Html.attribute("fill-rule")("evenodd"),
-		Html.attribute("clip-rule")("evenodd"),
-		Html.attribute("role")("img"),
-		id("gh-logo"),
-	],
-	[
-		Html.element("path")(
-			[Html.attribute("d")("M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z")],
-			[],
-		),
-	],
-)

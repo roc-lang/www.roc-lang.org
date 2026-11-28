@@ -28,96 +28,181 @@
         U+2215, U+FEFF, U+FFFD;
 }
 
-/* Shared by website pages and the website-only generated docs shell. */
+/* latin-ext, bold */
+@font-face {
+    font-family: "Lato";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src:
+        url("/fonts/lato-v23-latin-ext_latin/lato-v23-latin-ext_latin-700.woff2")
+            format("woff2"),
+        url("/fonts/lato-v23-latin-ext_latin/lato-v23-latin-ext_latin-700.woff")
+            format("woff");
+    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
+        U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* latin, bold */
+@font-face {
+    font-family: "Lato";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src:
+        url("/fonts/lato-v23-latin/lato-v23-latin-700.woff2")
+            format("woff2"),
+        url("/fonts/lato-v23-latin/lato-v23-latin-700.woff") format("woff");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+        U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+        U+2215, U+FEFF, U+FFFD;
+}
+
+/* Shared by website pages and the website-only generated docs shell, so this
+   file must not depend on the custom properties of site.css. */
 #top-bar {
-    --gray-bg: #f4f8f9;
-    --top-bar-fg: #000;
-    --primary-1: #9b6bf2;
+    /* The same surface as the code blocks in site.css. */
+    --top-bar-bg: #f5f4fb;
+    --top-bar-fg: #1c1c21;
+    --top-bar-border: #d0daee;
+    --top-bar-accent: #7c38f5;
+    /* The same edge as the boxes in site.css. */
+    --top-bar-glow: 0 1px 0 #e3edff, 0 2px 10px rgb(70 90 160 / 0.07);
+    --top-bar-height: 56px;
+    --top-bar-gutter: 24px;
+    --top-bar-link-pad: 12px;
+
+    box-sizing: border-box;
+    width: 100%;
+    background-color: var(--top-bar-bg);
+    border-bottom: 1px solid var(--top-bar-border);
+    box-shadow: var(--top-bar-glow);
     font-family: "Lato", sans-serif;
     font-size: 18px;
     line-height: 24px;
 }
-#top-bar a { text-decoration: none; }
-#top-bar a:hover { text-decoration: underline; }
-#top-bar a:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
-#top-bar,
-#top-bar nav {
-    background-color: var(--gray-bg);
-}
 
-#top-bar {
+#top-bar nav {
     box-sizing: border-box;
-    width: 100%;
+    max-width: 1024px;
+    min-height: var(--top-bar-height);
+    margin: 0 auto;
+    padding: 0 var(--top-bar-gutter);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-#top-bar nav {
-    max-width: 1024px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    padding-right: 9px;
+#top-bar a {
+    color: var(--top-bar-fg);
+    text-decoration: none;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+}
+
+#top-bar a:hover {
+    text-decoration-line: underline;
+}
+
+#top-bar a[aria-current] {
+    text-decoration-line: underline;
+    text-decoration-color: var(--top-bar-accent);
+}
+
+#top-bar a:focus-visible {
+    outline: 2px solid var(--top-bar-accent);
+    outline-offset: -2px;
 }
 
 #nav-home-link {
-    display: inline-block;
-    color: var(--top-bar-fg);
-    font-size: 1.8rem;
-    padding: 4px;
-}
-
-.home-link-text {
-    padding: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--top-bar-height);
     font-size: 24px;
-    position: relative;
-    top: -0.6rem;
-}
-
-#top-bar-links a,
-#top-bar-links label {
-    box-sizing: border-box;
-    color: var(--top-bar-fg);
-    display: inline-block;
-    padding: 12px 16px;
-    margin: 0 2px;
 }
 
 #top-bar .roc-logo {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto;
-    fill: var(--primary-1);
-    text-shadow: 1px 1px 1px #010101;
-    position: relative;
-    top: -2px;
+    display: block;
+    width: 32px;
+    height: 32px;
+    fill: var(--top-bar-accent);
 }
 
-@media only screen and (max-width: 1023px) {
+/* The negative margin puts the last link's text on the page's right edge. */
+#top-bar-links {
+    display: flex;
+    margin-right: calc(-1 * var(--top-bar-link-pad));
+}
+
+#top-bar-links a {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--top-bar-height);
+    padding: 0 var(--top-bar-link-pad);
+}
+
+/* Wide screens: the links are centered in the bar, the home link stays left.
+   The docs lay out their own header (see docs-site.css), so skip them. */
+@media only screen and (min-width: 720px) {
+    :not(.website-docs) > #top-bar nav {
+        position: relative;
+        justify-content: center;
+    }
+
+    :not(.website-docs) > #top-bar #nav-home-link {
+        position: absolute;
+        left: var(--top-bar-gutter);
+        top: 0;
+    }
+
+    :not(.website-docs) > #top-bar #top-bar-links {
+        margin-right: 0;
+    }
+}
+
+/* Narrow screens: links in three columns whose outer edges meet the gutters. */
+@media only screen and (max-width: 719px) {
+    #top-bar {
+        --top-bar-gutter: 16px;
+    }
+
+    #top-bar nav {
+        gap: 16px;
+    }
+
     .home-link-text {
-        display: none; /* Don't show "Roc" in the header next to the logo, to save space */
+        display: none; /* Save space: the logo alone links home. */
     }
+
     #top-bar-links {
-        width: 100%;
+        flex: 1;
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr; /* Three equal-width columns */
-        grid-template-rows: auto auto; /* Two rows */
+        grid-template-columns: repeat(3, 1fr);
+        margin-right: 0;
     }
-    #top-bar-links > :nth-child(3n + 1) {
-        text-align: left;
+
+    #top-bar-links a {
+        min-height: 44px;
+        padding: 0;
     }
+
     #top-bar-links > :nth-child(3n + 2) {
-        text-align: center;
+        justify-content: center;
     }
+
     #top-bar-links > :nth-child(3n + 3) {
-        text-align: right;
-    }
-    #top-bar-links a,
-    #top-bar-links label {
-        font-size: 1.2rem;
-        padding: 12px 0.5rem;
-        margin: 0;
+        justify-content: flex-end;
     }
 }
 
 @media (prefers-color-scheme: dark) {
-    #top-bar { --gray-bg: #202746; --top-bar-fg: #ccc; --primary-1: #9c7cea; }
+    #top-bar {
+        --top-bar-bg: #202746;
+        --top-bar-fg: #e4e4ea;
+        --top-bar-border: #3d4fb3;
+        --top-bar-accent: #b79df7;
+        --top-bar-glow: 0 0 20px rgb(88 108 255 / 0.25);
+    }
 }

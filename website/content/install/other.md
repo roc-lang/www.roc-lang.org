@@ -1,4 +1,6 @@
-# Other Systems
+# Install Roc on other systems
+
+[Install on other OS](/install?all)
 
 Note: if your system is in this "other" category, that means we did not test Roc on your system. The steps below may still work if zig works on your system.
 

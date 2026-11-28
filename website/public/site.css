@@ -1,706 +1,121 @@
-:root {
-    /* WCAG AAA Compliant colors */
-    --code-bg: #f4f8f9;
-    --gray-bg: #f4f8f9;
-    --gray: #717171;
-    --orange: #bf5000;
-    --green: #0b8400;
-    --light-cyan: #8af4e6;
-    --dark-cyan: #4eefd9;
-    --blue: #05006d;
-    --violet: #7c38f5;
-    --violet-bg: #ece2fd;
-    --magenta: #ff32cf;
+/* ---- design tokens ---- */
 
-    --primary-1: #9b6bf2;
-    --primary-2: #7c38f5;
-    --highlight: #1bd6bd;
-    --code-color: white;
-    --link-color: var(--primary-2);
-    --code-link-color: var(--primary-2);
-    --text-color: #000;
-    --heading-color: #333;
-    --text-hover-color: var(--primary-2);
-    --body-bg-color: #ffffff;
-    --border-color: #717171;
-    --faded-color: #4c4c4c;
-    --font-sans: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial,
-        sans-serif;
+:root {
+    color-scheme: light dark;
+
+    --font-sans: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
     --font-mono: "Source Code Pro", SFMono-Regular, Consolas, "Liberation Mono",
         Menlo, Courier, monospace;
-    --top-header-height: 67px;
-    --sidebar-width: 280px;
 
-    --font-size-normal: 18px;
-    --body-max-width: 1024px;
+    --font-size-normal: 1.125rem;
+    --font-size-small: 0.9375rem;
+    --line-height: 1.6;
+
+    /* Spacing scale: every margin, padding and gap uses one of these. */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+    --space-9: 128px;
+
+    /* The header, main content and footer share these edges. */
+    --page-width: 1024px;
+    --text-width: 720px;
+    --gutter: var(--space-5);
+    --top-bar-height: 56px;
+
+    --border-width: 1px;
+    --rule-width: 4px; /* heading underlines and callout bars */
+    --control-height: 48px;
     --action-btn-width: 120px;
-    --dark-code-bg: #202746;
 
-    /* Tutorial */
-    --header-link-color: #1bbcb3;
-    --header-link-hover: #222;
-    --h1-color: #8055e4;
-    --tutorial-h3-color: #8c5ce3; /* Slightly darker than --primary-1, which looks washed-out in <h3>s */
-}
-
-html {
-    line-height: 1.5rem;
-    background: var(--body-bg-color);
-    color: var(--text-color);
-    font-family: "Lato", sans-serif;
-}
-
-html,
-body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    overflow-x: hidden; /* This shouldn't be necessary, but without it mobile has a right gutter. */
-}
-
-p {
-    margin-top: 0;
-}
-
-details summary {
-    cursor: pointer;
-    color: var(--primary-1);
-}
-
-details summary:hover {
-    color: var(--primary-2);
-}
-
-p,
-li,
-details {
-    max-width: 720px;
-}
-
-footer {
-    width: 100%;
-    color: var(--text-color);
-    text-align: center;
-    font-size: var(--font-size-normal);
-    padding: 20px;
-    box-sizing: border-box;
-    margin-top: 24px;
-}
-
-#footer {
-    max-width: var(--body-max-width);
-    margin: 0 auto;
-}
-
-hr {
-    color: var(--primary-1);
-    margin-bottom: 1rem;
-}
-
-.svg-text {
-    fill: #000;
-}
-
-.logo-dark {
-    fill: #612bde;
-}
-
-.logo-light {
-    fill: #8257e5;
-}
-
-.btn-small {
-    display: inline-block;
-    box-sizing: border-box;
-    width: var(--action-btn-width);
-    text-align: center;
-    white-space: nowrap;
-    background: #7c38f5;
-    border: 4px solid #9b6bf2;
-    color: #fff !important;
-    cursor: pointer;
-    text-decoration: none !important;
-    padding: 12px;
-}
-
-.btn-small .roc-logo {
-    fill: #fff;
-    position: relative;
-    left: -4px;
-    top: 11px;
-}
-
-.btn-small:hover {
-    background: #9b6bf2;
-    border-color: #7c38f5;
-}
-
-#individual-sponsors {
-    list-style-type: none;
-    padding: 24px 40px;
-    max-width: 720px;
-    overflow-y: auto;
-}
-
-#individual-sponsors li {
-    display: inline;
-    white-space: nowrap;
-    margin: 0.2rem;
-}
-
-#individual-sponsors li::after {
-    content: ",";
-    white-space: pre; /* Preserve the space after the comma */
-}
-
-#individual-sponsors li:last-child::after {
-    content: ""; /* No comma after the last one */
-}
-
-#sponsor-logos {
-    padding: 24px 36px;
-    padding-bottom: 36px;
-    min-width: 308px; /* Widest logo plus padding - Firefox on Android needs this */
-    max-width: none !important;
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 48px;
-}
-
-#sponsor-logos svg {
-    height: 64px;
-    margin-top: 32px;
-}
-
-#sponsor-logos .logo-lambda-class {
-    position: relative;
-    top: 14px;
-    height: 4rem;
-    fill: #000;
-}
-
-#sponsor-logos .logo-martian path {
-    fill: #04021e;
-}
-
-#sponsor-logos + p {
-    margin-bottom: 3em;
-}
-
-/* Used for e.g. displaying the instruction "Click" on desktop and "Touch" on mobile.
- * When we think we're on mobile (based on max-width), we can switch the instruction.
-*/
-.desktop {
-    display: inline;
-}
-
-.mobile {
-    display: none;
-}
-
-section p:last-child {
-    margin-bottom: 0;
-}
-
-aside {
-    margin-left: 4rem;
-}
-
-a {
-    text-decoration: none;
-    color: var(--link-color);
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-a:hover code {
-    text-decoration: inherit;
-}
-
-li {
-    margin-bottom: 0.5rem;
-}
-
-h1,
-h2,
-h3,
-h4 {
-    font-weight: bold;
-}
-
-h1 {
-    font-size: 5rem;
-    line-height: 1.2;
-}
-
-h2 {
-    display: inline-block;
-    font-size: 2.5rem;
-    line-height: 3.3rem;
-    border-bottom: 4px solid var(--dark-cyan);
-    padding: 0;
-    margin: 0;
-    margin-bottom: 2rem;
-    color: var(--heading-color);
-}
-
-.article-layout main,
-.article-layout pre {
-    max-width: 720px;
-}
-
-.article-layout p,
-.article-layout li,
-.article-layout pre,
-.article-layout details {
-    font-size: 20px;
-}
-
-#homepage-main h2 {
-    margin-top: 60px; /* On the homepage, these need to be spaced out more. */
-}
-
-/* The Sponsors heading follows the Tutorial button; tighten its top margin to
-   1.5rem so the gap below that button matches the gap below the Run button
-   (the .roc-interactive widget's 1.5em ≈ 24px bottom margin). */
-#homepage-main h2#sponsors {
-    margin-top: 1.5rem;
-}
-
-#homepage-main #nav-home-link {
-    visibility: hidden;
-}
-
-h2 a,
-h3 a {
-    color: var(--heading-color);
-}
-
-h2:hover a {
-    color: var(--link-color);
-    text-decoration: none;
-}
-
-h3 {
-    font-size: 1.5rem;
-}
-
-#tutorial-toc-toggle:checked + #tutorial-toc {
-    display: block;
-}
-
-.home-examples-title {
-    margin-bottom: 4px;
-}
-
-main {
-    max-width: var(--body-max-width);
-    margin: auto;
-    padding: 12px;
-    box-sizing: border-box;
-}
-
-.welcome-to-roc {
-    white-space: nowrap;
-    overflow-x: hidden;
-    padding-right: 60px;
-    margin-bottom: 12px;
-}
-
-code,
-samp {
-    font-family: var(--font-mono);
-    color: var(--text-color);
-    background-color: var(--gray-bg);
-    display: inline-block;
-    padding: 5px;
-}
-
-p code,
-td code,
-li code,
-th code {
-    padding: 0 8px;
-}
-
-code a,
-a code {
-    text-decoration: none;
-    color: var(--code-link-color);
-    background: none;
-    padding: 0;
-}
-
-code a:visited,
-a:visited code {
-    color: var(--code-link-color);
-}
-
-pre {
-    position: relative;
-    margin-bottom: 16px;
-    padding: 0 0.35rem;
-    box-sizing: border-box;
-    tab-size: 4;
-    background-color: var(--gray-bg);
-    overflow-x: hidden;
-    word-wrap: normal;
-    font-size: var(--font-size-normal);
-    line-height: 1.76em;
-    white-space: pre;
-    background-color: var(--dark-code-bg);
-}
-
-pre > samp,
-pre > code {
-    overflow-x: auto;
-    display: block;
-    background-color: var(--dark-code-bg);
-    color: var(--code-color);
-}
-
-/* The repl won't work at all if you have JS disabled. */
-.no-js #try-roc {
-    display: none !important;
-}
-
-#homepage-repl-container {
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-#homepage-repl-container #repl-description {
-    padding: 0 30px;
-    margin-top: 2px;
-    flex: 1;
-}
-
-#homepage-repl-container #repl-description a {
-    color: inherit;
-    text-decoration: underline;
-}
-
-#homepage-repl-container #repl-description a:hover {
-    color: var(--primary-1);
-}
-
-#homepage-repl-container #repl {
-    flex: 1;
-    border: 2px solid #444;
-    font-size: var(--font-size-normal);
-    min-height: 0; /* On /repl on mobile, this expands to fill the screen, which we don't want */
-    margin-right: 6px;
-    max-width: 50%;
-}
-
-#homepage-repl-container #repl,
-#homepage-repl-container #repl code,
-#homepage-repl-container #source-input {
-    color: white;
-    background-color: var(--dark-code-bg);
-}
-
-#homepage-repl-container #source-input {
-    margin-bottom: 0;
-    margin-top: 6px;
-    font-size: var(--font-size-normal);
-    height: 57px;
-}
-
-#homepage-repl-container p {
-    position: relative; /* Needed for the repl arrow's position: absolute */
-}
-
-#homepage-repl-container #repl-arrow {
-    cursor: default;
-    font-weight: bold;
-    font-size: 48px;
-    position: absolute;
-    top: -9px;
-    left: -79px;
-    text-shadow: 1px 1px 1px #444;
-    z-index: 3;
-    fill: var(--primary-1);
-}
-
-.repl-err {
-    color: var(--magenta);
-}
-
-/* Tables */
-
-table {
-    border-collapse: collapse;
-    overflow-x: auto;
-    border: 2px solid #f0f0f0;
-    margin-bottom: 1rem;
-}
-
-thead {
-    border: none;
-}
-
-tbody {
-    border: none;
-}
-
-tr {
-    border: none;
-    border-top: 2px solid #f0f0f0;
-}
-
-th,
-td {
-    border: none;
-    border-right: 2px solid #f0f0f0;
-    padding: 12px;
-}
-
-th:last-child,
-td:last-child {
-    border-right: none;
-}
-
-p,
-aside,
-li,
-details {
-    font-size: var(--font-size-normal);
-    line-height: 1.85rem;
-}
-
-/* Homepage */
-#homepage-intro-outer {
-    margin: 60px auto;
-    text-align: center;
-}
-
-#homepage-intro-box {
-    position: relative;
-    display: inline-block;
-    text-align: left;
-}
-
-#homepage-h1 {
-    color: #222;
-    text-shadow: none;
-    font-family: inherit;
-    font-size: 64px;
-    padding: 0;
-    padding-top: 60px;
-    position: relative;
-    left: -5px;
-}
-
-#homepage-logo {
-    height: 176px;
-    width: auto;
-    position: absolute;
-    left: -200px;
-    top: -100px;
-}
-
-#first-code-sample {
-    margin-top: 60px;
-    line-height: 1.85em;
-    color: #fcf9fd;
-}
-
-#first-code-sample .kw,
-#first-code-sample .punctuation,
-.interactive-example .kw,
-.interactive-example .punctuation {
-    color: #9c7cea;
-}
-
-#first-code-sample,
-#first-code-sample .code-snippet {
-    background-color: var(--dark-code-bg);
-}
-
-#homepage-tagline {
-    font-size: 20px;
-}
-
-.nowrap {
-    white-space: nowrap;
-}
-
-/* Mobile-friendly screen width */
-@media only screen and (max-width: 1023px) {
+    --body-bg-color: #ffffff;
+    --surface-color: #f5f4fb;
+    --text-color: #1c1c21;
+    --heading-color: #1c1c21;
+    --faded-color: #55555e;
+    --border-color: #dcd8ee;
+
+    /* --accent is the brand violet for fills and rules. --link-color is
+       darker so that link text reaches a 7:1 contrast on the background. */
+    --accent: #7c38f5;
+    --accent-hover: #6325db;
+    --accent-bg: #f1eafe;
+    --accent-border: #c9b1fa;
+    --link-color: #6325db;
+    --on-accent: #ffffff;
+
+    /* Code blocks and the homepage cards sit on near white.
+       The syntax colors match the docs' light scheme. */
+    --card-bg: rgb(252 253 255 / 0.92);
+    --code-bg: var(--card-bg);
+    --code-color: #202746;
+    --code-border: transparent;
+    --card-hover-border: transparent;
+    /* No borders: a glow that goes from violet at the top left to blue at the
+       bottom right. */
+    --box-glow: -2px -2px 10px rgb(124 56 245 / 0.18), 2px 2px 10px rgb(40 130 245 / 0.22);
+    --box-glow-hover: -2.5px -2.5px 12.5px rgb(124 56 245 / 0.31), 2.5px 2.5px 12.5px rgb(40 130 245 / 0.37);
+    --syntax-keyword: #6633bf;
+    --syntax-literal: #087f78;
+    --syntax-comment: #596078;
+    --syntax-faded: #3e496d;
+    --syntax-error: #b42338;
+    --line-number-color: #75799a; /* decorative, so below AA on purpose */
+    --scrollbar-thumb: #b6bad2;
+
+    /* The homepage logo's outline, matching the lattice in background.js. */
+    --logo-line: #8088e2;
+    --logo-star: #8b5cf6;
+    --logo-star-core: #6d28d9;
+}
+
+@media (prefers-color-scheme: dark) {
     :root {
-        --font-size-normal: 16px;
-        --body-max-width: none;
-    }
+        --body-bg-color: #151517;
+        --surface-color: #202746;
+        --text-color: #d6d6dc;
+        --heading-color: #f2f2f5;
+        --faded-color: #a9a9b4;
+        --border-color: #3a3f55;
 
-    #tutorial-main main,
-    #tutorial-toc-toggle-label,
-    #close-tutorial-toc {
-        display: block !important;
-    }
+        --accent: #9c7cea;
+        --accent-hover: #b79df7;
+        --accent-bg: #241c3a;
+        --accent-border: #4b3a80;
+        --link-color: #b79df7;
 
-    #tutorial-toc {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overflow-y: auto;
-        margin: 0 !important;
-        padding-right: 120px;
-        border: 0;
-    }
+        --code-bg: rgb(32 39 70 / 0.8);
+        --card-bg: var(--code-bg);
+        --card-hover-border: var(--accent);
+        --code-color: #ffffff;
+        --code-border: #3d4fb3;
+        --box-glow: 0 0 20px rgb(88 108 255 / 0.25), inset 0 0 24px rgb(88 108 255 / 0.07);
+        --box-glow-hover: 0 0 24px rgb(120 120 255 / 0.4), inset 0 0 24px rgb(88 108 255 / 0.1);
+        --syntax-keyword: #b79df7;
+        --syntax-literal: #4eefd9;
+        --syntax-comment: #cccccc;
+        --syntax-faded: #aeb4c6;
+        --syntax-error: #fc5a5a;
+        --line-number-color: #8294c9;
+        --scrollbar-thumb: var(--line-number-color);
 
-    #homepage-logo {
-        /* The bird runs off the screen unless we shrink it */
-        height: 80px;
-        width: auto;
-        position: absolute;
-        left: 227px;
-        top: -28px;
-    }
-
-    #homepage-main #nav-home-link {
-        display: none;
-    }
-
-    #sponsor-logos {
-        padding: 4px;
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 24px !important;
-    }
-
-    #sponsor-logos svg {
-        margin-top: 0 !important;
-    }
-
-    .home-examples-column {
-        padding-right: 0 !important;
-        border-right: none !important;
-    }
-
-    /* Used for e.g. displaying the instruction "Click" on desktop and "Touch" on mobile. */
-    .desktop {
-        display: none;
-    }
-
-    .mobile {
-        display: inline;
-    }
-
-    h2 {
-        margin-top: 48px;
-        padding: 6px 0;
-    }
-
-    h1 code,
-    h2 code,
-    h3 code,
-    h4 code,
-    h5 code {
-        font-size: inherit;
-    }
-
-    code {
-        white-space: normal;
-    }
-
-    /* Homepage */
-
-    #homepage-intro-box {
-        margin: 30px auto;
-    }
-
-    #homepage-tagline {
-        margin-top: 0;
-    }
-
-    #homepage-h1 {
-        /* TODO remove !important from repl.css (increasing specificity instead), and then this one too. */
-        font-size: 48px !important;
-        padding: 0;
-        margin: 0;
-        text-align: left;
-    }
-
-    #first-code-sample {
-        margin: 64px auto;
-        margin-bottom: 0;
-    }
-
-    #homepage-tagline {
-        font-size: 16px;
-    }
-
-    .home-goals-container,
-    .home-examples-container {
-        /* It's unclear why this !important is necessary, since its specificity
-         should theoretically be higher than what it's overriding. In practice,
-         at least in Chrome, removing the !important breaks this. */
-        display: grid !important;
-        grid-template-columns: 1fr;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    p,
-    code {
-        word-break: break-word !important;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5 {
-        line-height: 1.2em !important;
-        font-size: 2rem !important;
-        width: auto;
-    }
-
-    #homepage-repl-container #repl {
-        max-width: none;
+        --logo-line: #4860ff;
+        --logo-star: #9650ff;
+        --logo-star-core: #d6b4ff;
     }
 }
 
-/* iPhone SE and similar */
-@media only screen and (max-width: 320px) {
-    #homepage-logo {
-        /* The bird runs off the screen unless we shrink it */
-        left: 188px;
-        top: -30px;
-    }
-
+@media only screen and (max-width: 719px) {
     :root {
-        --font-size-normal: 14px;
-        --body-max-width: 320px;
+        --font-size-normal: 1rem;
+        --gutter: var(--space-4);
     }
-}
-
-@font-face {
-    font-family: "Permanent Marker";
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src:
-        url("/fonts/permanent-marker-v16-latin/permanent-marker-v16-latin-regular.woff2")
-            format("woff2"),
-        url("/fonts/permanent-marker-v16-latin/permanent-marker-v16-latin-regular.woff")
-            format("woff");
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-        U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
-        U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
@@ -711,178 +126,465 @@ details {
     src: url("/fonts/source-code-pro/SourceCodePro-Regular.ttf.woff2") format("woff2");
 }
 
+/* ---- base ---- */
+
+*,
+*::before,
+*::after {
+    border-radius: 0;
+}
+
+html {
+    background: var(--body-bg-color);
+    color: var(--text-color);
+    font-family: var(--font-sans);
+    font-size: 100%;
+    line-height: var(--line-height);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Keep in-page link targets clear of the sticky header. */
+    scroll-padding-top: calc(var(--top-bar-height) + var(--space-5));
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    font-size: var(--font-size-normal);
+    overflow-wrap: break-word; /* long unbroken words must not widen the page */
+}
+
+/* The header, main and footer are all centered on the same column. */
+main,
+#footer {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--page-width);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+}
+
+main {
+    flex: 1;
+    padding-bottom: var(--space-7);
+}
+
+.article-layout main > *,
+p,
+li,
+details,
+aside,
+blockquote {
+    max-width: var(--text-width);
+}
+
+/* Decorative triangle lattice drawn by background.js, behind all content. */
+#bg-backdrop,
+#bg-pattern {
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100vh;
+    height: 100lvh; /* the largest viewport, so toolbars don't resize it */
+    pointer-events: none;
+}
+
+#bg-backdrop {
+    z-index: -2;
+}
+
+#bg-pattern {
+    z-index: -1;
+    opacity: 0.5;
+}
+
 @media (prefers-color-scheme: dark) {
-    :root {
-        /* WCAG AAA Compliant colors */
-        --code-bg: #202746;
-        --gray-bg: #202746;
-        --gray: #b6b6b6;
-        --orange: #fd6e08;
-        --green: #8ecc88;
-        --cyan: #12c9be;
-        --blue: #b1afdf;
-        --violet-bg: #332944;
-        --magenta: #f39bac;
-
-        --primary-1: #9c7cea;
-        --primary-2: #1bd6bd;
-        --text-color: #ccc;
-        --body-bg-color: #151517;
-        --border-color: var(--gray);
-        --code-color: #eeeeee;
-        --logo-solid: #8f8f8f;
-        --faded-color: #bbbbbb;
-        --gray: #6e6e6e;
-        --heading-color: #eee;
-
-        /* Tutorial */
-        --header-link-color: #9c7cea;
-        --header-link-hover: #ddd;
-        --h1-color: #1bc6bd;
-        --tutorial-h3-color: var(--primary-1);
-    }
-
-    .logo-dark {
-        fill: #6c3bdc;
-    }
-
-    .logo-light {
-        fill: #8a66de;
-    }
-
-    .svg-text {
-        fill: #fff;
-    }
-
-    #homepage-h1 {
-        color: #fcf9fd;
-    }
-
-    h3 {
-        color: #fff;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5 {
-        text-shadow: none;
-    }
-
-    html {
-        scrollbar-color: #444444 #2f2f2f;
-    }
-
-    table,
-    tr,
-    th,
-    td {
-        border-color: var(--gray);
-    }
-
-    #first-code-sample,
-    #homepage-repl-container #repl {
-        border: 1px solid #ddd;
-    }
-
-    .home-goals-content:hover {
-        background-color: #481870 !important;
-    }
-
-    #sponsor-logos .logo-martian path {
-        fill: #fff;
-    }
-
-    #sponsor-logos .logo-lambda-class {
-        fill: #fff;
+    #bg-pattern {
+        opacity: 0.3;
     }
 }
 
-/* Comments `#` and Documentation comments `##` */
+@media print {
+    #bg-backdrop,
+    #bg-pattern {
+        display: none;
+    }
+}
+
+@media only screen and (min-width: 720px) {
+    body > #top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+}
+
+.skip-link {
+    position: absolute;
+    top: 0;
+    left: var(--gutter);
+    z-index: 20;
+    padding: var(--space-3) var(--space-4);
+    background: var(--accent);
+    color: var(--on-accent);
+    text-decoration: none;
+}
+
+/* Visually hidden until it receives keyboard focus. */
+.skip-link:not(:focus) {
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+}
+
+/* ---- typography ---- */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: var(--space-6) 0 var(--space-4);
+    color: var(--heading-color);
+    font-weight: bold;
+    line-height: 1.2;
+    overflow-wrap: break-word;
+}
+
+h1 {
+    margin: var(--space-7) 0 var(--space-5);
+    font-size: clamp(2.25rem, 1.5rem + 3vw, 3rem);
+}
+
+/* Section headings are underlined with the brand color. */
+h2 {
+    width: fit-content;
+    margin: var(--space-7) 0 var(--space-5);
+    padding-bottom: var(--space-1);
+    border-bottom: var(--rule-width) solid var(--accent);
+    font-size: clamp(1.625rem, 1.25rem + 1.5vw, 2rem);
+}
+
+h3 {
+    font-size: 1.375rem;
+}
+
+h4,
+h5,
+h6 {
+    font-size: var(--font-size-normal);
+}
+
+h1 a,
+h2 a,
+h3 a,
+h4 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+h1 a:hover,
+h2 a:hover,
+h3 a:hover,
+h4 a:hover {
+    color: var(--link-color);
+}
+
+p,
+ul,
+ol,
+table,
+pre,
+details,
+aside,
+blockquote {
+    margin: 0 0 var(--space-4);
+}
+
+ul,
+ol {
+    padding-left: var(--space-5);
+}
+
+li {
+    margin-bottom: var(--space-2);
+}
+
+li > ul,
+li > ol {
+    margin: var(--space-2) 0 0;
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+}
+
+a:hover {
+    text-decoration-thickness: 2px;
+}
+
+hr {
+    height: 0;
+    margin: var(--space-6) 0;
+    border: 0;
+    border-top: var(--border-width) solid var(--border-color);
+}
+
+img,
+svg {
+    max-width: 100%;
+}
+
+/* Notes and asides share one callout style. */
+aside,
+blockquote {
+    box-sizing: border-box;
+    padding: var(--space-3) var(--space-4);
+    border-left: var(--rule-width) solid var(--accent);
+    background: var(--accent-bg);
+}
+
+aside > :last-child,
+blockquote > :last-child,
+section p:last-child {
+    margin-bottom: 0;
+}
+
+details summary {
+    width: fit-content;
+    color: var(--link-color);
+    cursor: pointer;
+}
+
+details summary:hover {
+    text-decoration: underline;
+}
+
+details[open] > summary {
+    margin-bottom: var(--space-3);
+}
+
+.nowrap {
+    white-space: nowrap;
+}
+
+.example-version {
+    color: var(--faded-color);
+    font-size: var(--font-size-small);
+}
+
+/* ---- tutorial contents ---- */
+
+/* Wide screens have a free column right of the text: the contents list goes
+   there and follows the scroll. compiler.js collapses it below this width. */
+@media only screen and (min-width: 1024px) {
+    .tutorial-contents {
+        float: right;
+        position: sticky;
+        top: calc(var(--top-bar-height) + var(--space-5));
+        box-sizing: border-box;
+        width: calc(100% - var(--text-width) - var(--space-6));
+        max-height: calc(100vh - var(--top-bar-height) - 2 * var(--space-5));
+        margin: 0;
+        padding-left: var(--space-4);
+        overflow-y: auto;
+        border-left: var(--border-width) solid var(--border-color);
+        font-size: var(--font-size-small);
+    }
+
+    .tutorial-contents summary {
+        color: var(--heading-color);
+        font-weight: bold;
+    }
+
+    .tutorial-contents ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+}
+
+/* ---- tables ---- */
+
+table {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: var(--space-2) var(--space-4);
+    border: var(--border-width) solid var(--border-color);
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: var(--surface-color);
+    color: var(--heading-color);
+}
+
+td > ul:last-child,
+td > ol:last-child,
+td li:last-child {
+    margin-bottom: 0;
+}
+
+/* ---- code ---- */
+
+code,
+samp,
+pre {
+    font-family: var(--font-mono);
+}
+
+/* Inline code */
+code,
+samp {
+    padding: 0.1em 0.3em;
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    font-size: 0.9em;
+    overflow-wrap: break-word;
+}
+
+a code,
+code a {
+    padding: 0;
+    background: none;
+    color: inherit;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code {
+    font-size: inherit;
+}
+
+/* Code blocks */
+pre {
+    position: relative; /* for the copy button */
+    box-sizing: border-box;
+    border: var(--border-width) solid var(--code-border);
+    background-color: var(--code-bg);
+    box-shadow: var(--box-glow);
+    color: var(--code-color);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
+    tab-size: 4;
+    white-space: pre;
+}
+
+pre > samp,
+pre > code {
+    display: block;
+    padding: var(--space-4) var(--space-5);
+    overflow-x: auto;
+    background: none;
+    color: inherit;
+    font-size: inherit;
+    overflow-wrap: normal;
+}
+
+/* Comments `#` and documentation comments `##` */
 samp .comment,
 code .comment,
 .roc-interactive .roc-output .c {
-    color: #ccc;
+    color: var(--syntax-comment);
 }
 
 ::highlight(roc-c) {
-    color: #ccc;
+    color: var(--syntax-comment);
 }
 
-/* Number, String, Tag literals */
+/* Number, string, and tag literals; types, tags, and modules */
 samp .storage.type,
 code .storage.type,
 samp .string,
 code .string,
-samp .string.begin,
-code .string.begin,
-samp .string.end,
-code .string.end,
+samp .str,
+code .str,
+samp .number,
+code .number,
 samp .constant,
 code .constant,
-.roc-interactive .roc-output .n,
 samp .literal,
 code .literal,
-samp.language-roc :is(.str, .number) {
-    color: var(--dark-cyan);
+samp .type,
+code .type,
+samp .meta.path,
+code .meta.path,
+samp .upperident,
+code .upperident,
+samp.language-roc :is(.str, .number),
+.roc-interactive .roc-output .n {
+    color: var(--syntax-literal);
 }
 
 ::highlight(roc-n),
-::highlight(roc-s) {
-    color: var(--dark-cyan);
+::highlight(roc-s),
+::highlight(roc-u) {
+    color: var(--syntax-literal);
 }
 
-/* Keywords and punctuation */
+/* Keywords, operators, punctuation, and delimiters */
 samp .keyword,
 code .keyword,
-samp .punctuation.section,
-code .punctuation.section,
-samp .punctuation.separator,
-code .punctuation.separator,
-samp .punctuation.terminator,
-code .punctuation.terminator,
 samp .kw,
 code .kw,
-.roc-interactive .roc-output .k {
-    color: var(--primary-1);
-}
-
-::highlight(roc-k) {
-    color: var(--primary-1);
-}
-
-/* Operators */
 samp .op,
 code .op,
-samp .keyword.operator,
-code .keyword.operator,
 samp .colon,
-code .colon {
-    color: var(--primary-1);
-}
-
-::highlight(roc-o) {
-    color: var(--primary-1);
-}
-
-/* Delimieters */
+code .colon,
+samp .comma,
+code .comma,
+samp .paren,
+code .paren,
+samp .brace,
+code .brace,
+samp .bracket,
+code .bracket,
 samp .delimiter,
 code .delimiter,
-samp.language-roc :is(.paren, .bracket, .brace, .comma) {
-    color: var(--primary-1);
+samp .punctuation,
+code .punctuation,
+samp.language-roc :is(.paren, .bracket, .brace, .comma),
+.roc-interactive .roc-output .k {
+    color: var(--syntax-keyword);
 }
 
+::highlight(roc-k),
+::highlight(roc-o),
 ::highlight(roc-d) {
-    color: var(--primary-1);
+    color: var(--syntax-keyword);
 }
 
 ::highlight(roc-f),
 ::highlight(roc-p) {
-    color: #aeb4c6;
+    color: var(--syntax-faded);
 }
 
-/* Variables modules and field names */
+/* Variables, modules, and field names */
 samp .function,
 code .function,
 samp .meta.group,
@@ -893,35 +595,21 @@ samp .lowerident,
 code .lowerident,
 .roc-interactive .roc-output .v,
 .roc-interactive .roc-output pre.roc-terminal {
-    color: white;
+    color: var(--code-color);
 }
 
 ::highlight(roc-v) {
-    color: white;
+    color: var(--code-color);
 }
 
 samp .error,
 code .error,
 .roc-interactive .roc-output .e {
-    color: hsl(0, 96%, 67%);
+    color: var(--syntax-error);
 }
 
 ::highlight(roc-e) {
-    color: hsl(0, 96%, 67%);
-}
-
-/* Types, Tags, and Modules */
-samp .type,
-code .type,
-samp .meta.path,
-code .meta.path,
-samp .upperident,
-code .upperident {
-    color: var(--dark-cyan);
-}
-
-::highlight(roc-u) {
-    color: var(--dark-cyan);
+    color: var(--syntax-error);
 }
 
 samp .dim,
@@ -930,10 +618,58 @@ code .dim,
     opacity: 0.55;
 }
 
+/* ---- line numbers ---- */
+
+/* --code-inset is the space left of the numbers; the code then starts
+   --line-numbers-width further in. */
+.roc-interactive .roc-source-editor {
+    --code-inset: var(--space-5);
+    --line-numbers-width: calc(2ch + var(--space-5));
+}
+
+.line-numbers {
+    box-sizing: content-box;
+    width: 2ch;
+    padding-left: var(--code-inset);
+    color: var(--line-number-color);
+    opacity: 0.6;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
+    text-align: right;
+    white-space: pre;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.line-numbers > span {
+    display: block;
+}
+
+/* The numbers sit inside the highlight's border, under the transparent
+   textarea; JS moves them with its scroll position. */
+.roc-interactive .roc-source-editor .line-numbers {
+    position: absolute;
+    top: var(--border-width);
+    bottom: var(--border-width);
+    left: var(--border-width);
+    z-index: 0;
+    padding-top: var(--space-4);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.roc-interactive .roc-source-editor textarea.roc-source,
+.roc-interactive .roc-source-editor .roc-source-highlight {
+    padding-left: calc(var(--code-inset) + var(--line-numbers-width));
+}
+
+/* ---- copy button on example pages ---- */
+
 .button-container {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: var(--space-2);
+    right: var(--space-2);
 }
 
 /* The button overlays the first line of the snippet, so on devices that can
@@ -956,12 +692,13 @@ code .dim,
 }
 
 .copy-button {
-    background: var(--dark-code-bg);
-    border: 1px solid var(--dark-cyan);
-    color: var(--dark-cyan);
-    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--syntax-literal);
+    background: var(--code-bg);
+    color: var(--syntax-literal);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-small);
     cursor: pointer;
-    margin: 8px;
 }
 
 .copy-button:hover {
@@ -969,636 +706,536 @@ code .dim,
     color: var(--code-color);
 }
 
-.roc-logo {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto;
-    fill: var(--primary-1);
-    text-shadow: 1px 1px 1px #010101;
-    position: relative;
-    top: -2px;
+.copy-button:focus-visible {
+    outline-color: var(--code-color);
 }
 
-/* HOME GOALS */
+/* ---- buttons ---- */
+
+.btn-small,
+.roc-interactive button.roc-run {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--action-btn-width);
+    min-height: var(--control-height);
+    margin: 0 0 var(--space-5);
+    padding: 0 var(--space-5);
+    border: 2px solid var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-normal);
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.btn-small:hover,
+.roc-interactive button.roc-run:hover:not(:disabled) {
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
+}
+
+.roc-interactive button.roc-run:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+}
+
+.btn-row > .btn-small {
+    margin: 0;
+}
+
+/* White on the lighter dark-scheme violet would be too faint. */
+@media (prefers-color-scheme: dark) {
+    .skip-link,
+    .btn-small,
+    .roc-interactive button.roc-run {
+        --accent: #7c38f5;
+        --accent-hover: #6325db;
+    }
+}
+
+/* The Run button is outlined, in the same color as the heading underlines. */
+.roc-interactive button.roc-run {
+    --run-color: #7c38f5;
+    border-color: var(--run-color);
+    background: transparent;
+    color: var(--run-color);
+}
+
+.roc-interactive button.roc-run:hover:not(:disabled) {
+    border-color: var(--run-color);
+    background: color-mix(in srgb, var(--run-color) 15%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+    .roc-interactive button.roc-run {
+        --run-color: #9c7cea; /* the dark-scheme --accent */
+    }
+}
+
+/* ---- footer ---- */
+
+footer {
+    border-top: var(--border-width) solid var(--border-color);
+}
+
+#footer {
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+}
+
+#footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    column-gap: var(--space-5);
+}
+
+#footer-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--control-height);
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+#footer-links a:hover {
+    color: var(--link-color);
+    text-decoration: underline;
+}
+
+#gh-logo {
+    display: block;
+    fill: currentColor;
+}
+
+/* ---- logos ---- */
+
+.logo-dark {
+    fill: #612bde;
+}
+
+.logo-light {
+    fill: #8257e5;
+}
+
+@media (prefers-color-scheme: dark) {
+    .logo-dark {
+        fill: #6c3bdc;
+    }
+
+    .logo-light {
+        fill: #8a66de;
+    }
+}
+
+/* ---- homepage ---- */
+
+/* The page's own logo sits right below the header, so the header's home link
+   would be redundant here. */
+#homepage-main #nav-home-link {
+    visibility: hidden;
+}
+
+#homepage-intro-outer {
+    padding: var(--space-9) 0;
+}
+
+/* Logo and title, centered as one block. */
+#homepage-intro-box {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    grid-template-areas:
+        "logo title"
+        "logo tagline";
+    column-gap: var(--space-5);
+    align-items: center;
+}
+
+#homepage-logo {
+    grid-area: logo;
+    display: block;
+    width: 112px;
+    height: auto;
+    overflow: visible; /* corner glows reach past the viewBox */
+}
+
+/* Glowing corners, only seen while the logo animates in. */
+#homepage-logo .logo-star {
+    opacity: 0;
+}
+
+#logo-star-glow stop {
+    stop-color: var(--logo-star);
+}
+
+/* The glow only works on the dark background. */
+@media (prefers-color-scheme: light) {
+    .logo-glow {
+        display: none;
+    }
+}
+
+.logo-flare {
+    stroke: var(--logo-star);
+    stroke-opacity: 0.4;
+    vector-effect: non-scaling-stroke;
+}
+
+.logo-core {
+    fill: var(--logo-star-core);
+}
+
+#homepage-h1 {
+    grid-area: title;
+    align-self: end;
+    margin: 0;
+    font-size: 4.5rem;
+    line-height: 1;
+}
+
+#homepage-tagline {
+    grid-area: tagline;
+    align-self: start;
+    margin: var(--space-2) 0 0;
+    font-size: 1.25rem;
+}
 
 .home-goals-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 45px;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
 }
 
 .home-goals-column {
     display: flex;
-    flex-direction: column;
-    flex: 1;
+}
+
+/* The get-started cards below the editor. */
+.home-start-cards {
+    margin-top: var(--space-9);
+}
+
+.home-editor-intro {
+    margin-top: var(--space-9);
+    text-align: center;
+}
+
+/* The intro, editor and output form one block centered in the page. */
+.home-editor-intro,
+.roc-interactive.front-page {
     width: 100%;
+    max-width: var(--text-width);
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .home-goals-content {
+    box-sizing: border-box;
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    border: 4px solid var(--light-cyan);
-    color: inherit;
-    cursor: pointer;
+    padding: var(--space-5);
+    border: var(--border-width) solid var(--code-border);
+    background: var(--card-bg);
+    box-shadow: var(--box-glow);
+    color: var(--text-color);
+    text-decoration: none;
+    /* For a background drawing, which sits above the card's own background. */
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+/* A large, faint line drawing centred behind a card's text. */
+.home-goals-bg-art {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    /* Sized by the card's height, so it fits wide, short cards too. The width
+       follows from the viewBox. */
+    height: 85%;
+    width: auto;
+    transform: translate(-50%, -50%);
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8px;
+    stroke-linejoin: miter;
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    .home-goals-bg-art {
+        opacity: 0.08;
+    }
+}
+
+.home-goals-bg-art * {
+    vector-effect: non-scaling-stroke;
 }
 
 .home-goals-content:hover {
-    text-decoration: none;
-    cursor: pointer;
-    background-color: var(--light-cyan);
+    border-color: var(--card-hover-border);
+    box-shadow: var(--box-glow-hover);
 }
 
-.home-goals-learn-more {
-    text-decoration: underline;
+.home-goals-content:focus-visible {
+    outline-color: var(--accent);
 }
 
-.home-examples-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 24px;
-    width: 100%;
+.home-goals-title {
+    width: fit-content;
+    margin: 0 0 var(--space-4);
+    padding-bottom: var(--space-1);
+    border-bottom: var(--rule-width) solid var(--accent);
+    font-size: 1.75rem;
 }
 
-.home-examples-column {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    width: 100%;
-}
-
-.home-examples-column:not(:last-of-type) {
-    padding-right: 24px;
-    border-right: 2px solid var(--primary-1);
-}
-
-/* Wider screens */
-@media only screen and (min-width: 768px) {
-    .home-goals-column {
-        margin-bottom: 0;
-    }
-
-    .home-goals-column:last-child {
-        margin-right: 0;
-    }
+.home-goals-description {
+    margin-bottom: var(--space-5);
 }
 
 .home-goals-learn-more {
     margin-top: auto;
+    color: var(--link-color);
     white-space: nowrap;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
 }
 
-.home-goals-title {
-    padding: 0;
-    font-weight: bold;
-    margin-bottom: 10px;
-    font-size: 32px;
-    border-bottom: none;
-    font-family: inherit;
-    text-transform: lowercase;
-    padding-bottom: 42px;
-    padding-top: 2px;
-    font-style: italic;
-    letter-spacing: 1px;
-    word-spacing: 3px;
-    margin: 0;
-    color: var(--text-color);
+.home-goals-content:hover .home-goals-learn-more {
+    text-decoration-thickness: 2px;
 }
 
-.home-goals-description {
-    line-height: 1.5;
-    margin-bottom: 2em;
+#homepage-main main > h2 {
+    margin-top: var(--space-8);
 }
 
-/* Interactive example on homepage */
-
-.interactive-example {
-    font-size: var(--font-size-normal);
+/* Everything below the cards lines up with the left edge of the centered
+   editor block. */
+#homepage-main main > .home-start-cards ~ * {
+    max-width: var(--text-width);
+    margin-left: max(0px, calc((100% - var(--text-width)) / 2));
 }
 
-.interactive-example,
-.interactive-example samp {
-    background-color: #202746;
-    color: white;
-}
-
-.interactive-example samp {
-    position: relative;
-    display: block;
-    width: 100%;
-    height: 580px;
-    padding-right: 300px;
-    cursor: default;
-}
-
-.interactive-example label:hover,
-.interactive-radio:checked + label {
-    background-color: #000;
-    cursor: pointer;
-}
-
-.interactive-desc {
-    display: none;
-    position: absolute;
-    top: 0;
-    right: 300px;
-    width: 360px;
-    background-color: #ede6ff;
-    border: 1px solid black;
-    color: black;
-    padding: 0 16px;
-    padding-top: 12px;
-    margin-top: 9px;
-    cursor: text;
-    white-space: normal;
-    font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial;
-}
-
-.interactive-desc a {
-    color: #7c38f5;
-}
-
-.interactive-desc code,
-.interactive-desc pre {
-    background: none;
-    color: inherit;
-}
-
-.interactive-desc pre {
-    border: 1px solid;
-    padding: 0 8px;
-}
-
-.interactive-desc code {
-    font-weight: bold;
-    padding: 0;
-}
-
-.interactive-radio {
-    display: none;
-}
-
-.interactive-radio:checked + label + .interactive-desc {
-    display: block;
-}
-
-.close-desc {
-    display: none;
-    position: absolute;
-    height: 40px;
-    width: 40px;
-    font-size: 24px;
-    top: -12px;
-    right: -12px;
-    color: #fff;
-    background: #9b6bf2;
-    border: 2px solid #7c38f5;
-    border-radius: 100%;
-    z-index: 4;
-}
-
-.close-desc:hover {
-    color: #222;
-    background: var(--light-cyan);
-    border-color: var(--light-cyan);
-}
-
-/* Tutorial */
-
-#tutorial-main main {
-    display: flex;
-    flex-direction: row-reverse;
-    max-width: 1024px;
-}
-
-#tutorial-main h1,
-#tutorial-main h2,
-#tutorial-main h3,
-#tutorial-main h4,
-#tutorial-main h5 {
-    font-family: "Permanent Marker";
-    line-height: 1rem;
-    margin-top: 1.75rem;
-    margin-bottom: 0;
-    border: none;
-}
-
-#tutorial-main h3 a {
-    color: var(--tutorial-h3-color);
-}
-
-#tutorial-main h1 a,
-#tutorial-main h2 a,
-#tutorial-main h4 a,
-#tutorial-main h5 a {
-    color: var(--header-link-color);
-}
-
-#tutorial-main h1 a:hover,
-#tutorial-main h2 a:hover,
-#tutorial-main h3 a:hover,
-#tutorial-main h4 a:hover,
-#tutorial-main h5 a:hover {
-    text-decoration: none;
-    color: var(--header-link-hover);
-}
-
-#tutorial-main h1 {
-    font-size: 7rem;
-    line-height: 7rem;
-    color: var(--h1-color);
-    margin-top: 24px;
-    margin-bottom: 1.75rem;
-    text-shadow: 1px 1px 1px #010101;
-}
-
-#tutorial-main h2 {
-    font-size: 4rem;
-    line-height: 4rem;
-    text-shadow: 1px 1px 1px #010101;
-    padding: 0.8rem 0;
-    margin-top: 2.5rem;
-    width: 60rem; /* Without this, "Building an application" wraps and looks awkward */
-}
-
-#tutorial-main h3 {
-    font-family: inherit;
-    font-size: 1.65rem;
-    line-height: 3rem;
-    margin-bottom: 0.5rem;
-}
-
-#tutorial-main h4 {
-    font-size: 2rem;
-    text-shadow: 1px 1px 1px #010101;
-}
-
-#tutorial-body,
-#tutorial-body pre {
-    max-width: 646px;
-}
-
-#tutorial-toc {
-    position: relative;
-    background-color: var(--gray-bg);
-    flex: 0 0 auto; /* Take up as much space as it needs */
-    margin-top: 30px;
-    background: var(--code-bg);
-    padding: 12px 24px;
-    margin-left: 64px;
-    align-self: flex-start; /* Aligns to the start, not stretching in height */
-    z-index: 2;
-}
-
-#tutorial-toc > ul {
+#sponsor-logos {
+    max-width: none;
+    margin: var(--space-6) 0;
     display: flex;
     flex-wrap: wrap;
-    list-style-type: none;
-    padding: 16px 16px;
-    margin: 0px;
+    align-items: center;
+    gap: var(--space-6) var(--space-7);
 }
 
-#tutorial-toc > ul > li {
-    flex: 1 1 50%; /* Adjust the percentage to control how many items per row */
-    margin-bottom: 0; /* Reset the margin as they are now side by side */
-    white-space: nowrap;
-    overflow: hidden; /* Ensures content doesn't overflow its container */
-    text-overflow: ellipsis; /* Adds an ellipsis if the content overflows */
+#sponsor-logos a {
+    display: block;
 }
 
-#tutorial-toc code {
-    background: none;
-    color: inherit;
-    margin: 0;
+#sponsor-logos svg {
+    display: block;
+    width: auto;
+    height: 64px; /* The ohne-makler logo has no viewBox, so it can't scale. */
+}
+
+/* The Martian wordmark is shorter than the other two logos. */
+#sponsor-logos .logo-martian {
+    height: 36px;
+}
+
+#sponsor-logos .logo-lambda-class,
+#sponsor-logos .logo-martian path {
+    fill: var(--heading-color);
+}
+
+#individual-sponsors {
+    max-width: var(--text-width);
     padding: 0;
-}
-
-#tutorial-toc ol {
-    padding: 3px;
-    margin: 8px 0;
     list-style: none;
-    padding-bottom: 0;
-    margin-bottom: 0;
 }
 
-#tutorial-toc h2 {
-    font-family: inherit;
-    font-size: 2em;
-    text-shadow: none;
+#individual-sponsors li {
+    display: inline;
     margin: 0;
-    padding: 16px 0;
+    white-space: nowrap;
 }
 
-#toc-search {
-    background-color: var(--toc-search-bg);
-    border: 1px solid var(--toc-search-border);
-    color: inherit;
-    padding: 6px 8px;
-    margin-top: 16px;
-    margin-bottom: 4px;
-    box-sizing: border-box;
-    width: 100%;
-    font-size: inherit;
+/* The deploy's HTML minifier strips the whitespace between the items, so the
+   space that lets the list wrap must come from here. */
+#individual-sponsors li::after {
+    content: ", ";
+    white-space: normal;
 }
 
-#tutorial-toc-toggle,
-#tutorial-toc-toggle-label,
-#close-tutorial-toc {
-    display: none;
-    /* This may be overridden on mobile-friendly screen widths */
+#individual-sponsors li:last-child::after {
+    content: ""; /* No comma after the last one */
 }
 
-#tutorial-toc-toggle:hover,
-#tutorial-toc-toggle-label:hover,
-#close-tutorial-toc:hover {
-    text-decoration: underline;
-    cursor: pointer;
-}
+@media only screen and (max-width: 899px) {
+    #homepage-intro-box {
+        column-gap: var(--space-4);
+    }
 
-#tutorial-toc-toggle,
-#tutorial-toc-toggle-label {
-    font-size: 1.2rem;
-    float: right;
-    padding: 0 1rem;
-    font-family: Lato;
-    font-weight: normal;
-}
+    #homepage-logo {
+        width: 80px;
+    }
 
-#close-tutorial-toc {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    font-size: 1.2rem;
-    padding: 12px 24px;
-    font-weight: bold;
-}
+    #homepage-h1 {
+        font-size: 3rem;
+    }
 
-/* for larger screens */
-@media only screen and (min-width: 768px) {
-    #tutorial-toc > ul > li {
-        flex: 1 1 33%; /* Adjust the percentage to control how many items per row */
+    #homepage-tagline {
+        margin-top: var(--space-1);
+        font-size: var(--font-size-normal);
     }
 }
 
-/* REPL */
-
-#repl {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    font-size: 18px;
-}
-
-#homepage-repl-container #repl-prompt,
-#homepage-repl-container .input-line-prefix {
-    top: 1.25rem;
-    color: var(--light-cyan);
-}
-
-.input-line-prefix,
-#repl-prompt {
-    color: var(--cyan);
-    color: var(--primary-2);
-}
-
-#repl-prompt {
-    position: relative;
-    left: 16px;
-    top: 0.95rem;
-    font-size: 1.25rem;
-    height: 0;
-    z-index: 2;
-    font-family: var(--font-mono);
-    /* Let clicks pass through to the textarea */
-    pointer-events: none;
-    user-select: none;
-}
-
-#homepage-repl-container #source-input {
-    color: var(--code-color);
-}
-
-#source-input {
-    width: 100%;
-    font-family: var(--font-mono);
-    background-color: var(--code-bg);
-    display: inline-block;
-    height: 78px;
-    padding: 16px;
-    padding-left: 36px;
-    border: 1px solid transparent;
-    margin: 0;
-    margin-bottom: 2em;
-    box-sizing: border-box;
-    font-size: 18px;
-    resize: none;
-    color: inherit;
-}
-
-#source-input:focus {
-    outline: 2px solid var(--primary-1);
-    box-sizing: border-box;
-}
-
-.history {
-    padding: 1em;
-    padding-bottom: 0;
-    flex: 1;
-}
-
-#help-text,
-#history-text {
-    white-space: pre-wrap;
-}
-
-#history-text {
-    margin-top: 16px;
-    min-height: 26px;
-}
-
-#loading-message {
-    text-align: center;
-    /* approximately match height after loading and printing help message */
-    height: 96px;
-}
-
-.history-item {
-    margin-bottom: 24px;
-    overflow-x: hidden;
-}
-
-.history-item .input {
-    margin: 0;
-    margin-bottom: 8px;
-}
-
-.history-item .output {
-    margin: 0;
-}
-
-.panic {
-    color: #ff6666;
-}
-
-.color-red {
-    color: #ff6666;
-}
-
-.color-green {
-    color: var(--green);
-}
-
-.color-yellow {
-    color: var(--orange);
-}
-
-.color-blue {
-    color: var(--cyan);
-}
-
-.color-magenta {
-    color: var(--primary-1);
-}
-
-.color-cyan {
-    color: var(--cyan);
-}
-
-/* Really this isn't white so much as "default text color." For the repl, this should be black
-    in a light color scheme, and only white in dark mode. The name could be better!
-*/
-#homepage-repl-container .color-white {
-    color: #fff;
-}
-
-#repl-container .color-white {
-    color: #000;
-}
-
-@media (prefers-color-scheme: dark) {
-    #homepage-repl-container .color-white {
-        color: #fff;
+/* Tablets keep the three columns, with tighter cards whose text may wrap. */
+@media only screen and (min-width: 720px) and (max-width: 899px) {
+    .home-goals-container {
+        gap: var(--space-4);
     }
 
-    #repl-container .color-white {
-        color: #fff;
+    .home-goals-content {
+        padding: var(--space-4);
+    }
+
+    .home-goals-content .nowrap,
+    .home-goals-learn-more {
+        white-space: normal;
     }
 }
 
-.bold {
-    font-weight: bold;
-}
-
-.underline {
-    text-decoration: underline;
-}
-
-/* Mobile-friendly screen width */
-@media only screen and (max-width: 767px) {
-    #repl {
-        margin: 0;
-        padding: 0;
-        min-height: calc(100vh - var(--top-bar-height));
-    }
-
-    code.history {
-        flex-grow: 1;
-    }
-
-    #source-input {
-        margin: 0;
-    }
-
-    #loading-message {
-        margin: 0;
-    }
-
-    #homepage-repl-container {
-        flex-direction: column;
-    }
-
-    #homepage-repl-container #repl-description {
-        padding: 0;
-        margin-bottom: 1.5em;
-    }
-
-    #repl-arrow {
+@media only screen and (max-width: 719px) {
+    /* With no home link, the links can use the header's full width. */
+    #homepage-main #nav-home-link {
         display: none;
     }
 
-    /* Right-align the Tutorial button so it falls under the thumb on mobile.
-       (The Run button's override lives next to its base rule below, since that
-       rule comes later in the source and would otherwise win.) */
-    .btn-small {
-        display: block;
-        margin-left: auto;
-        margin-right: 0;
+    /* Half the desktop spacing, so the cards start on the first screen. */
+    #homepage-intro-outer {
+        padding: var(--space-8) 0;
+    }
+
+    .home-editor-intro,
+    .home-start-cards {
+        margin-top: var(--space-8);
+    }
+
+    .home-goals-container {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #sponsor-logos {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
 
-#gh-logo {
-    fill: var(--text-color);
+/* ---- examples ---- */
+
+/* The example index keeps ordinary links and works without JavaScript. */
+#examples-main .examples-nav ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-5);
+    margin: var(--space-5) 0 var(--space-7);
+    padding: 0;
+    list-style: none;
 }
 
-#gh-link {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#examples-main .examples-nav li {
     margin: 0;
 }
 
-#gh-centered-link {
-    text-decoration: none;
-    display: flex;
-    align-items: center;
+#examples-main main > ul > li {
+    margin-bottom: var(--space-4);
 }
 
-#gh-link-text {
-    margin-left: 8px;
-    vertical-align: middle;
+@media only screen and (max-width: 540px) {
+    #examples-main .examples-nav ul {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
-.repl-prompt:before {
-    color: var(--light-cyan);
-    content: "» ";
+/* "View on GitHub" icon link below an example's title */
+#gh-example-link {
+    display: block;
+    width: fit-content;
+    margin-bottom: var(--space-4);
+    color: var(--text-color);
 }
 
-#rplf-h1 {
-    color: var(--heading-color);
+#gh-example-link:hover {
+    color: var(--link-color);
 }
 
 /* ---- interactive code widget ---- */
 
+/* The repl won't work at all if you have JS disabled. */
+.no-js #try-roc {
+    display: none !important;
+}
+
 .roc-interactive {
-    margin: 1.5em 0;
+    margin: var(--space-5) 0 0;
 }
 
 .roc-interactive.front-page {
     display: block;
-    max-width: 720px;
+    max-width: var(--text-width);
 }
 
 .roc-interactive .roc-source-editor {
     position: relative;
+    margin-bottom: var(--space-1);
 }
 
+/* How to tab out of the editor. It always takes up its line, so showing it
+   while the editor has focus doesn't move the page. */
+.roc-interactive .roc-editor-hint {
+    visibility: hidden;
+    max-width: none;
+    margin: 0 0 var(--space-2);
+    color: var(--faded-color);
+    font-size: var(--font-size-small);
+    line-height: 1.2;
+}
+
+.roc-interactive:has(textarea.roc-source:focus) .roc-editor-hint {
+    visibility: visible;
+}
+
+/* The transparent textarea sits exactly on top of the highlighted copy of its
+   text, so these two must always share the same box and font metrics. */
 .roc-interactive textarea.roc-source,
 .roc-interactive .roc-source-highlight {
     display: block;
-    width: 100%;
     box-sizing: border-box;
-    min-height: 100%;
+    width: 100%;
     margin: 0;
-    padding: 0.75em;
+    padding: var(--space-4) var(--space-5);
+    border: var(--border-width) solid var(--code-border);
     font-family: var(--font-mono);
-    font-size: var(--font-size-normal);
-    line-height: normal;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
     tab-size: 4;
-    border: 1px solid #ddd;
     white-space: pre;
     overflow-wrap: normal;
     overflow-x: auto;
@@ -1607,20 +1244,21 @@ code .dim,
 .roc-interactive textarea.roc-source {
     position: relative;
     z-index: 1;
-    resize: vertical;
+    min-height: 100%;
+    resize: none;
+    border-color: transparent; /* the highlight underneath draws the border */
     background: transparent;
     color: transparent;
-    caret-color: #e0d6f0;
+    caret-color: var(--code-color);
 }
 
-.roc-interactive textarea.roc-source:focus,
 .roc-interactive textarea.roc-source:focus-visible {
-    border-color: var(--light-cyan);
-    outline: 2px solid var(--light-cyan);
+    outline: 2px solid var(--syntax-literal);
+    outline-offset: 0;
 }
 
 .roc-interactive textarea.roc-source::selection {
-    background: color-mix(in srgb, var(--primary-2) 45%, transparent);
+    background: color-mix(in srgb, var(--syntax-keyword) 45%, transparent);
     color: transparent;
 }
 
@@ -1628,55 +1266,48 @@ code .dim,
     position: absolute;
     inset: 0;
     z-index: 0;
+    min-height: 100%;
     pointer-events: none;
     overflow: hidden;
-    background: var(--dark-code-bg);
-    color: #e0d6f0;
+    background: var(--code-bg);
+    box-shadow: var(--box-glow);
+    color: var(--code-color);
 }
 
-/* Shown only when JS is disabled — the script replaces it with the textarea above. */
-.roc-interactive pre.roc-source {
-    display: block;
-    box-sizing: border-box;
+/* The Run button floats over the editor's bottom right corner, so it stays
+   visible when the code is wider than the editor and scrolls sideways. */
+.roc-interactive > button.roc-run,
+.roc-interactive .roc-source-editor > button.roc-run {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    display: inline-flex;
+    width: auto;
     margin: 0;
-    padding: 0.75em;
-    font-family: var(--font-mono);
-    font-size: var(--font-size-normal);
-    tab-size: 4;
-    background: var(--dark-code-bg);
-    color: #e0d6f0;
-    border: 1px solid #ddd;
-    overflow-x: auto;
 }
 
-.roc-interactive button.roc-run {
-    margin: 16px 0;
-    box-sizing: border-box;
-    width: var(--action-btn-width);
-    padding: 12px;
-    cursor: pointer;
-    font-size: var(--font-size-normal);
-    color: #fff !important;
-    background: #7c38f5;
-    border: 4px solid #9b6bf2;
+/* Without JS the widget is its highlighted code block, with the button asking
+   for JS in the same corner. The script replaces both with the editor above. */
+.roc-interactive:has(> pre) {
+    position: relative;
 }
 
-.roc-interactive button.roc-run:hover {
-    background: #9b6bf2;
-    border-color: #7c38f5;
+.roc-interactive > pre {
+    margin: 0 0 var(--space-5);
 }
 
-.roc-interactive button.roc-run:disabled {
-    opacity: 0.4;
-    cursor: default;
+.roc-interactive > button.roc-run:disabled {
+    opacity: 1;
+    background: var(--code-bg);
 }
 
 .roc-interactive .roc-output {
-    color: #b794e0;
+    margin-bottom: var(--space-5);
+    color: var(--text-color);
     font-family: var(--font-mono);
-    font-size: var(--font-size-normal);
+    font-size: var(--font-size-small);
     white-space: pre-wrap;
-    min-height: 1.2em;
 }
 
 .roc-interactive .roc-output:empty {
@@ -1689,9 +1320,11 @@ code .dim,
 
 .roc-interactive .roc-output pre,
 .roc-interactive .roc-output pre.roc-terminal {
-    padding: 0.75em;
-    background-color: #151517;
     margin: 0;
+    padding: var(--space-4) var(--space-5);
+    border-color: var(--code-border);
+    background-color: var(--code-bg);
+    color: var(--syntax-keyword);
     font: inherit;
     line-height: 1.35;
     white-space: pre-wrap;
@@ -1699,6 +1332,7 @@ code .dim,
 }
 
 .roc-interactive .roc-output pre.roc-terminal {
+    color: var(--code-color);
     line-height: 1.175;
     white-space: pre;
 }
@@ -1715,85 +1349,80 @@ code .dim,
     text-decoration: underline;
 }
 
-/* Right-align the Run button so it falls under the thumb on mobile. Defined
-   here (after the base .roc-run rule) so it wins on source order. */
-@media only screen and (max-width: 767px) {
-    .roc-interactive button.roc-run {
-        display: block;
-        margin-left: auto;
-        margin-right: 0;
+/* ---- scrollbars ---- */
+
+/* Square thumbs. Styling the scrollbar makes browsers draw it with these
+   shapes instead of their rounded defaults. */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+/* Slimmer inside the page, where a bar sits right under a line of code. */
+body ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 0;
+    background: var(--scrollbar-thumb);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* ---- motion ---- */
+
+@media (prefers-reduced-motion: no-preference) {
+    a,
+    .btn-small,
+    .roc-interactive button.roc-run,
+    .home-goals-content,
+    .copy-button {
+        transition:
+            color 0.1s ease,
+            background-color 0.1s ease,
+            border-color 0.1s ease,
+            box-shadow 0.2s ease;
     }
-}
 
-/* ---- structured compiler diagnostics ---- */
+    /* The homepage logo starts as an outline with glowing corners, like the
+       background lattice, then fills in face by face. --i is the step at which
+       a face fills or a corner fades. */
+    #homepage-logo > path,
+    #homepage-logo .logo-star {
+        animation: logo-face 0.45s ease-out backwards;
+        animation-delay: calc(0.6s + var(--i) * 0.26s);
+    }
 
-.report {
-    border-left: 3px solid #555;
-    padding: 0.3em 0.6em;
-    margin: 0.3em 0;
-    font-size: 13px;
-}
+    #homepage-logo > path {
+        stroke: var(--logo-line);
+        stroke-opacity: 0;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+    }
 
-.report.error {
-    border-color: #e55;
-    background: #1f0f17;
-}
-.report.warning {
-    border-color: #c90;
-    background: #1f180f;
-}
-.report.info {
-    border-color: #48f;
-    background: #0f1722;
-}
+    #homepage-logo .logo-star {
+        animation-name: logo-star;
+    }
 
-.report h1 {
-    font-size: 13px;
-    margin: 0 0 0.2em;
-}
+    @keyframes logo-face {
+        from {
+            fill-opacity: 0;
+            stroke-opacity: 1;
+        }
+    }
 
-.report pre {
-    margin: 0.2em 0;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    white-space: pre-wrap;
-}
-
-/* The example index keeps ordinary links and works without JavaScript. */
-#examples-main .examples-nav ul {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem 1.5rem;
-    list-style: none;
-    padding: 0;
-    margin: 2rem 0 3rem;
-}
-
-#examples-main .examples-nav li {
-    margin: 0;
-}
-
-#examples-main h2 {
-    display: block;
-    margin-top: 3rem;
-    margin-bottom: 1.5rem;
-    scroll-margin-top: 1.5rem;
-}
-
-#examples-main h3 {
-    margin-top: 1.5rem;
-}
-
-#examples-main main > ul {
-    padding-left: 1.25rem;
-}
-
-#examples-main main > ul > li {
-    margin-bottom: 1rem;
-}
-
-@media only screen and (max-width: 540px) {
-    #examples-main .examples-nav ul {
-        grid-template-columns: 1fr;
+    @keyframes logo-star {
+        from {
+            opacity: 1;
+        }
     }
 }

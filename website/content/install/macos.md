@@ -1,4 +1,6 @@
-# macOS
+# Install Roc on macOS
+
+[Install on other OS](/install?all)
 
 ## How to install Roc
 

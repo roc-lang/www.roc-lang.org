@@ -2,20 +2,7 @@
 
 # Tutorial
 
-Roc is still a work in progress and has not reached a 0.1 release, so expect missing features and bugs. This tutorial is also work in progress.
-
-Helpful resources:
-- [Standard library docs](/docs/main/)
-- [Examples](/examples/)
-- [Language reference](/docs/main/langref/)
-- [Roc syntax overview](/examples/AllSyntax/README.html)
-- Learn Roc by doing, with [exercism](https://exercism.org/tracks/roc/)
-
-If you want help, the best place to get it is [Roc Zulip](https://roc.zulipchat.com/). You're welcome to ask any questions in [#beginners](https://roc.zulipchat.com/#narrow/channel/231634-beginners/).
-
-With those disclaimers in mind, let's get into the adventure!
-
-<details class="tutorial-contents">
+<details class="tutorial-contents" open>
 <summary>On this page</summary>
 
 - [Hello, World](#hello-world)
@@ -31,9 +18,20 @@ With those disclaimers in mind, let's get into the adventure!
 
 </details>
 
+Helpful resources:
+- [Standard library docs](/docs/main/)
+- [Examples](/examples/)
+- [Language reference](/docs/main/langref/)
+- [Roc syntax overview](/examples/AllSyntax/README.html)
+- Learn Roc by doing, with [exercism](https://exercism.org/tracks/roc/)
+
+If you want help, the best place to get it is [Roc Zulip](https://roc.zulipchat.com/). You're welcome to ask any questions in [#beginners](https://roc.zulipchat.com/#narrow/channel/231634-beginners/).
+
+With those disclaimers in mind, let's get into the adventure!
+
 ## Hello, World {#hello-world}
 
-First, follow the [installation guide](/install/) to install a nightly build.
+First, follow the [installation guide](/install/) to install Roc.
 It includes an executable named `roc` (or `roc.exe` on Windows). You'll know it is available on your `PATH`
 if `roc version` works.
 

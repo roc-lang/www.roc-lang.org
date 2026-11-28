@@ -9,17 +9,17 @@ who's interested in attending. The organizer then posts a finalized time and a l
 We have not had a Roc conference yet, although there have been a few Roc talks given at conferences,
 and a few times when Roc community members have met up in person.
 
-### [Code of Conduct](#code-of-conduct) {#code-of-conduct}
+## [Code of Conduct](#code-of-conduct) {#code-of-conduct}
 
 The Roc project enforces [a code of conduct](https://github.com/roc-lang/roc/blob/main/code_of_conduct.md). Please read and follow it!
 
-### [Contributing](#contributing) {#contributing}
+## [Contributing](#contributing) {#contributing}
 
 All the source code to the Roc project is on GitHub in the [roc-lang](https://github.com/roc-lang) organization. The compiler and CLI are at [roc-lang/roc](https://github.com/roc-lang/roc), and there's a tag for [Good First Issues](https://github.com/roc-lang/roc/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
 
 The project has [many contributors](https://github.com/roc-lang/roc/graphs/contributors), and we like to invest in helping new contributors get started. If you'd like to become a new contributor (even if you don't know what you'd like that contribution to be yet), just make a post in [the "new contributors" topic](https://roc.zulipchat.com/#narrow/stream/316715-contributing/topic/new.20contributors) and say hello!
 
-### [Ideas, proposals, and feature requests](#ideas) {#ideas}
+## [Ideas, proposals, and feature requests](#ideas) {#ideas}
 
 Roc doesn't have a formal process for managing design proposals.
 

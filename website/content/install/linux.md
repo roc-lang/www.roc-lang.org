@@ -1,4 +1,6 @@
-# Linux
+# Install Roc on Linux
+
+[Install on other OS](/install?all)
 
 ## How to install Roc
 

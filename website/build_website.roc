@@ -46,7 +46,8 @@ CompilerInfo : {
 
 main! : List(OsStr) => Try({}, _)
 main! = |raw_args| {
-	args = raw_args.drop_first(1).map(OsStr.display)
+	# The platform passes only the arguments, without the program name.
+	args = raw_args.map(OsStr.display)
 	use_cache = args.any(|arg| arg == "--cache")
 	use_minify = args.any(|arg| arg == "--minify")
 	examples_only = args.any(|arg| arg == "--examples-only")
@@ -251,13 +252,15 @@ ensure_examples_present! = |compiler| {
 
 ensure_fonts_present! : () => Try({}, _)
 ensure_fonts_present! = || {
-	if !path("build/fonts").is_dir!()? {
-		design_assets_commit = "4d949642ebc56ca455cf270b288382788bce5873"
-		design_assets_tarfile = "roc-lang-design-assets-4d94964.tar.gz"
-		design_assets_dir = "roc-lang-design-assets-4d94964"
+	# Checks for the newest font, so cached builds with older fonts are refreshed.
+	if !path("build/fonts/lato-v23-latin/lato-v23-latin-700.woff2").exists!()? {
+		design_assets_commit = "3e08b9e49b02c5b2457f10bd3968fad0d04a67d5"
+		design_assets_tarfile = "roc-lang-design-assets-3e08b9e.tar.gz"
+		design_assets_dir = "roc-lang-design-assets-3e08b9e"
 
 		run!("curl", ["-fLJO", "https://github.com/roc-lang/design-assets/tarball/${design_assets_commit}"])?
 		run!("tar", ["-xzf", design_assets_tarfile])?
+		path("build/fonts").delete_all!() ?? {}
 		run!("mv", ["${design_assets_dir}/fonts", "build/fonts"])?
 		path(design_assets_dir).delete_all!() ?? {}
 		path(design_assets_tarfile).delete!() ?? {}
